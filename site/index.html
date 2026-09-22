@@ -143,20 +143,20 @@
       margin-top: 0.18rem;
     }
     .sheet-wrap { overflow-x: auto; margin: 1.5rem 0 0.35rem; }
+    .sheet-title {
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 500;
+      font-size: 1.2rem;
+      line-height: 1.3;
+      margin: 1.5rem 0 0.45rem;
+    }
+    .sheet-title + .sheet-wrap { margin-top: 0; }
     table.sheet {
       width: 100%;
       border-collapse: collapse;
       font-family: "Public Sans", sans-serif;
       font-size: 0.82rem;
       line-height: 1.35;
-    }
-    table.sheet caption {
-      caption-side: top;
-      text-align: left;
-      font-family: Fraunces, Georgia, serif;
-      font-weight: 500;
-      font-size: 1.2rem;
-      margin: 0 0 0.45rem;
     }
     table.sheet th {
       text-align: right;
@@ -248,8 +248,9 @@
       <a href="#policies">03 Policies</a>
       <a href="#setting">04 Setting</a>
       <a href="#findings">05 Findings</a>
-      <a href="#limits">06 Limits</a>
-      <a href="#references">07 References</a>
+      <a href="#variations">06 Variations</a>
+      <a href="#limits">07 Limits</a>
+      <a href="#references">08 References</a>
     </nav>
     <main>
       <header>
@@ -388,9 +389,9 @@
           <figcaption><strong>The gain is about $69,000 a night on peak nights. Soft nights give back about $8,000.</strong> Soft revenue is still above a price of $80, so the soft part of the score does not charge that gap.</figcaption>
         </figure>
 
+        <p class="sheet-title" id="table-1">What if the selling limit is fixed?</p>
         <div class="sheet-wrap">
-          <table class="sheet">
-            <caption>Pin the selling limit. Leave the price alone.</caption>
+          <table class="sheet" aria-labelledby="table-1">
             <thead>
               <tr>
                 <th>Policy</th>
@@ -427,9 +428,9 @@
         </div>
         <p class="aside">Scores are in millions. Learned, wide open, and flat are three scores for the same prices. Only the selling limit changes. The last column is the share of peak nights with denied admission, first with the learned limit, then with the limit pinned at 15,000. Joint SAC's limit averages 12,578, within 2% of the flat pin at 12,353. Forcing it to stay at 12,353 still costs $120,000, because the learned limit changes from day to day and the flat pin does not.</p>
 
+        <p class="sheet-title" id="table-2">What if a cap stops overbooking after training?</p>
         <div class="sheet-wrap">
-          <table class="sheet">
-            <caption>The cap lowers the selling limit after training. No retraining.</caption>
+          <table class="sheet" aria-labelledby="table-2">
             <thead>
               <tr>
                 <th>Policy</th>
@@ -466,9 +467,9 @@
         </div>
         <p class="aside">Joint BC to SAC has denied admission on the most peak nights, and the cap costs this policy the least. The bookings the cap removes were already charged as oversold seats. The interval on that 0.6% includes zero, so the capped score and the uncapped score are a tie.</p>
 
+        <p class="sheet-title" id="table-3">The same cap, with denied admission at zero</p>
         <div class="sheet-wrap">
-          <table class="sheet">
-            <caption>The same cap, with denied admission at zero</caption>
+          <table class="sheet" aria-labelledby="table-3">
             <thead>
               <tr>
                 <th>Policy</th>
@@ -510,6 +511,49 @@
         <p>What if the forecast is wrong? The myopic rule and the selling-limit controllers use the same demand model that generates the nights. A real venue does not get that model. If that forecast is wrong about price sensitivity by a plausible amount, myopic alone loses 3.5 to 5.8 percent. Capped Joint BC to SAC over pace is 3.6 percent, and that interval sits above zero. The joint policies do not move. Scores stay the same, and mean prices stay the same to the cent, because those policies never read a demand model. They see bookings and the calendar.</p>
         <p>A joint policy does not need the forecast to be right, because it does not use a forecast. A forecast that is wrong only about the level of demand changes no price, for any policy here. Demand enters as a multiple, so that level cancels out of the sum that picks a price. Only a wrong price sensitivity changes the price.</p>
 
+        <p class="sheet-title" id="table-4">Which policy to use</p>
+        <div class="sheet-wrap">
+          <table class="sheet kv" aria-labelledby="table-4">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th class="note">Use</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Best score, and denied admission at zero</td>
+                <td class="note">Joint BC to SAC with the cap. It ties the uncapped policy on score. The cap removes the denied admissions.</td>
+              </tr>
+              <tr>
+                <td>Denied admission is acceptable</td>
+                <td class="note">Raw BC to SAC, with no cap. It ties the capped policy on score, and it has denied admission on 12 of 17 peak nights.</td>
+              </tr>
+              <tr>
+                <td>You want the price path to be easy to read</td>
+                <td class="note">Joint SAC. The weekend and weekday price paths are the chart above.</td>
+              </tr>
+              <tr>
+                <td>The policy should set only the price</td>
+                <td class="note">Pace PPO. An analytic controller sets the selling limit, and denied admission on these thirty nights is zero.</td>
+              </tr>
+              <tr>
+                <td>Later buyers must never pay less than earlier ones</td>
+                <td class="note">Any joint policy, with price drops blocked at decision time. It scores higher than the same policy unblocked, and no retraining is needed.</td>
+              </tr>
+              <tr>
+                <td>The demand forecast might be wrong</td>
+                <td class="note">Any joint policy. It sees bookings and the calendar, and it does not use a demand model, so a wrong forecast leaves its prices and its score unchanged.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="variations">
+        <h2><span>06</span>Variations</h2>
+        <p>Two changes to the setup, each tried on Joint SAC: a rule that the price may never fall, and a different training reward.</p>
+
         <h3 class="group-label">The late markdown was losing money</h3>
         <p>Look again at the weekend line in the price-path chart above. It rises to $117 around day 37, then falls to $89, so a buyer on the last day pays less than one who booked three weeks earlier. A venue cannot do that to its early buyers. So we added a rule: the price may rise, but never fall.</p>
         <p>Blocking the drops earns more. Keep the trained policy as it is and refuse any price below yesterday's. The score goes from 2,033,000 to 2,078,000, and the paired interval on that gain sits above zero. The block overrides 2,610 of the policy's 3,000 daily decisions, and none of the thirty nights has a markdown.</p>
@@ -519,9 +563,9 @@
         <h3 class="group-label">The reward decides the overbooking</h3>
         <p>The training reward in the Setting section is a price list: it tells the policy what each mistake costs. We changed two of those prices and trained Joint SAC again, with the same settings and the same training seed. The new prices are ones a venue could write down without knowing in advance which nights will be quiet.</p>
 
+        <p class="sheet-title" id="table-5">Same policy, two price lists</p>
         <div class="sheet-wrap">
-          <table class="sheet">
-            <caption>Same policy, two price lists</caption>
+          <table class="sheet" aria-labelledby="table-5">
             <thead>
               <tr>
                 <th></th>
@@ -562,48 +606,10 @@
 
         <p>Under the original reward, the first person turned away costs the whole bonus, so the policy keeps a safety margin. Under the new one, each denied admission costs a flat $400, so the policy overbooks whenever it expects enough no-shows. That is where the gain comes from: peak nights, which sell more and leave fewer seats empty. Quiet nights barely change, because they cannot fill at any price.</p>
         <p>Two warnings. First, the cap no longer takes denied admission to zero: two peak nights still turn people away, which is why the new policy is not in the table above. Second, the score also charges $400 for a denied admission, the same as the new reward. The new policy turns away about 216 more people per peak night, so its lead disappears if a denied admission really costs the venue more than about $652, counting refunds, compensation and the lost customer. This is one training run. Details: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/objective"><code>runs/objective/</code></a>.</p>
-
-        <div class="sheet-wrap">
-          <table class="sheet kv">
-            <caption>Which policy to use</caption>
-            <thead>
-              <tr>
-                <th>When</th>
-                <th class="note">Use</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Best score, and denied admission at zero</td>
-                <td class="note">Joint BC to SAC with the cap. It ties the uncapped policy on score. The cap removes the denied admissions.</td>
-              </tr>
-              <tr>
-                <td>Denied admission is acceptable</td>
-                <td class="note">Raw BC to SAC, with no cap. It ties the capped policy on score, and it has denied admission on 12 of 17 peak nights.</td>
-              </tr>
-              <tr>
-                <td>You want the price path to be easy to read</td>
-                <td class="note">Joint SAC. The weekend and weekday price paths are the chart above.</td>
-              </tr>
-              <tr>
-                <td>The policy should set only the price</td>
-                <td class="note">Pace PPO. An analytic controller sets the selling limit, and denied admission on these thirty nights is zero.</td>
-              </tr>
-              <tr>
-                <td>Later buyers must never pay less than earlier ones</td>
-                <td class="note">Any joint policy, with price drops blocked at decision time. It scores higher than the same policy unblocked, and no retraining is needed.</td>
-              </tr>
-              <tr>
-                <td>The demand forecast might be wrong</td>
-                <td class="note">Any joint policy. It sees bookings and the calendar, and it does not use a demand model, so a wrong forecast leaves its prices and its score unchanged.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </section>
 
       <section id="limits">
-        <h2><span>06</span>Limits</h2>
+        <h2><span>07</span>Limits</h2>
         <ul class="policies">
           <li><strong>The sample.</strong> The demand model is synthetic. There is one product and one venue. Every chart uses the same thirty held-out nights, seeds 0 to 29, in June and December. Train the same policy again on another machine and the weights will not match bit for bit.</li>
           <li><strong>Capped Joint BC to SAC.</strong> On the published training it scores 3.6 percent higher than pace. Resample those thirty nights and the paired interval on that gap sits above zero. The paired interval is the range of the gap across resamples. The gap ranks the two policies only when that range excludes zero.</li>
@@ -617,7 +623,7 @@
       </section>
 
       <section id="references">
-        <h2><span>07</span>References and further reading</h2>
+        <h2><span>08</span>References and further reading</h2>
         <ul class="refs">
           <li>Littlewood, K. (1972). Forecasting and control of passenger bookings. AGIFORS Symposium.</li>
           <li>Belobaba, P. (1989). Application of a probabilistic decision model to airline seat inventory control. <em>Operations Research</em>.</li>

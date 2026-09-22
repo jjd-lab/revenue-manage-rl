@@ -226,7 +226,7 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 
 ## Docs
 
-- [`site/index.html`](site/index.html) — the public page: problem, policies, setting, findings, and limits
+- [`site/index.html`](site/index.html) — the public page: problem, policies, setting, findings, variations, and limits
 - [`docs/DESIGN.md`](docs/DESIGN.md) — architecture, glossary, demand, reward vs metrics, the control layer
 - [`docs/EVALUATING_POLICIES.md`](docs/EVALUATING_POLICIES.md) — how a score is read, including when myopic's selling limit does not bind
 - [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) — the experiment record and the headline table
