@@ -147,7 +147,7 @@ def test_default_config_does_not_wrap():
 
 
 def test_clamp_mode_on_a_shipped_config_holds_the_charged_price():
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     env = make_env(cfg)
     assert isinstance(env, MonotonePriceEnv)
     env.reset(seed=0)
@@ -161,7 +161,7 @@ def test_clamp_mode_on_a_shipped_config_holds_the_charged_price():
 
 
 def test_reset_clears_the_previous_episodes_close():
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     env = make_env(cfg)
     env.reset(seed=0)
     env.step(np.array([1.0, 0.0], dtype=np.float32))
@@ -371,7 +371,7 @@ def test_negative_knobs_are_rejected():
 
 def test_ratchet_holds_the_guarantee_through_a_whole_episode():
     """End to end, on the charged price the env reports — not the wrapper's own value."""
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     cfg["control"]["price_monotone"].update(mode="ratchet", max_step=1.0)
     env = make_env(cfg)
     env.reset(seed=0)
@@ -389,7 +389,7 @@ def test_ratchet_holds_the_guarantee_through_a_whole_episode():
 
 
 def test_ratchet_config_is_rejected_without_max_step():
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     cfg["control"]["price_monotone"]["mode"] = "ratchet"
     cfg["control"]["price_monotone"]["max_step"] = None
     with pytest.raises(ValueError, match="requires max_step"):
@@ -398,7 +398,7 @@ def test_ratchet_config_is_rejected_without_max_step():
 
 def test_clamp_executed_action_reproduces_the_charged_price():
     """Under clamp the executed action differs from the request exactly when it bound."""
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     env = make_env(cfg)
     env.reset(seed=0)
     up = np.ones(env.action_space.shape, dtype=np.float32)
@@ -446,7 +446,7 @@ def test_cloning_the_request_under_a_clamp_teaches_the_forbidden_move():
     if not model.exists():
         pytest.skip("needs artifacts/tree_long/best/rl_best.zip; see README Model checkpoints")
 
-    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml")
     policy = resolve_expert_policy(model_path=str(model), algo="sac")
 
     requested = collect_expert_dataset(
@@ -471,7 +471,7 @@ def test_resolve_expert_policy_accepts_a_checkpoint():
     if not model.exists():
         pytest.skip("needs artifacts/tree_long/best/rl_best.zip; see README Model checkpoints")
     policy = resolve_expert_policy(model_path=str(model), algo="sac")
-    env = make_env(load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml"))
+    env = make_env(load_config(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml"))
     obs, _info = env.reset(seed=0)
     action = policy(obs, env, {})
     assert np.asarray(action).shape == env.action_space.shape

@@ -206,7 +206,7 @@ Config under `control.price_monotone`. Applied by `MonotonePriceEnv`, the
 outermost wrapper in `make_env`, on either action shape. `mode: clamp`
 clamps; `mode: penalty` charges the violation in the wrapper reward. Do not
 enable it together with early promo or MPC. See `controls/price_monotone.py`
-and `configs/experiment_monotone_up_sac.yaml`.
+and `configs/experiment_monotone_up_clamp_sac.yaml`.
 
 ```yaml
 control:

@@ -25,8 +25,8 @@ produces, not what you will find after a fresh clone.
 | `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | `artifacts/promo_ppo/rl_promo_ppo.zip` | §5b |
 | `bc_sac_safe_sl` | `experiment_bc_sac_safe_sl.yaml` | `runs/both_goals/` | reuses the `bc_sac` checkpoint | §5c |
 | `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
-| `monotone_up_clamp` | `experiment_monotone_up_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_clamp/best/best_model.zip` | §12 |
-| `monotone_up_penalty_10` | `experiment_monotone_up_penalty_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
+| `monotone_up_clamp` | `experiment_monotone_up_clamp_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_clamp/best/best_model.zip` | §12 |
+| `monotone_up_penalty_10` | `experiment_monotone_up_penalty_last_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
 trained joint action down, and the price MPC post-processes a trained price. Both
@@ -37,7 +37,7 @@ weights of their own.
 shaping, behaviour cloning, peak-only, high-water penalty) sit beside it in
 the same directory. The penalty arms sweep weights `{1, 10, 100}` and
 `{0.1, 0.5, 1, 10}`
-from `experiment_monotone_up_penalty_sac.yaml` (that file is weight 10, run name
+from `experiment_monotone_up_penalty_last_sac.yaml` (that file is weight 10, run name
 `monotone_up_penalty_10`). Weights 1 and 100 load the same file, set
 `control.price_monotone.penalty`, and train as `monotone_up_penalty_1` and
 `monotone_up_penalty_100`. Selection is seeds 100–129; only the winner is

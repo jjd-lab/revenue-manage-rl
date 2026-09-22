@@ -23,14 +23,14 @@ rest ask *why the retrain failed*, one fix at a time:
 
 Train (seed 7, 200k steps each), then rerun this script:
 
-    rprl-train  -c configs/experiment_monotone_up_sac.yaml
-    rprl-train  -c configs/experiment_monotone_up_penalty_sac.yaml
+    rprl-train  -c configs/experiment_monotone_up_clamp_sac.yaml
+    rprl-train  -c configs/experiment_monotone_up_penalty_last_sac.yaml
     # penalty 1 and 100: same config, override penalty and run_name
     rprl-train  -c configs/experiment_monotone_up_ratchet_sac.yaml
     rprl-train  -c configs/experiment_monotone_up_ratchet_pace_sac.yaml
     rprl-train  -c configs/experiment_monotone_up_peak_only_sac.yaml
     rprl-train  -c configs/experiment_monotone_up_penalty_hw_sac.yaml
-    rprl-bc-sac -c configs/experiment_monotone_up_bc_sac.yaml
+    rprl-bc-sac -c configs/experiment_monotone_up_bc_clamp_sac.yaml
     rprl-bc-sac -c configs/experiment_monotone_up_bc_ratchet_sac.yaml
 
 Decreases are counted on successive ``info["price"]`` values. ``reset()``'s
@@ -76,14 +76,19 @@ EXTRA_ARMS = (
         None,
     ),
     # The clone before any RL: the arm that answers the question.
-    ("bc_clone", "experiment_monotone_up_bc_sac.yaml", "monotone_up_bc_clamp", "bc_only_model.zip"),
+    (
+        "bc_clone",
+        "experiment_monotone_up_bc_clamp_sac.yaml",
+        "monotone_up_bc_clamp",
+        "bc_only_model.zip",
+    ),
     (
         "bc_clone_ratchet",
         "experiment_monotone_up_bc_ratchet_sac.yaml",
         "monotone_up_bc_ratchet",
         "bc_only_model.zip",
     ),
-    ("bc_clamp", "experiment_monotone_up_bc_sac.yaml", "monotone_up_bc_clamp", None),
+    ("bc_clamp", "experiment_monotone_up_bc_clamp_sac.yaml", "monotone_up_bc_clamp", None),
     ("bc_ratchet", "experiment_monotone_up_bc_ratchet_sac.yaml", "monotone_up_bc_ratchet", None),
     ("peak_only", "experiment_monotone_up_peak_only_sac.yaml", "monotone_up_peak_only", None),
 )
@@ -157,7 +162,7 @@ def main() -> None:
         raise SystemExit(f"missing reference checkpoint: {RL_BEST}")
 
     cfg_plain = load_config()
-    cfg_clamp = load_config(str(ROOT / "configs" / "experiment_monotone_up_sac.yaml"))
+    cfg_clamp = load_config(str(ROOT / "configs" / "experiment_monotone_up_clamp_sac.yaml"))
     soft_cfg = SoftAwareConfig.from_dict(cfg_plain["eval"]["soft_aware"])
 
     clamp_zip = _best_zip("monotone_up_clamp")
@@ -181,7 +186,7 @@ def main() -> None:
         return make_env(cfg_clamp, use_held_out=True)
 
     def penalty_factory(weight: float):
-        cfg = load_config(str(ROOT / "configs" / "experiment_monotone_up_penalty_sac.yaml"))
+        cfg = load_config(str(ROOT / "configs" / "experiment_monotone_up_penalty_last_sac.yaml"))
         cfg["control"]["price_monotone"]["penalty"] = float(weight)
 
         def _factory(cfg=cfg):

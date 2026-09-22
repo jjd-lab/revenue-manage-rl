@@ -1,7 +1,7 @@
 # Does a gentler fine-tune preserve the clone? Twenty thousand steps instead of two hundred thousand.
 # Behaviour cloning of the clamped policy scores 2,038,966; every
 # fine-tune tried lands below it. This file is one of those settings.
-# Identical to experiment_monotone_up_bc_sac.yaml apart from the
+# Identical to experiment_monotone_up_bc_clamp_sac.yaml apart from the
 # learning rate, the step budget and the run name.
 demand:
   kind: tree_elastic

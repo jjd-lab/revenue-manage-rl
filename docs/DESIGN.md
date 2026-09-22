@@ -241,7 +241,7 @@ this wrapper sits outside `PriceOnlyWrapper` and is not shown the shifted day.
 The constraint is rejected when early promo (including the `promo` alias) or
 MPC is also enabled: both replace the price inside `PriceOnlyWrapper` after
 this wrapper has already projected. Example:
-`configs/experiment_monotone_up_sac.yaml`.
+`configs/experiment_monotone_up_clamp_sac.yaml`.
 
 
 ## Algorithms

@@ -101,7 +101,7 @@ score in the table, zero markdowns, and no retraining. If a policy that has
 internalised the rule is wanted, clone the clamped one and do not fine-tune it.
 
 **Reproducing the fine-tune sweep.** The three rows above come from
-`experiment_monotone_up_bc_sac.yaml` and its two variants,
-`..._bc_short_sac.yaml` (20k steps) and `..._bc_gentle_sac.yaml` (lr 3e-5),
+`experiment_monotone_up_bc_clamp_sac.yaml` and its two variants,
+`configs/experiment_monotone_up_bc_short_sac.yaml` (20k steps) and `configs/experiment_monotone_up_bc_gentle_sac.yaml` (lr 3e-5),
 each run with `rprl-bc-sac`. The BC-only number is `bc_only_model.zip`, written
 before any RL step, and is the `bc_clone` arm in the table above.

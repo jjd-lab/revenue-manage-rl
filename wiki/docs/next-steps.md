@@ -373,8 +373,8 @@ template for the controller (`get_*` factory returning `None` when disabled,
      so `price_monotone.enabled` is false on the default config. The existing
      assertion is a superset, so a missing block would otherwise still pass.
    - Export from `controls/__init__.py` and `envs/__init__.py`.
-5. Add `configs/experiment_monotone_up_sac.yaml` and
-   `experiment_monotone_up_penalty_sac.yaml`, matching
+5. Add `configs/experiment_monotone_up_clamp_sac.yaml` and
+   `experiment_monotone_up_penalty_last_sac.yaml`, matching
    `configs/tree_long_sac.yaml`'s hyperparameters (200k steps, seed 7), with
    `mode: clamp` and `mode: penalty` respectively.
 6. Add `tests/test_price_monotone.py`: a unit test on a `SimpleNamespace` fake
