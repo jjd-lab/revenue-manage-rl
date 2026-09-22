@@ -104,7 +104,8 @@ policy reaches a given score. Three tests train a tiny agent and are marked
   `runs/explain_rl_best/`; needs the joint SAC checkpoint.
 - `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`,
   drawn from committed CSVs only. `site/index.html` is published with GitHub
-  Pages from the `/site` folder.
+  Pages by `.github/workflows/pages.yml`. Branch-deploy only serves `/` or
+  `/docs`, so the workflow uploads `site/` as the Pages artifact instead.
 
 `runs/bc_sac/` has no `final_eval.py`; evaluate that family with `rprl-eval`
 directly. Two rows of its published table used intermediate checkpoints that were

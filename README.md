@@ -32,8 +32,17 @@ denied admission on 71% of peak nights into none.
 | Pace PPO | price only | 2.010M | 0.00 |
 | Myopic (perfect-forecast baseline) | price only | 1.972M | 0.00 |
 
+That ranking is *unconstrained*. Apply the cap to every joint policy and all three
+reach zero denied admission for 0.6–2.4% of score — but only BC→SAC keeps a clear
+lead: capped joint SAC ties pace PPO, and capped joint PPO falls below both
+price-only policies ([§10](docs/EXPERIMENT_LOG.md)). Under a safety constraint,
+"both levers beat one" belongs to the behaviour-cloned policy, not to joint
+control in general. Taking the second lever away is still expensive for all of
+them ([§9](docs/EXPERIMENT_LOG.md)) — it is load-bearing, just not sufficient.
+
 Full table: [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) §7. The chart-led
-reading is the [public page](site/index.html) (`/site`, published with GitHub Pages).
+reading is the public page: **<https://jjd-lab.github.io/revenue-manage-rl/>**
+(source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
 
 ![Joint SAC vs myopic: average price and inventory paths over the booking horizon](runs/explain_rl_best/01_price_inventory_paths.png)
 
@@ -207,6 +216,7 @@ missing. Every one evaluates on held-out seeds 0–29.
 python runs/joint_vs_price_only_soft_aware/REPRODUCE.py   # the headline table
 python runs/both_goals/final_eval.py                       # oversell cap + MPC table
 python runs/ablate_selling_limit/run_ablation.py           # is the second lever load-bearing?
+python runs/oversell_cap_transfer/run_cap_transfer.py      # does the oversell cap transfer?
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -221,6 +231,7 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`docs/EXTENDING.md`](docs/EXTENDING.md) — add a demand model, algorithm, or controller; multi-product path
 - [`runs/explain_rl_best/README.md`](runs/explain_rl_best/README.md) — why the joint SAC behaves as it does, figure by figure
 - [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — does the second lever earn its place? (pin the limit, keep the price)
+- [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — does the oversell cap transfer to every joint policy, and what does safety cost?
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the oversell cap, the price MPC, and the soft-night fill ceiling
 - [`runs/tree_demand_sanity.md`](runs/tree_demand_sanity.md) — early 30k-step sanity check, superseded by the campaigns
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

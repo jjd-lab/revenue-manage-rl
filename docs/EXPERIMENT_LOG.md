@@ -286,6 +286,39 @@ Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_abl
 
 ---
 
+## 10. Does the oversell cap transfer?
+
+§5c and §7 only ever cap BC→SAC. Joint SAC (0.18) and joint PPO (0.35) also deny
+admission and had never been wrapped. Same cap
+(`configs/experiment_bc_sac_safe_sl.yaml`), same seeds, no retraining.
+Results: `runs/oversell_cap_transfer/`.
+
+| policy | uncapped | capped | given up | peak oversell |
+| --- | ---: | ---: | ---: | --- |
+| joint BC→SAC raw | 2.094M | **2.081M** | **0.62%** | 0.71 → **0.00** |
+| joint SAC `rl_best` | 2.033M | **2.009M** | 1.21% | 0.18 → **0.00** |
+| joint PPO `long_007` | 2.011M | **1.962M** | 2.42% | 0.35 → **0.00** |
+
+**Takeaways**
+
+- **The cap generalises.** Zero denied admission on all three, for 0.6–2.4% of
+  score, no retraining. The method claim in §5c holds beyond the policy it was
+  built for.
+- **The cost inverts.** The policy that oversells *most* is *cheapest* to fix.
+  BC→SAC is filling so far past capacity that the clipped bookings were already
+  paying the double oversell penalty; joint PPO oversells rarely, so the cap takes
+  bookings it was being paid for. Oversell volume does not predict the cost of
+  safety — whether the marginal booking earns or costs does.
+- **It narrows §7.** Among policies that deny admission on no peak night:
+  BC→SAC + cap **2.081M**, pace PPO 2.010M, joint SAC + cap 2.009M, price-only PPO
+  2.003M, joint PPO + cap 1.962M. Capped joint SAC lands 1,198 behind pace PPO — a
+  tie at this seed count — and capped joint PPO falls below both price-only
+  policies. So under a safety constraint, "both levers beat one" is a property of
+  **the behaviour-cloned policy**, not of joint control in general. The second
+  lever is still load-bearing (§9), but having it is not by itself enough.
+
+---
+
 ## Experiment takeaways
 
 1. **The earlier prototype fell short on engineering and metrics**, not because “RL cannot do RM.”
@@ -299,12 +332,15 @@ Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_abl
 6. **The second lever is load-bearing, and it is the *movement* that pays** (§9).
    Pinning a joint policy's limit — even to a sensible constant near its own
    average — costs 90k–344k and sends peak denied admission to 0.82.
-7. **Recommended packages**
+7. **The cap generalises to every joint policy, but the advantage does not** (§10).
+   All three reach zero denied admission for 0.6–2.4%; once constrained that way,
+   only BC→SAC still beats the price-only policies.
+8. **Recommended packages**
    - Best `score_aware` with zero denied admission: **BC→SAC + safe SL**
    - Highest raw `score_aware`, if 71% peak oversell is acceptable: **BC→SAC**
    - The pure joint policy, and the one to read for what the levers buy: **joint SAC `rl_best`**
-   - Simple 1D + zero oversell: **pace PPO**
-8. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
+   - Simple 1D + zero oversell: **pace PPO** — and at this seed count it ties capped joint SAC
+9. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
 
 ---
 
@@ -325,6 +361,7 @@ Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_abl
 | `runs/pace_ppo/` | Section 5a table |
 | `runs/promo_ppo/` | Section 5b table |
 | `runs/ablate_selling_limit/` | Section 9 second-lever ablation |
+| `runs/oversell_cap_transfer/` | Section 10 cap transfer across joint policies |
 | `runs/soft_aware_eval/` | Section 6 demo of the stratified report |
 | `runs/tree_demand_sanity.md` | Early 30k-step sanity check, superseded by section 2 |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |

@@ -233,8 +233,7 @@ Added `site/index.html`, a chart-led page for someone who is not going to read
 the experiment log: the single-resource problem, four differences from the
 classical revenue-management line, and the soft-aware result. The charts are
 drawn by `scripts/build_site_figures.py` from committed CSVs in `runs/`, so they
-do not depend on checkpoints. GitHub Pages from the `/site` folder is what
-publishes it.
+do not depend on checkpoints.
 
 ## [2026-09-21] ingest | requirements.txt pinning the environment behind runs/
 
@@ -301,3 +300,28 @@ travels with it everywhere: pinned arms are off-distribution (each policy priced
 the limit it learned), so this measures coupling, not what a policy purpose-trained
 for a fixed limit would score — the price-only rows in §7 remain the honest
 cross-policy number.
+
+## [2026-09-22] decision | The oversell cap transfers; the joint advantage does not
+
+The cap (`control.safe_sl`) had only ever been applied to BC→SAC.
+`runs/oversell_cap_transfer/` runs all three joint policies through it, uncapped
+and capped, on the same seeds. Every one reaches **zero** peak denied admission
+for 0.6–2.4% of score, so §5c's method claim generalises beyond the policy it was
+built for.
+
+Two findings worth the write-up. **The cost inverts:** BC→SAC gives up 0.62% to
+remove oversell on 71% of peak nights while joint PPO gives up 2.42% to remove it
+on 35% — the heavy overseller is filling so far past capacity that the clipped
+bookings were already paying the double penalty, so oversell volume does not
+predict the price of safety. **And it narrows §7:** ranked among zero-denied-
+admission policies, BC→SAC+cap 2.081M > pace PPO 2.010M > joint SAC+cap 2.009M >
+price-only PPO 2.003M > joint PPO+cap 1.962M. Capped joint SAC ties pace PPO
+(1,198 apart) and capped joint PPO falls below both price-only policies, so under
+a safety constraint "both levers beat one" belongs to the behaviour-cloned policy
+specifically, not to joint control in general. Recorded as §10 plus takeaway 7,
+and a paragraph in §05 of the site.
+
+Also fixed a published falsehood: the README and two wiki pages said the site is
+published "with GitHub Pages from the `/site` folder". Branch-deploy only accepts
+`/` or `/docs` (verified: the API rejects `/site` with a 422), so `site/` is now
+deployed by `.github/workflows/pages.yml` with Pages in `build_type=workflow`.

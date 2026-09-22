@@ -1,0 +1,4 @@
+policy,score_uncapped,score_capped,score_given_up_pct,peak_oversell_uncapped,peak_oversell_capped
+joint_sac_rl_best,2033263.9,2008715.65,1.207,0.1765,0.0
+joint_bc_sac_raw,2094381.48,2081399.96,0.62,0.7059,0.0
+joint_ppo_long_007,2010885.26,1962157.01,2.423,0.3529,0.0
