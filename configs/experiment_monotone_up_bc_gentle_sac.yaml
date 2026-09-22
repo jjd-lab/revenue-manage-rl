@@ -1,0 +1,51 @@
+# Does a gentler fine-tune preserve the clone? A tenth of the learning rate.
+# Behaviour cloning of the clamped policy scores 2,038,966; every
+# fine-tune tried lands below it. This file is one of those settings.
+# Identical to experiment_monotone_up_bc_sac.yaml apart from the
+# learning rate, the step budget and the run name.
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: clamp
+    reference: high_water
+    tolerance: 0
+    max_step: null
+    apply_when_days_prior_le: null
+
+bc:
+  expert_model_path: artifacts/tree_long/best/rl_best.zip
+  expert_algo: sac
+  executed_action_key: price_monotone_executed_action
+  n_episodes: 300
+  epochs: 50
+  batch_size: 256
+  lr: 0.001
+  log_std_target: -1.0
+  seed_replay_buffer: true
+  critic_warm_steps: 1000
+  learning_starts: 500
+
+algorithm:
+  name: sac
+  learning_rate: 0.00003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_bc_gentle
+  log_dir: runs/price_monotone_up

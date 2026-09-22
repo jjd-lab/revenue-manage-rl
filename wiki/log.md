@@ -481,3 +481,32 @@ about 45k and removes every charged markdown. Retraining under the clamp
 costs about 110k and flattens the path. Penalty weight 10 still marks down.
 `explain_rl_best.py` now records the charged price, so a clamped path is what
 the figure shows. Status: [[next-steps]].
+
+## [2026-09-22] decision | The monotone guarantee is free as a filter, not as a training target
+
+Nine more arms on `runs/price_monotone_up/`. Clamping the frozen `rl_best`
+overrides 2,610 of its 3,000 decisions, removes every markdown and *raises*
+`score_aware` about 45k: the late plunge was losing money. Nothing trained under
+the constraint matched it.
+
+`mode: ratchet` was added on the hypothesis that the clamp's action aliasing
+was to blame -- under `clamp` every action below the floor charges the floor,
+so the gradient there is exactly zero and the dead region grows as the floor
+rises. Removing the aliasing changed nothing (1,921,207 against the clamp
+retrain's 1,923,106). The hypothesis was right about the mechanism and wrong
+about the cause: the retrains pin at `min_price`, which is the
+maximum-optionality move under an irreversible ratchet and close to correct on
+soft nights, where the revenue-maximizing path genuinely falls. `apply_on:
+peak_only` recovers 42k of the gap, which is where the cost lives.
+
+What does work is cloning: BC of the clamped policy scores 2,038,966 with zero
+markdowns, a tie with the unconstrained reference. Fine-tuning then destroys it
+at every setting tried, down to 1,808,182. Clone and stop.
+
+`reference: high_water` fixes two defects at once -- a `tolerance` of $t under
+`reference: last` permitted a $t-per-day glide without limit, and a penalty
+charged against yesterday made a staircase a series of small fines. Properly
+selected (weight 1, seeds 100-129) it is the best-scoring retrained arm and
+still marks down 1,377 times. No penalty weight buys the guarantee. Status:
+[[next-steps]].
+

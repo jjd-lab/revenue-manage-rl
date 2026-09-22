@@ -421,71 +421,91 @@ the test set.
 
 ---
 
-## 12. What a non-decreasing price costs
+## 12. What a non-decreasing price costs, and whether a policy can learn it
 
 F4's weekend path marks down late: about $112.85 on day 16 to $89.08 on day 1.
 `control.price_monotone` with `direction: up` forbids that. `mode: clamp`
-clamps the charged price. `mode: penalty` leaves it and subtracts
-`penalty * (violation_dollars / price_span)` from the step reward. The first
-step of each episode is exempt, because `reset()`'s price is a placeholder.
-Promo and MPC are rejected alongside it: both rewrite price inside
-`PriceOnlyWrapper` after the outer clamp. Results: `runs/price_monotone_up/`.
+raises an offending action to the floor; `mode: ratchet` reads the action as a
+move from the floor, so no two actions charge the same price; `mode: penalty`
+constrains nothing and subtracts `penalty * (violation_dollars / price_span)`
+from the step reward. The first step of each episode is exempt, because
+`reset()`'s price is a placeholder. Promo and MPC are rejected alongside it:
+both rewrite price inside `PriceOnlyWrapper` after the outer clamp. Results:
+`runs/price_monotone_up/`.
 
-Same reference throughout: frozen joint SAC `rl_best`, seeds 0–29, `score_aware`,
-paired against the unconstrained arm. The penalty weight is 10, chosen from
-`{1, 10, 100}` on seeds 100–129. Those selection scores are not reported.
+Same reference throughout: frozen joint SAC `rl_best`, seeds 0–29,
+`score_aware`, paired against the unconstrained arm. Penalty weights are chosen
+on seeds 100–129 (`penalty_selection.csv`, `penalty_hw_selection.csv`); those
+scores are not results.
 
-| arm | score_aware | paired vs unconstrained | 95% interval | charged decreases |
-| --- | ---: | ---: | --- | --- |
-| unconstrained `rl_best` | 2,033,264 | 0 | — | 1,672 steps, 30/30 nights |
-| project, frozen checkpoint | **2,077,976** | **+44,712** | [20,945, 66,164] | **0** |
-| project, retrained | 1,923,106 | −110,158 | [−146,418, −73,687] | **0** |
-| penalty 10, retrained | 1,951,555 | −81,709 | [−134,174, −32,539] | 1,323 steps, 30/30 nights |
-
-None of the three intervals covers zero.
+| arm | score_aware | paired vs unconstrained | 95% interval | charged decreases | clamped steps |
+| --- | ---: | ---: | --- | ---: | ---: |
+| unconstrained `rl_best` | 2,033,264 | 0 | — | 1,672 | 0 |
+| **clamp, frozen** | **2,077,976** | **+44,712** | [20,945, 66,164] | **0** | 2,610 |
+| penalty_hw 1, retrained | 2,048,563 | +15,299 | [−39,344, 74,833] | 1,377 | 0 |
+| **bc_clone** | **2,038,966** | **+5,702** | [−42,250, 51,133] | **0** | 1,812 |
+| bc_clone_ratchet | 2,024,192 | −9,072 | [−63,648, 38,982] | **0** | 0 |
+| peak_only | 1,964,902 | −68,362 | [−124,006, −12,670] | 528 | 0 |
+| penalty 10, retrained | 1,951,555 | −81,709 | [−134,174, −32,539] | 1,323 | 0 |
+| ratchet_pace | 1,935,085 | −98,179 | [−162,419, −31,938] | **0** | 0 |
+| bc_ratchet | 1,935,036 | −98,228 | [−230,925, 16,571] | **0** | 0 |
+| clamp, retrained | 1,923,106 | −110,158 | [−146,418, −73,687] | **0** | 0 |
+| ratchet | 1,921,207 | −112,057 | [−144,200, −80,287] | **0** | 0 |
+| bc_clamp | 1,911,249 | −122,015 | [−147,486, −94,954] | **0** | 1,851 |
 
 **Takeaways**
 
-- **The markdown is real.** The unconstrained policy decreases price on every held-out night.
-- **Projecting the published policy is not a sacrifice.** Clamping `rl_best` with no retrain raises score by about 45k and removes every charged decrease.
-- **Retraining under the clamp gives the guarantee back expensively, and flat.** The project retrain is about 110k below the reference. Its charged weekend mean stays at $116.31 from day 100 to day 1; weekday nights sit on the $80 floor (`explain/rollouts.csv`). The plunge is gone because the path no longer moves.
-- **The penalty does not enforce the rule.** Weight 10 still marks down on every night and scores about 82k below the reference.
+- **The markdown is real, and it was losing money.** The unconstrained policy
+  decreases price on every held-out night. Clamping it with no retrain overrides
+  **2,610 of its 3,000 decisions**, removes every decrease, and *raises* score
+  by about 45k. The guarantee is free; the late plunge was the mistake.
+- **Training under the clamp costs about 110k, and removing the aliasing did not
+  help.** Under `clamp` every action below the floor charges the floor, so the
+  gradient over that whole region is exactly zero, and the dead region grows as
+  the floor rises. `ratchet` removes that by construction and scored 1,921,207 —
+  statistically identical to the clamp retrain. The aliasing was real and was
+  not the binding constraint.
+- **The retrains pin low rather than rise.** The clamp retrain holds $116.31 on
+  weekend nights from day 100 to day 1 and sits on the $80 floor on weekdays;
+  the ratchet opens at $80 and peaks at $82. Under an irreversible ratchet,
+  opening at `min_price` keeps the most options, and on soft nights — where the
+  revenue-maximizing path genuinely falls — that is close to right. Pace shaping
+  restores the shape (open $80.9, climb to $94.5) for about 14k of score.
+  `peak_only`, which frees weekday off-peak nights, recovers 42k.
+- **Cloning works; fine-tuning is what destroys it.** Behaviour cloning of the
+  clamped policy scores 2,038,966 with zero markdowns — a tie with the
+  unconstrained reference and 116k above the clamp retrain. Fine-tuning then
+  undoes it, at every setting tried: 1,966,735 at 200k steps and lr 3e-4,
+  1,937,339 at lr 3e-5, 1,808,182 at 20k steps. SAC walks away from a policy
+  worth 2.04M back into the same basin. The recipe is **clone and stop**.
+- **A penalty does not buy a guarantee at any weight.** Charged against
+  yesterday's price, a slow staircase is a series of small fines; weight 10
+  marks down on all 30 nights. Charged against the episode's high-water mark and
+  selected properly, weight 1 is the best-scoring retrained arm (2,048,563) and
+  **still marks down 1,377 times**. If the promise is "later buyers never pay
+  less", it has to be a clamp.
+
+The operator-facing answer: train unconstrained and deploy behind the clamp.
 
 ---
 
 ## Experiment takeaways
 
-1. **The earlier prototype fell short on engineering and metrics**, not because “RL cannot do RM.”
-2. **Tree + elasticity** demand is a better production analogy than linear-only.
-3. **Joint continuous (price, SL)** can work (SAC / BC→SAC) but oversell must be
-   managed (safe SL) or you accept risk for legacy score.
-4. **Price-only + analytic SL** is a safe PPO path with zero oversell. On
-   `score_aware` it ties myopic, pace PPO, `rl_best`, and joint PPO. It trails
-   both BC→SAC rows (§7).
-5. **Soft-day undersell is mostly structural** under current demand — do not use
-   overall remain>1500 as the primary KPI; use soft-aware eval.
-6. **The second lever is load-bearing, and it is the *movement* that pays** (§9).
-   Pinning a joint policy's limit — even to a sensible constant near its own
-   average — costs 90k–344k and sends peak denied admission to 0.82.
-7. **The cap generalises to every joint policy, but the advantage does not** (§10).
-   All three reach zero denied admission for 0.6–2.4%; once constrained that way,
-   only BC→SAC still beats the price-only policies.
-8. **Recommended packages**
-   - Zero denied admission, in the only resolved top tier: **BC→SAC + safe SL**.
-     Its score difference from raw BC→SAC covers zero; the cap is what removes
-     the denied admissions.
-   - If 71% peak oversell is acceptable: **raw BC→SAC**, tied on score with the
-     capped policy rather than ahead of it.
-   - The pure joint policy, and the one to read for what the levers buy: **joint SAC `rl_best`**
-   - Simple 1D + zero oversell: **pace PPO**. It ties uncapped `rl_best` and joint
-     PPO. It does not tie the published capped BC→SAC checkpoint. A retrain of
-     that pair can tie, and can still deny admission (§7, training seeds).
-9. **The joint policies need no demand forecast** (§11). A plausible elasticity
-   error costs myopic 3.5–5.8%, about the size of the one lead §7 still supports,
-   and the RL policies exactly 0.00%. Privileged knowledge of the *cancellation*
-   model, by contrast, is worth ≤1.11% to anyone.
-10. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
-11. **Clamping the published joint SAC to a non-decreasing price raises its score; retraining under that clamp costs about 110k** (§12). The frozen projection removes every markdown and gains about 45k. The retrain flattens the path. A penalty does not enforce the rule.
+1. The earlier prototype fell short on the engineering and on the metrics.
+2. Tree base demand plus linear elasticity is the demand model the published tables use. `linear_legacy` is the older alternative.
+3. Joint BC to SAC sets the price and the selling limit and has denied admission on 0.71 of peak nights. The cap, applied after training, takes that share to zero on the published checkpoint. The paired interval on the score cost covers zero, so the capped and uncapped scores are a tie (§7).
+4. Pace PPO sets only the price, and denied admission on these thirty nights is zero. On `score_aware` it ties myopic, Joint SAC, and Joint PPO. It trails both Joint BC to SAC rows (§7).
+5. On the thirteen soft nights, the best price with the selling limit wide open still leaves more than 1,500 seats empty. Do not rank policies by overall `remain > 1500`.
+6. Pinning a joint policy's selling limit and leaving the price alone costs $90,000 to $344,000 and sends the share of peak nights with denied admission to 0.82 (§9).
+7. The cap takes all three joint policies to zero denied admission on the published checkpoints, for 0.6 to 2.4 percent of score. After that, only Joint BC to SAC still beats the price-only policies (§10). The 3.6 percent lead over pace PPO does not repeat on every training seed. Seeds 43 and 44 beat their matched pace run. Seed 46 ties, and it scores below the published pace checkpoint. On seeds 43 and 44 the cap leaves denied admission on 0.24 and 0.47 of peak nights (§7).
+8. Which policy to use, matching the public page:
+   - Best score with denied admission at zero: Joint BC to SAC with the cap.
+   - If denied admission on 12 of 17 peak nights is acceptable: raw Joint BC to SAC. It ties the capped policy on score.
+   - If you want the weekend and weekday price paths: Joint SAC.
+   - If the policy should set only the price: pace PPO.
+   - If the demand forecast might be wrong: a joint policy. Those policies see bookings and the calendar. They do not read a demand model (§11). A wrong elasticity costs myopic 3.5 to 5.8 percent. It costs the joint policies nothing. A wrong cancellation model is worth at most 1.11 percent.
+9. Further fill on the soft nights needs a different demand model. It does not come from another training run of these policies.
+10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
 
 ---
 

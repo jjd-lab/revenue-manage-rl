@@ -1,0 +1,5 @@
+reference,penalty,score_aware_seeds_100_129,chosen
+high_water,0.1,1853363.82,False
+high_water,0.5,1906023.0,False
+high_water,1.0,2046131.5,True
+high_water,10.0,1564125.49,False

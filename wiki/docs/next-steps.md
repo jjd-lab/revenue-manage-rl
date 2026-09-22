@@ -240,12 +240,25 @@ policies at a different demand level only measures out-of-distribution behaviour
 
 ## Task 4 — Monotone price constraint (built 2026-09-22)
 
-**Status (2026-09-22).** Built. `runs/price_monotone_up/NOTES.md` has the
-four arms. Projecting the frozen `rl_best` checkpoint raises `score_aware`
-by about 45k and removes every charged decrease. Retraining under
-`mode: clamp` costs about 110k and flattens the path. Penalty weight 10,
-chosen on seeds 100–129, still marks down on every reported night. The
-recipe below is how to reproduce it.
+**Status (2026-09-22).** Built, then pushed on. Twelve arms in
+`runs/price_monotone_up/NOTES.md`. Clamping the frozen `rl_best` overrides
+2,610 of its 3,000 decisions, removes every markdown and *raises*
+`score_aware` about 45k — the guarantee is free as a filter. Nothing trained
+under the constraint matched it. `mode: ratchet`, added to remove the clamp's
+action aliasing, changed nothing (1,921,207 vs the clamp retrain's 1,923,106):
+the retrains pin at `min_price`, which is the maximum-optionality move under an
+irreversible ratchet. Cloning the clamped policy scores 2,038,966 with zero
+markdowns, a tie with the unconstrained reference; fine-tuning destroys it at
+every setting tried. **Clone and stop.** No penalty weight buys the guarantee,
+including the corrected high-water reference.
+
+**Still open.** `max_step` for `mode: ratchet` was fixed at $1.0 and never
+selected — the plan called for a sweep over `{0.5, 1.0, 2.0}` on seeds 100–129,
+and the observed drift (a neutral action climbs $0.5/day) suggests smaller
+values are worth trying. Whether a fine-tune that is *constrained to stay near
+the clone* (a KL or trust-region term, which SB3's SAC does not have) preserves
+the clone's score is untested, and it is the obvious next question given that
+every unconstrained fine-tune destroyed it.
 
 **Goal.** Add a config-driven constraint that forbids price from *decreasing*
 as the event date approaches — `direction: up`, so later buyers never pay less

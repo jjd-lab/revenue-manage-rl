@@ -33,7 +33,10 @@ trained joint action down, and the price MPC post-processes a trained price. Bot
 run an existing checkpoint under a different config, which is why they ship no
 weights of their own.
 
-`monotone_up_clamp` is a retrain. The penalty arm sweeps weights `{1, 10, 100}`
+`monotone_up_clamp` is a retrain, and eight further arms (ratchet, pace
+shaping, behaviour cloning, peak-only, high-water penalty) sit beside it in
+the same directory. The penalty arms sweep weights `{1, 10, 100}` and
+`{0.1, 0.5, 1, 10}`
 from `experiment_monotone_up_penalty_sac.yaml` (that file is weight 10, run name
 `monotone_up_penalty_10`). Weights 1 and 100 load the same file, set
 `control.price_monotone.penalty`, and train as `monotone_up_penalty_1` and

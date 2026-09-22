@@ -1,0 +1,167 @@
+{
+  "run_name": "monotone_up_ratchet",
+  "algo": "sac",
+  "seed": 7,
+  "total_timesteps": 200000,
+  "model_path": "artifacts/price_monotone/monotone_up_ratchet/final_model.zip",
+  "best_model_dir": "artifacts/price_monotone/monotone_up_ratchet/best",
+  "run_dir": "runs/price_monotone_up/monotone_up_ratchet",
+  "demand_kind": "tree_elastic",
+  "config": {
+    "demand": {
+      "kind": "tree_elastic",
+      "elasticity": -1.2,
+      "ref_price": 100.0,
+      "price_mode": "multiplicative",
+      "demand_noise_std": 8.0
+    },
+    "env": {
+      "capacity": 10000,
+      "booking_horizon": 100,
+      "min_price": 80.0,
+      "max_price": 120.0,
+      "min_selling_limit": 10000.0,
+      "max_selling_limit": 15000.0,
+      "demand_noise_std": 8.0,
+      "noshow_noise_std": 0.01,
+      "cancel_rho_noise_std": 0.02,
+      "cancel_lambda": 2000.0,
+      "cancel_rho_weekday": 0.4,
+      "cancel_rho_weekend": 0.5,
+      "noshow_base": 0.16,
+      "noshow_dow_coef": 0.02,
+      "noshow_month_coef": 0.02,
+      "revenue_scale": 0.0001,
+      "undersell_penalty": 650.0,
+      "oversell_penalty": 450.0,
+      "utilization_bonus": 80.0,
+      "normalize_obs": true,
+      "held_out_months": [
+        6,
+        12
+      ],
+      "reward": {
+        "pace_reward": false,
+        "pace_schedule": "linear",
+        "pace_penalty": 5.0,
+        "pace_target_final": 0.95,
+        "soft_day_upweight": false,
+        "soft_day_weekday_factor": 1.5,
+        "soft_day_offpeak_factor": 1.25,
+        "soft_day_base_threshold": null,
+        "soft_day_base_factor": 1.25,
+        "soft_day_sample_boost": 2.0
+      }
+    },
+    "control": {
+      "price_only": false,
+      "selling_limit": {
+        "kind": "analytic",
+        "overbook_factor": 1.05,
+        "keep_rate": null,
+        "low_remain_frac": 0.05
+      },
+      "early_promo": {
+        "enabled": false,
+        "base_demand_threshold": 90.0,
+        "promo_price": 80.0,
+        "mode": "set",
+        "apply_when_days_prior_ge": 30
+      },
+      "safe_sl": {
+        "enabled": false,
+        "kind": "analytic",
+        "overbook_factor": 1.02,
+        "low_remain_frac": 0.05,
+        "mix_alpha": 0.0
+      },
+      "mpc": {
+        "enabled": false,
+        "horizon": 5,
+        "n_grid": 21,
+        "base_demand_threshold": 90.0,
+        "soft_only": true
+      },
+      "price_monotone": {
+        "enabled": true,
+        "direction": "up",
+        "mode": "ratchet",
+        "reference": "high_water",
+        "apply_on": "always",
+        "tolerance": 0,
+        "max_step": 1.0,
+        "penalty": 10,
+        "apply_when_days_prior_le": null
+      }
+    },
+    "algorithm": {
+      "name": "sac",
+      "learning_rate": 0.0003,
+      "n_steps": 2048,
+      "batch_size": 256,
+      "gamma": 1.0,
+      "gae_lambda": 0.95,
+      "clip_range": 0.2,
+      "ent_coef": "auto",
+      "vf_coef": 0.5,
+      "max_grad_norm": 0.5,
+      "policy": "MlpPolicy",
+      "net_arch": [
+        256,
+        256
+      ],
+      "n_envs": 1,
+      "device": "cpu",
+      "buffer_size": 200000,
+      "learning_starts": 2000,
+      "tau": 0.005
+    },
+    "train": {
+      "total_timesteps": 200000,
+      "seed": 7,
+      "log_dir": "runs/price_monotone_up",
+      "model_dir": "artifacts/price_monotone",
+      "run_name": "monotone_up_ratchet"
+    },
+    "eval": {
+      "n_episodes": 30,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "soft_aware": {
+        "rule": "structural",
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "soft_focus_months": [
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      }
+    },
+    "tune": {
+      "method": "grid",
+      "n_trials": 8,
+      "shortfall_weight": 200.0,
+      "timesteps_per_trial": 40000,
+      "eval_episodes": 15
+    }
+  }
+}
