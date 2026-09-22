@@ -39,6 +39,9 @@ checkpoint under a different config, which is why they ship no weights of their 
 | Soft-aware report demo (two policies) | `runs/soft_aware_eval/run_demo.py` | `runs/soft_aware_eval/` | §6 |
 | Second-lever ablation (pin the selling limit) | `runs/ablate_selling_limit/run_ablation.py` | `runs/ablate_selling_limit/` | §9 |
 | Oversell-cap transfer across joint policies | `runs/oversell_cap_transfer/run_cap_transfer.py` | `runs/oversell_cap_transfer/` | §10 |
+| Cancellation-model dependence (keep-rate leak) | `runs/keep_rate_dependence/run_probe.py` | `runs/keep_rate_dependence/` | §11a |
+| Policies under a wrong demand forecast | `runs/forecast_misspecification/run_misspecification.py` | `runs/forecast_misspecification/` | §11b |
+| Cap `mix_alpha` re-selected on validation seeds | `runs/both_goals/validate_mix_alpha.py` | `runs/both_goals/` | §11 |
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 

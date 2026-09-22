@@ -74,6 +74,7 @@ class ReservationEnv(gym.Env):
         service_date: Optional[pd.Timestamp] = None,
         demand_model: Any = None,
         demand_cfg: Optional[dict] = None,
+        forecast_model: Any = None,
         render_mode: Optional[str] = None,
     ) -> None:
         super().__init__()
@@ -128,6 +129,12 @@ class ReservationEnv(gym.Env):
             self.demand_model = get_demand_model(
                 {"kind": "linear_legacy", "demand_noise_std": self.demand_noise_std}
             )
+
+        # What *decision* code is allowed to consult. Same object as demand_model
+        # unless a deliberately imperfect forecast is supplied: the env always
+        # generates bookings from demand_model, so a wrong forecast costs the
+        # operator without changing the world. See demand.protocol.decision_model.
+        self.forecast_model = forecast_model if forecast_model is not None else self.demand_model
 
         self.action_space = spaces.Box(
             low=-np.ones(2, dtype=np.float32),

@@ -319,6 +319,59 @@ Results: `runs/oversell_cap_transfer/`.
 
 ---
 
+## 11. Privileged knowledge: what the system is allowed to know
+
+Two audits of information the code has and a real operator would not.
+
+**11a. The cancellation model.** `estimate_keep_rate` reads the env's own
+`cancel_lambda`, `cancel_rho_*` and `noshow_*` and replays its Weibull, so the
+analytic limit and the oversell cap run on a perfectly specified cancellation
+model. Priced in `runs/keep_rate_dependence/` by swapping in fixed guesses:
+**0.07%** on the cap, **≤1.11%** on the limits, peak oversell `0.0000` in every
+cell — and a round 0.85 guess *beats* the exact model twice out of three. Knowing
+the true cancellation physics gives you the keep rate; the score-optimal limit
+depends on the reward structure, which is a different problem. **Disclosed, not
+fixed.**
+
+**11b. The demand forecast.** Everything else in this log assumes decision code
+consults the model that generates the world. `demand.forecast` splits them
+(`docs/DESIGN.md` § Forecast vs truth) and `runs/forecast_misspecification/`
+re-scores under a wrong one, without retraining:
+
+| policy | consults forecast for | elasticity −0.9 | elasticity −1.5 | level stale |
+| --- | --- | ---: | ---: | ---: |
+| myopic | price | **−3.47%** | **−5.82%** | 0.00% |
+| myopic @ `optimize_1d` | price + limit | −2.83% | −4.69% | **−1.06%** |
+| pace PPO + MPC | MPC trigger + lookahead | +0.69% | 0.00% | **−0.99%** |
+| pace PPO (analytic limit) | nothing | 0.00% | 0.00% | 0.00% |
+| joint SAC `rl_best` | nothing | 0.00% | 0.00% | 0.00% |
+| joint BC→SAC raw | nothing | 0.00% | 0.00% | 0.00% |
+
+**Takeaways**
+
+- **A plausible forecast error costs more than the margin this log argues over.**
+  §7's joint-vs-price-only gap is 1.2–3.6% under a *perfect* forecast; a wrong
+  elasticity costs myopic 3.5–5.8% on its own.
+- **The joint policies do not move at all** — identical scores and mean prices to
+  the cent. Their observation is booking state plus calendar one-hots (§8), so
+  they consult no model. That is the operator-facing property: not "1.2% better"
+  but "does not need your forecast to be right." Indifference by construction, not
+  learned robustness — see the caveats in that directory.
+- **A demand-*level* error moves no pricing decision, ever.** Demand is
+  `base * (1 + e(p−ref)/ref)`, so base cancels out of the argmax and myopic's price
+  is `ref(1−e)/(−2e) = $91.67` however wrong the level is. That is also why §8's
+  myopic line is "a flat $92" — a closed form, not a quirk. Level errors reach only
+  the MPC and `optimize_1d`. **To misspecify pricing, perturb elasticity.**
+
+**Also corrected here:** `mix_alpha=0.25` was originally chosen by reading
+held-out seeds 0–29 — the same thirty §7 reports on. Re-run on a disjoint block
+(seeds 100–129, `runs/both_goals/validate_mix_alpha.py`) the identical rule picks
+**0.25** again, for the same reason both times: `mix_alpha=0.4` scores highest but
+denies admission on 41–45% of peak nights. The shipped value is not an artefact of
+the test set.
+
+---
+
 ## Experiment takeaways
 
 1. **The earlier prototype fell short on engineering and metrics**, not because “RL cannot do RM.”
@@ -340,7 +393,11 @@ Results: `runs/oversell_cap_transfer/`.
    - Highest raw `score_aware`, if 71% peak oversell is acceptable: **BC→SAC**
    - The pure joint policy, and the one to read for what the levers buy: **joint SAC `rl_best`**
    - Simple 1D + zero oversell: **pace PPO** — and at this seed count it ties capped joint SAC
-9. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
+9. **The joint policies need no demand forecast, and that is worth more than the
+   margin** (§11). A plausible elasticity error costs myopic 3.5–5.8% and the RL
+   policies exactly 0.00%. Privileged knowledge of the *cancellation* model, by
+   contrast, is worth ≤1.11% to anyone.
+10. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
 
 ---
 
@@ -362,6 +419,8 @@ Results: `runs/oversell_cap_transfer/`.
 | `runs/promo_ppo/` | Section 5b table |
 | `runs/ablate_selling_limit/` | Section 9 second-lever ablation |
 | `runs/oversell_cap_transfer/` | Section 10 cap transfer across joint policies |
+| `runs/keep_rate_dependence/` | Section 11a: what the true cancellation model is worth |
+| `runs/forecast_misspecification/` | Section 11b: policies under a wrong demand forecast |
 | `runs/soft_aware_eval/` | Section 6 demo of the stratified report |
 | `runs/tree_demand_sanity.md` | Early 30k-step sanity check, superseded by section 2 |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |

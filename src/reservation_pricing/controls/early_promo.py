@@ -30,7 +30,7 @@ from typing import Any, Mapping, Optional
 
 import numpy as np
 
-from reservation_pricing.demand.protocol import features_from_state
+from reservation_pricing.demand.protocol import decision_model, features_from_state
 
 
 class EarlyPromoController:
@@ -78,8 +78,8 @@ class EarlyPromoController:
         return True
 
     def predict_base(self, env: Any) -> float:
-        """Price-unaware base demand at current env calendar / days_prior."""
-        demand = getattr(env, "demand_model", None)
+        """Price-unaware base demand at current calendar / days_prior, per the forecast."""
+        demand = decision_model(env)
         if demand is None or not hasattr(demand, "predict_base"):
             return float("inf")  # never trigger without a base predictor
         if hasattr(env, "demand_features"):

@@ -1,0 +1,4 @@
+subject,control_block,exact_model,exact_model_oversell,fixed_0.85,fixed_0.85_oversell,fixed_0.70,fixed_0.70_oversell,fixed_0.95,fixed_0.95_oversell,spread_pct,exact_is_best
+bc_sac + cap,safe_sl,2081399.96,0.0,2081775.62,0.0,2081438.72,0.0,2082832.07,0.0,0.069,False
+pace PPO limit,selling_limit,2009913.95,0.0,2018711.6,0.0,1996375.09,0.0,2014844.24,0.0,1.111,False
+price-only PPO limit,selling_limit,2003091.18,0.0,2001747.09,0.0,2003091.18,0.0,1996527.93,0.0,0.328,True

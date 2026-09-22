@@ -30,7 +30,7 @@ from typing import Any, Mapping, Optional
 import numpy as np
 
 from reservation_pricing.controls.selling_limit import _resolve_keep_rate
-from reservation_pricing.demand.protocol import features_from_state
+from reservation_pricing.demand.protocol import decision_model, features_from_state
 
 
 class ShortHorizonPriceMPC:
@@ -79,7 +79,7 @@ class ShortHorizonPriceMPC:
         self.last_best_price: Optional[float] = None
 
     def predict_base(self, env: Any) -> float:
-        demand = getattr(env, "demand_model", None)
+        demand = decision_model(env)
         if demand is None or not hasattr(demand, "predict_base"):
             return float("inf")
         if hasattr(env, "demand_features"):
@@ -152,7 +152,7 @@ class ShortHorizonPriceMPC:
         ``env.days_prior`` is the decision day (the wrapper has already stepped
         it back by one), so the first simulated day is that day itself.
         """
-        demand = getattr(env, "demand_model", None)
+        demand = decision_model(env)
         if demand is None:
             return -1e30
         capacity = float(getattr(env, "capacity", 10000))

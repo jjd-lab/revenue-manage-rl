@@ -1,0 +1,7 @@
+seed_block,seeds,mix_alpha,score_aware,peak_oversell,rule_picks
+validation,100-129,0.0,1990639.59,0.0,0.25
+validation,100-129,0.25,2055513.32,0.0,0.25
+validation,100-129,0.4,2077215.37,0.45,0.25
+test,0-29,0.0,2018891.44,0.0,0.25
+test,0-29,0.25,2081399.96,0.0,0.25
+test,0-29,0.4,2100940.73,0.4118,0.25

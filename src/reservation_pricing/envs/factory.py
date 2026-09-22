@@ -88,13 +88,17 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     env_cfg.update(overrides)
 
     demand_model = env_cfg.pop("demand_model", None)
+    forecast_model = env_cfg.pop("forecast_model", None)
     # Prefer top-level demand block; allow env.demand override
     demand_cfg: Optional[dict] = None
+    forecast_cfg: Optional[dict] = None
     if demand_model is None:
         if "demand" in cfg and isinstance(cfg["demand"], dict):
             demand_cfg = dict(cfg["demand"])
         elif "demand" in env_cfg and isinstance(env_cfg["demand"], dict):
             demand_cfg = dict(env_cfg.pop("demand"))
+        if demand_cfg is not None:
+            forecast_cfg = demand_cfg.pop("forecast", None)
         # Propagate env noise into demand if not set
         if demand_cfg is not None and "demand_noise_std" not in demand_cfg:
             if "demand_noise_std" in env_cfg:
@@ -109,8 +113,18 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     else:
         env_cfg.pop("demand", None)
 
+    # demand.forecast: a second, deliberately wrong model that only decision code
+    # sees. Inherits the true block's knobs, so a forecast usually names just a
+    # model_path. See demand.protocol.decision_model.
+    if forecast_model is None and isinstance(forecast_cfg, dict):
+        if forecast_cfg.get("enabled", True):
+            overrides = {k: v for k, v in forecast_cfg.items() if k != "enabled"}
+            forecast_model = get_demand_model({**(demand_cfg or {}), **overrides})
+
     kwargs = {k: v for k, v in env_cfg.items() if k in _ENV_KEYS}
-    env: gym.Env = ReservationEnv(demand_model=demand_model, **kwargs)
+    env: gym.Env = ReservationEnv(
+        demand_model=demand_model, forecast_model=forecast_model, **kwargs
+    )
 
     control = dict(cfg.get("control") or {}) if isinstance(cfg.get("control"), dict) else {}
     control.update(control_overrides)

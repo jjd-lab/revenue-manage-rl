@@ -35,6 +35,24 @@ class DemandModel(Protocol):
         ...
 
 
+def decision_model(env: Any) -> Any:
+    """The demand model *decision* code may consult — the forecast, not the truth.
+
+    Baselines, selling-limit controllers, early promo and the price MPC all call
+    this instead of ``env.demand_model``. It normally returns that same model, so
+    a single-model setup behaves exactly as before.
+
+    When ``demand.forecast`` is configured the env carries a **separate, wrong**
+    model here: the environment still generates bookings from its own true model,
+    and only the things a real operator would have to forecast with see the wrong
+    one. Env dynamics (``gross_fn``) and evaluation machinery (soft/peak
+    classification, the soft-day oracle) deliberately keep using the true model —
+    misspecifying those would change the world or the scoreboard, not the
+    operator's information. See ``docs/DESIGN.md`` § Forecast vs truth.
+    """
+    return getattr(env, "forecast_model", None) or getattr(env, "demand_model", None)
+
+
 def booking_curve_bin(days_prior: int, horizon: int = 100, n_bins: int = 5) -> int:
     """Discretize days-prior into booking-curve bins (0 = far out, n_bins-1 = last minute)."""
     if horizon <= 0:

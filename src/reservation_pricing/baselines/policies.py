@@ -1,9 +1,14 @@
 """Classical pricing / booking-limit baselines (no learning).
 
-Myopic pricing always uses ``env.demand_model.predict_mean(features, price)`` on a
-1D price grid (or closed-form for linear_legacy when available). This keeps the
-baseline model-aware but honest for non-linear tree base demand — production RM
-would call the same pricing demand API.
+Myopic pricing maximizes ``predict_mean(features, price)`` on a 1D price grid (or
+closed-form for linear_legacy when available). This keeps the baseline
+model-aware but honest for non-linear tree base demand — production RM would call
+the same pricing demand API.
+
+The model it calls is ``decision_model(env)``, which is the env's own model unless
+``demand.forecast`` is configured. With a forecast configured the baseline prices
+against a **wrong** model while the env still generates from the true one, which
+is what a real operator faces; see ``docs/DESIGN.md`` § Forecast vs truth.
 """
 
 from __future__ import annotations
@@ -12,6 +17,7 @@ from typing import Any, Callable
 
 import numpy as np
 
+from reservation_pricing.demand.protocol import decision_model
 from reservation_pricing.envs.reservation import ReservationEnv
 from reservation_pricing.metrics import PolicyFn, aggregate, run_episode
 
@@ -55,11 +61,12 @@ def fixed_price_policy(price: float = 100.0, selling_limit: float | None = None)
 def _myopic_price_grid(env: ReservationEnv, n_grid: int = 41) -> float:
     """Maximize price * E[gross | features, price] on a 1D grid via demand API."""
     features = env.demand_features()
+    dm = decision_model(env)
     prices = np.linspace(env.min_price, env.max_price, n_grid)
     best_p = float(env.min_price)
     best_rev = -1.0
     for p in prices:
-        mean_g = float(env.demand_model.predict_mean(features, float(p)))
+        mean_g = float(dm.predict_mean(features, float(p)))
         rev = float(p) * max(0.0, mean_g)
         if rev > best_rev:
             best_rev = rev
@@ -69,7 +76,7 @@ def _myopic_price_grid(env: ReservationEnv, n_grid: int = 41) -> float:
 
 def _myopic_price_linear_closed_form(env: ReservationEnv) -> float | None:
     """Closed-form only when demand is linear_legacy with known coefs; else None."""
-    dm = env.demand_model
+    dm = decision_model(env)
     if getattr(dm, "kind", None) != "linear_legacy":
         return None
     # demand = base + price_coef * price; revenue = p * max(0, base + c p)

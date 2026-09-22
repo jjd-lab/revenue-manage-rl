@@ -57,6 +57,26 @@ Oracle detail: `runs/oracle_ceiling/NOTES.md` — **all 13/13 soft episodes** st
 | **(A) score + low oversell** | **PARTIAL → strong YES on safety** | Recommended `bc_sac+safe_sl` (`mix_alpha=0.25`, `activate_remain_frac=0.20`): **oversell 0.40 → 0.00**, score **870.6k → 863.2k (−7.4k, −0.8%)**. Beats pace_ppo (+31k) and rl_best (+40k) with zero oversell. Hard project (mix=0) also zero oversell but −43k score. |
 | **(B) soft-day undersell** | **NO — structural ceiling** | Oracle: undersell>1500 on soft days is **unavoidable** under current tree base + elasticity −1.2 and price≥$80 (best soft remain ≈1895–2356). MPC / promo / pace cannot beat the **0.433** floor (= 13/30 soft episodes). `pace/mpc` is a no-op vs pace_ppo (policy already min-prices soft states). |
 
+### Was `mix_alpha=0.25` picked on the test set?
+
+**Yes, originally — and it survives the check.** `final_eval.py` chooses the
+"recommended safe-SL variant" from held-out seeds 0..29, the same thirty
+`docs/EXPERIMENT_LOG.md` §7 reports on. That is selection on the evaluation set:
+the published `bc_sac+safe_sl` score is a best-of-three.
+
+`validate_mix_alpha.py` re-runs the identical rule (peak oversell < 0.05, then
+highest `score_aware`) on a **disjoint** block, seeds 100..129:
+
+| seeds | mix 0.00 | mix 0.25 | mix 0.40 | rule picks |
+| --- | ---: | ---: | ---: | --- |
+| validation 100–129 | 1,990,640 (0.00) | **2,055,513 (0.00)** | 2,077,215 (0.45) | **0.25** |
+| test 0–29 | 2,018,891 (0.00) | **2,081,400 (0.00)** | 2,100,941 (0.41) | **0.25** |
+
+Same answer on both, and for the same reason: `mix_alpha=0.4` scores highest but
+leaves 41–45% of peak nights denying admission, so it fails the oversell rule on
+either block. The shipped value is not an artefact of looking at the test set.
+CSV: `mix_alpha_selection.csv`.
+
 ### Which lever moved which metric?
 
 | Lever | Oversell | Undersell>1500 | Score |

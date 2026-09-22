@@ -325,3 +325,42 @@ Also fixed a published falsehood: the README and two wiki pages said the site is
 published "with GitHub Pages from the `/site` folder". Branch-deploy only accepts
 `/` or `/docs` (verified: the API rejects `/site` with a 422), so `site/` is now
 deployed by `.github/workflows/pages.yml` with Pages in `build_type=workflow`.
+
+## [2026-09-22] decision | Split forecast from truth; price the privileged knowledge
+
+A question about where the cap's constants come from turned into an audit of what
+this code is allowed to know that a real operator would not. Two channels, both
+now measured rather than argued about.
+
+**The cancellation model** (`runs/keep_rate_dependence/`): `estimate_keep_rate`
+reads the env's own `cancel_lambda`, `cancel_rho_*`, `noshow_*` and replays its
+Weibull, so the analytic limit and the oversell cap run on a perfectly specified
+cancellation model. Priced by swapping in fixed guesses: **0.07%** on the cap,
+**≤1.11%** on the limits, peak oversell 0.0000 in every cell — and a round 0.85
+guess beats the exact model twice out of three. Knowing the physics gives you the
+keep rate; the score-optimal limit depends on the reward structure. Disclosed in
+[[conventions]]-adjacent docs, deliberately **not** fixed.
+
+**The demand forecast** (`runs/forecast_misspecification/`): new `demand.forecast`
+block plus `demand.protocol.decision_model(env)`, so baselines, the `optimize_1d`
+limit, early promo and the MPC can be given a wrong model while the env still
+generates from the true one. Env dynamics, soft/peak classification and the
+soft-day oracle deliberately keep the truth — misspecifying those would change the
+world or the scoreboard, not the operator's information. Result: a wrong
+elasticity costs myopic **3.5–5.8%**, more than §7's whole 1.2–3.6% margin, while
+the joint policies move **0.00%** with mean prices identical to the cent. Recorded
+as §11 with takeaway 9, and a paragraph in §05 of the site.
+
+**A design trap worth remembering.** The first version degraded the demand *level*
+and returned +0.00% for everything including myopic — not a null result but a bad
+experiment. Demand is `base * (1 + e(p-ref)/ref)`, so base is multiplicative and
+cancels out of the price argmax: myopic's price is `ref(1-e)/(-2e) = $91.67`
+however wrong the level is (verified at base scaled 1.00/0.75/0.50). That is also
+why §8's myopic line is "a flat $92" — a closed form, not a quirk. To misspecify
+pricing, perturb elasticity. Written into `docs/DESIGN.md` § Forecast vs truth.
+
+**Also closed:** `mix_alpha=0.25` was originally selected by reading the same
+seeds §7 reports on. Re-run on a disjoint block (100–129,
+`runs/both_goals/validate_mix_alpha.py`) the identical rule picks 0.25 again,
+because 0.4 denies admission on 41–45% of peak nights either way. The shipped
+value is not a test-set artefact.

@@ -39,6 +39,7 @@ Generated, not documented here. Where to look:
 | `runs/joint_vs_price_only_soft_aware/` | The headline soft-aware table (§7 of the experiment log) |
 | `runs/explain_rl_best/` | Why the winning joint SAC behaves as it does — figures and a guide |
 | `runs/ablate_selling_limit/`, `runs/oversell_cap_transfer/` | Is the second lever load-bearing (§9), and does the oversell cap transfer (§10) |
+| `runs/forecast_misspecification/`, `runs/keep_rate_dependence/` | What the system is allowed to know, and what that knowledge is worth (§11) |
 | `runs/both_goals/`, `runs/oracle_ceiling/` | Oversell cap, price MPC, and the soft-day fill ceiling (§5c) |
 | `runs/tree_long/`, `runs/bc_sac/`, `runs/price_only_long/`, `runs/pace_ppo/`, `runs/promo_ppo/` | One directory per training campaign (§2–§5b) |
 | `runs/soft_aware_eval/` | Demo of the soft-aware report on two policies |

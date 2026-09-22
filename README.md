@@ -217,6 +217,8 @@ python runs/joint_vs_price_only_soft_aware/REPRODUCE.py   # the headline table
 python runs/both_goals/final_eval.py                       # oversell cap + MPC table
 python runs/ablate_selling_limit/run_ablation.py           # is the second lever load-bearing?
 python runs/oversell_cap_transfer/run_cap_transfer.py      # does the oversell cap transfer?
+python runs/forecast_misspecification/run_misspecification.py   # policies under a wrong forecast
+python runs/keep_rate_dependence/run_probe.py              # what privileged knowledge is worth
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -232,6 +234,8 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/explain_rl_best/README.md`](runs/explain_rl_best/README.md) — why the joint SAC behaves as it does, figure by figure
 - [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — does the second lever earn its place? (pin the limit, keep the price)
 - [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — does the oversell cap transfer to every joint policy, and what does safety cost?
+- [`runs/forecast_misspecification/NOTES.md`](runs/forecast_misspecification/NOTES.md) — what each policy is worth when the demand forecast is wrong
+- [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — pricing the one place the controllers read the simulator's own parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the oversell cap, the price MPC, and the soft-night fill ceiling
 - [`runs/tree_demand_sanity.md`](runs/tree_demand_sanity.md) — early 30k-step sanity check, superseded by the campaigns
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

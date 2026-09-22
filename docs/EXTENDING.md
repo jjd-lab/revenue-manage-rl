@@ -118,6 +118,28 @@ control:
 
 Train: `rprl-train -c configs/experiment_price_only_ppo.yaml`
 
+## Give decision code a wrong forecast
+
+`demand.forecast` builds a second model that only baselines and controllers see;
+the env keeps generating from the block above it. Use it to ask what a policy is
+worth when the forecast is stale or misfitted. Mechanism and the full
+reads-forecast / reads-truth split: `docs/DESIGN.md` § Forecast vs truth.
+
+```yaml
+demand:
+  kind: tree_elastic
+  elasticity: -1.2            # the world
+  forecast:                   # inherits every key above; override what is wrong
+    enabled: true
+    elasticity: -0.9          # operator underestimates price sensitivity
+    # model_path: artifacts/forecasts/stale_tree.joblib   # or a different tree
+```
+
+Programmatically, `make_env(cfg, forecast_model=model)` takes any `DemandModel`.
+Perturb `elasticity` to move pricing decisions; perturb the base tree to move the
+MPC and `optimize_1d` limit. A multiplicative error in the base level does *not*
+move myopic's price — it cancels out of the argmax.
+
 ## Config validation
 
 `config.validate_config` checks known `demand.kind`, `algorithm.name`, and

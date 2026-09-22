@@ -5,6 +5,15 @@ demand:
   ref_price: 100.0
   price_mode: multiplicative
   demand_noise_std: 8.0
+  # Optional second model that only *decision* code sees — baselines, the
+  # selling-limit controllers, early promo and the price MPC. The env keeps
+  # generating from the block above, so a wrong forecast costs the operator
+  # without changing the world. Off here (decisions use the true model, which
+  # is what every published table assumes). Inherits the keys above; usually
+  # you only name a different model_path. See docs/DESIGN.md § Forecast vs truth.
+  # forecast:
+  #   enabled: true
+  #   model_path: artifacts/forecasts/tree_base_demand_sparse.joblib
 
 env:
   capacity: 10000

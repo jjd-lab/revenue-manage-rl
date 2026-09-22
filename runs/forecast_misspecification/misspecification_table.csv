@@ -1,0 +1,7 @@
+policy,consults_forecast_for,true,true_price,elasticity_-0.9,elasticity_-0.9_price,elasticity_-1.5,elasticity_-1.5_price,level_stale,level_stale_price,elasticity_-0.9_pct,elasticity_-1.5_pct,level_stale_pct
+myopic,price,1972305.33,92.0,1903795.52,106.0,1857431.73,83.0,1972305.33,92.0,-3.474,-5.824,0.0
+myopic @ optimize_1d limit,price + limit,1951069.15,92.0,1895765.83,106.0,1859650.49,83.0,1930385.79,92.0,-2.835,-4.686,-1.06
+pace PPO + MPC,MPC trigger + lookahead,2009913.95,89.43,2023823.83,92.84,2009913.95,89.43,1990092.93,88.47,0.692,0.0,-0.986
+pace PPO (analytic limit),nothing,2009913.95,89.43,2009913.95,89.43,2009913.95,89.43,2009913.95,89.43,0.0,0.0,0.0
+joint SAC rl_best,nothing,2033263.9,91.31,2033263.9,91.31,2033263.9,91.31,2033263.9,91.31,0.0,0.0,0.0
+joint BC->SAC raw,nothing,2094381.48,92.08,2094381.48,92.08,2094381.48,92.08,2094381.48,92.08,0.0,0.0,0.0

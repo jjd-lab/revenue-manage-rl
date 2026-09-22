@@ -38,6 +38,8 @@ from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
 import numpy as np
 
+from reservation_pricing.demand.protocol import decision_model
+
 
 @runtime_checkable
 class SellingLimitController(Protocol):
@@ -160,7 +162,7 @@ class Optimize1DSellingLimit:
         lo = float(getattr(env, "min_selling_limit", 0.0))
         hi = float(getattr(env, "max_selling_limit", lo))
 
-        demand = getattr(env, "demand_model", None)
+        demand = decision_model(env)
         if demand is not None and hasattr(env, "demand_features"):
             mu = float(demand.predict_mean(env.demand_features(), float(price)))
         elif hasattr(env, "expected_gross"):

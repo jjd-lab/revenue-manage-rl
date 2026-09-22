@@ -89,6 +89,50 @@ mean = 80 - 0.2 * price + 60 * dow_eff + 40 * month_eff
 
 Select with `demand.kind: linear_legacy` or `-c configs/demand_linear_legacy.yaml`.
 
+### Forecast vs truth
+
+By default there is **one** demand model: the env generates bookings from it, and
+every component that consults a model consults that same object. That is what all
+published tables assume, and it is worth naming, because it means nothing in the
+default setup is ever *wrong* about the world — unlike a real operator.
+
+`demand.forecast` splits the two. When set, the env carries a second, deliberately
+imperfect model in `env.forecast_model`, and decision code reaches it through
+`demand.protocol.decision_model(env)`:
+
+```yaml
+demand:
+  kind: tree_elastic
+  elasticity: -1.2          # the world
+  forecast:                 # what the operator believes; inherits the keys above
+    elasticity: -0.9
+```
+
+| Reads the **forecast** | Reads the **truth** |
+| --- | --- |
+| myopic baseline (price grid / closed form) | `ReservationEnv.gross_fn`, `expected_gross` — the world |
+| `optimize_1d` selling limit | soft/peak classification (`metrics.classify_soft`) |
+| early promo trigger | the soft-day oracle in `evaluate/soft_aware.py` |
+| short-horizon price MPC | reward, penalties, every business metric |
+
+The split is deliberate: misspecifying the env would change the world, and
+misspecifying the classifier or the oracle would change the scoreboard. Only the
+operator's *information* is degraded. The joint RL policies appear in neither
+column — their observation is booking state plus calendar one-hots, so they
+consult no model at all, which is what `runs/forecast_misspecification/` measures.
+
+One structural caveat that experiment exposed: demand enters as
+`base * (1 + elasticity * (price - ref) / ref)`, so a purely multiplicative error
+in **base** cancels out of the price argmax. Myopic's price is
+`ref(1-e)/(-2e) = $91.67` no matter how wrong the demand *level* is. Level errors
+reach only the components that use the level itself — the MPC and `optimize_1d`.
+To misspecify *pricing*, perturb `elasticity`.
+
+The analytic selling limit and the oversell cap have a second, narrower channel:
+`estimate_keep_rate` reads the env's own cancel / no-show parameters. That is
+privileged too, and `runs/keep_rate_dependence/` prices it — see that directory
+before assuming it matters.
+
 ### Cancel / no-show
 
 Weibull cancel + DOW/month no-show rates remain; parameters are **config-driven**
