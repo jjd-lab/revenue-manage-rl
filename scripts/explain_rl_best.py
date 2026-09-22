@@ -58,6 +58,12 @@ def rollout_rows(policy, name: str, seeds, cfg) -> pd.DataFrame:
                 price = float(a[0])
                 sl = float(a[1]) if a.size > 1 else np.nan
             obs, r, term, trunc, info = env.step(action)
+            # Charged price, not the action. A project-mode wrapper can raise a
+            # markdown after this unscale, and the path has to show that.
+            if info.get("price") is not None:
+                price = float(info["price"])
+            if info.get("selling_limit") is not None:
+                sl = float(info["selling_limit"])
             done = term or trunc
             base = np.nan
             if hasattr(dm, "predict_base"):

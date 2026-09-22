@@ -25,10 +25,20 @@ produces, not what you will find after a fresh clone.
 | `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | `artifacts/promo_ppo/rl_promo_ppo.zip` | §5b |
 | `bc_sac_safe_sl` | `experiment_bc_sac_safe_sl.yaml` | `runs/both_goals/` | reuses the `bc_sac` checkpoint | §5c |
 | `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
+| `monotone_up_project` | `experiment_monotone_up_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_project/best/best_model.zip` | §12 |
+| `monotone_up_penalty_10` | `experiment_monotone_up_penalty_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
 
-The last two are wrappers, not new policies: safe SL projects a trained joint action
-down, and the price MPC post-processes a trained price. Both run an existing
-checkpoint under a different config, which is why they ship no weights of their own.
+`bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
+trained joint action down, and the price MPC post-processes a trained price. Both
+run an existing checkpoint under a different config, which is why they ship no
+weights of their own.
+
+`monotone_up_project` is a retrain. The penalty arm sweeps weights `{1, 10, 100}`
+from `experiment_monotone_up_penalty_sac.yaml` (that file is weight 10, run name
+`monotone_up_penalty_10`). Weights 1 and 100 load the same file, set
+`control.price_monotone.penalty`, and train as `monotone_up_penalty_1` and
+`monotone_up_penalty_100`. Selection is seeds 100–129; only the winner is
+reported on seeds 0–29.
 
 ## Analyses (no training)
 
@@ -43,6 +53,7 @@ checkpoint under a different config, which is why they ship no weights of their 
 | Policies under a wrong demand forecast | `runs/forecast_misspecification/run_misspecification.py` | `runs/forecast_misspecification/` | §11b |
 | Cap `mix_alpha` re-selected on validation seeds | `runs/both_goals/validate_mix_alpha.py` | `runs/both_goals/` | §11 |
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
+| Monotone price, four arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

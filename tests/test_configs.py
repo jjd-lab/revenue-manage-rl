@@ -39,9 +39,16 @@ def test_default_config_falls_back_to_the_packaged_copy(monkeypatch):
 
 def test_default_config_carries_the_full_schema_with_everything_off():
     cfg = load_config()
-    assert set(cfg["control"]) >= {"price_only", "selling_limit", "early_promo", "safe_sl", "mpc"}
+    assert set(cfg["control"]) >= {
+        "price_only",
+        "selling_limit",
+        "early_promo",
+        "safe_sl",
+        "mpc",
+        "price_monotone",
+    }
     assert cfg["control"]["price_only"] is False
-    for block in ("early_promo", "safe_sl", "mpc"):
+    for block in ("early_promo", "safe_sl", "mpc", "price_monotone"):
         assert cfg["control"][block]["enabled"] is False
     assert cfg["env"]["reward"]["pace_reward"] is False
     assert cfg["env"]["reward"]["soft_day_upweight"] is False

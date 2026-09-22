@@ -116,7 +116,11 @@ policy reaches a given score. Three tests train a tiny agent and are marked
   `final_eval.py` scripts share `evaluate/report.py`, which writes checkpoint
   paths relative to the repo root.
 - `python scripts/explain_rl_best.py` — figures 01–07 and the two CSVs in
-  `runs/explain_rl_best/`; needs the joint SAC checkpoint.
+  `runs/explain_rl_best/`; needs the joint SAC checkpoint. The price column is
+  the charged `info["price"]`, so a project-mode wrapper shows the clamped path.
+- `python runs/price_monotone_up/run_monotone.py` — four-arm monotone comparison.
+  Checkpoints live under `artifacts/price_monotone/` (untracked). Reading is
+  `runs/price_monotone_up/NOTES.md`.
 - `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`,
   drawn from committed CSVs only. `site/index.html` is published with GitHub
   Pages by `.github/workflows/pages.yml`. Branch-deploy only serves `/` or

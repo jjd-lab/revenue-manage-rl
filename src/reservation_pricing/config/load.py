@@ -11,6 +11,8 @@ KNOWN_DEMAND_KINDS = {"linear_legacy", "tree_elastic"}
 KNOWN_ALGOS = {"ppo", "sac", "td3", "baseline"}
 KNOWN_SL_KINDS = {"analytic", "optimize_1d"}
 KNOWN_SAFE_SL_KINDS = {"analytic", "chance"}
+KNOWN_MONOTONE_DIRECTIONS = {"up", "down"}
+KNOWN_MONOTONE_MODES = {"project", "penalty"}
 
 
 def deep_merge(base: dict, override: dict) -> dict:
@@ -86,6 +88,45 @@ def load_config(path: str | Path | None = None, base: str | Path | None = None) 
     return cfg
 
 
+def _block_enabled(control: dict[str, Any], key: str) -> bool:
+    block = control.get(key)
+    return isinstance(block, dict) and bool(block.get("enabled", False))
+
+
+def _reject_monotone_with_price_overrides(control: dict[str, Any]) -> None:
+    """Promo and MPC rewrite price inside PriceOnlyWrapper, after any outer clamp.
+
+    Reject the combination when the monotone constraint is enabled. Presence of
+    a disabled block is fine: the default config carries both.
+    """
+    mono = control.get("price_monotone")
+    if not isinstance(mono, dict) or not bool(mono.get("enabled", False)):
+        return
+    direction = str(mono.get("direction", "up")).lower().strip()
+    if direction not in KNOWN_MONOTONE_DIRECTIONS:
+        raise ValueError(
+            f"Unknown control.price_monotone.direction={direction!r}; "
+            f"expected one of {sorted(KNOWN_MONOTONE_DIRECTIONS)}"
+        )
+    mode = str(mono.get("mode", "project")).lower().strip()
+    if mode not in KNOWN_MONOTONE_MODES:
+        raise ValueError(
+            f"Unknown control.price_monotone.mode={mode!r}; "
+            f"expected one of {sorted(KNOWN_MONOTONE_MODES)}"
+        )
+    if (
+        _block_enabled(control, "early_promo")
+        or _block_enabled(control, "promo")
+        or _block_enabled(control, "mpc")
+    ):
+        raise ValueError(
+            "control.price_monotone cannot be combined with an enabled "
+            "early_promo, promo, or mpc block: those override price inside "
+            "PriceOnlyWrapper after the outer projection, so the guarantee "
+            "would be silently violated"
+        )
+
+
 def validate_config(cfg: dict[str, Any]) -> None:
     """Light structural checks; raises ValueError on obvious mistakes."""
     if not isinstance(cfg, dict):
@@ -127,3 +168,4 @@ def validate_config(cfg: dict[str, Any]) -> None:
                     f"Unknown control.safe_sl.kind={sk!r}; "
                     f"expected one of {sorted(KNOWN_SAFE_SL_KINDS)}"
                 )
+        _reject_monotone_with_price_overrides(control)

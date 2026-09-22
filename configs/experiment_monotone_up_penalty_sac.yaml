@@ -1,0 +1,38 @@
+# Joint SAC, same hyperparameters as tree_long_sac, with a soft non-decreasing
+# price. Markdowns are not clamped; the wrapper subtracts
+# penalty * (violation_dollars / price_span) from the step reward.
+# This file is the penalty=10 candidate. The sweep also trains 1 and 100
+# (runs/price_monotone_up/run_monotone.py ranks them on seeds 100–129).
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: penalty
+    tolerance: 0
+    max_step: null
+    penalty: 10
+    apply_when_days_prior_le: null
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_penalty_10
+  log_dir: runs/price_monotone_up

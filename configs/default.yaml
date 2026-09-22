@@ -81,6 +81,14 @@ control:
     n_grid: 21
     base_demand_threshold: 90.0
     soft_only: true
+  price_monotone:                # one-sided price path; off, so the agent is unconstrained
+    enabled: false
+    direction: up                # up | down
+    mode: project                # project | penalty
+    tolerance: 0
+    max_step: null
+    penalty: 10
+    apply_when_days_prior_le: null
 
 algorithm:
   name: ppo

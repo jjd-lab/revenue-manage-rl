@@ -53,6 +53,7 @@ _CONTROL_OVERRIDE_KEYS = (
     "promo",
     "safe_sl",
     "mpc",
+    "price_monotone",
 )
 
 
@@ -64,8 +65,9 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     Legacy joint ``(price, SL)`` mode is unchanged when ``price_only`` is false/absent.
 
     Optional post-process wrappers (config-driven):
-    - ``control.safe_sl`` → ``OversellGuardEnv`` on joint (or after price-only) actions
+    - ``control.safe_sl`` → ``OversellGuardEnv`` on joint actions
     - ``control.mpc`` → short-horizon price MPC inside ``PriceOnlyWrapper``
+    - ``control.price_monotone`` → ``MonotonePriceEnv``, outermost, either action space
     """
     env_cfg = dict(cfg.get("env", cfg))
     # Flatten optional env.reward / control.reward nests into env kwargs
@@ -151,5 +153,14 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
         safe = get_oversell_cap(control)
         if safe is not None:
             env = OversellGuardEnv(env, safe)
+
+    # Outermost, and only when enabled. A disabled block returns None and
+    # leaves the env unwrapped, so the default config is a true no-op.
+    from reservation_pricing.controls.price_monotone import get_price_monotone
+    from reservation_pricing.envs.price_guard import MonotonePriceEnv
+
+    monotone = get_price_monotone(control)
+    if monotone is not None:
+        env = MonotonePriceEnv(env, monotone)
 
     return env

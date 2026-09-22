@@ -142,9 +142,12 @@ move myopic's price — it cancels out of the argmax.
 
 ## Config validation
 
-`config.validate_config` checks known `demand.kind`, `algorithm.name`, and
-`control.selling_limit.kind`. Extend `KNOWN_DEMAND_KINDS` / `KNOWN_ALGOS` /
-`KNOWN_SL_KINDS` when registering new plugins.
+`config.validate_config` checks known `demand.kind`, `algorithm.name`,
+`control.selling_limit.kind`, and, when enabled, `price_monotone.direction`
+and `price_monotone.mode`. It rejects an enabled monotone block combined with
+an enabled `early_promo`, `promo`, or `mpc` block. Extend `KNOWN_DEMAND_KINDS`
+/ `KNOWN_ALGOS` / `KNOWN_SL_KINDS` / `KNOWN_MONOTONE_DIRECTIONS` /
+`KNOWN_MONOTONE_MODES` when registering new plugins.
 
 
 ## Early promo (soft-day price override)
@@ -196,3 +199,23 @@ control:
 
 Implemented in `controls/price_mpc.py`; hooked in `PriceOnlyWrapper` after
 early_promo, before SL.
+
+## Monotone price
+
+Config under `control.price_monotone`. Applied by `MonotonePriceEnv`, the
+outermost wrapper in `make_env`, on either action shape. `mode: project`
+clamps; `mode: penalty` charges the violation in the wrapper reward. Do not
+enable it together with early promo or MPC. See `controls/price_monotone.py`
+and `configs/experiment_monotone_up_sac.yaml`.
+
+```yaml
+control:
+  price_monotone:
+    enabled: true
+    direction: up          # up | down
+    mode: project          # project | penalty
+    tolerance: 0
+    max_step: null
+    penalty: 10
+    apply_when_days_prior_le: null
+```

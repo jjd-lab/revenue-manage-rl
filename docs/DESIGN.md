@@ -172,7 +172,7 @@ Example: `configs/experiment_price_only_pace_ppo.yaml`.
 
 ## Control layer
 
-Four config-driven controls can take a lever off the agent or post-process its
+Five config-driven controls can take a lever off the agent or post-process its
 action. This section says what each does; the YAML to switch one on is in
 `docs/EXTENDING.md`, and `configs/default.yaml` lists every knob with the
 controllers' defaults.
@@ -210,6 +210,25 @@ When `control.mpc.enabled` (price-only), soft / behind-pace states replace the
 RL price with a short-horizon grid search over `predict_mean` (+ remain/score
 dynamics). Soft-only mode avoids harming peak days. Example:
 `configs/experiment_pace_mpc.yaml`.
+
+### Monotone price (non-decreasing path)
+
+When `control.price_monotone.enabled`, `MonotonePriceEnv` is the outermost
+wrapper and keeps the agent's action shape, joint or price-only.
+`direction: up` forbids a later day from charging less than the previous
+charged price. `mode: project` clamps the action. `mode: penalty` leaves the
+action and subtracts `penalty * (violation_dollars / price_span)` from the
+step reward, outside the frozen `env.reward` weights.
+
+The first step of an episode is exempt. `reset()` writes `min_price` as a
+placeholder, and the wrapper clears the last charged price so one episode's
+close cannot floor the next. An optional `apply_when_days_prior_le` window is
+judged on the decision day `days_prior − 1` inside the controller, because
+this wrapper sits outside `PriceOnlyWrapper` and is not shown the shifted day.
+The constraint is rejected when early promo (including the `promo` alias) or
+MPC is also enabled: both replace the price inside `PriceOnlyWrapper` after
+this wrapper has already projected. Example:
+`configs/experiment_monotone_up_sac.yaml`.
 
 
 ## Algorithms

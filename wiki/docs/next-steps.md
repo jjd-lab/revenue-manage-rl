@@ -238,33 +238,40 @@ The two-lever advantage may scale with capacity pressure. Scale base demand
 single-point result into a curve. **Retraining is required** — evaluating today's
 policies at a different demand level only measures out-of-distribution behaviour.
 
-## Task 4 — Monotone price constraint (queued, not started)
+## Task 4 — Monotone price constraint (built 2026-09-22)
 
-**Status.** Not started. This section is the full spec; no code, config, or
-`runs/` directory exists for it yet.
+**Status (2026-09-22).** Built. `runs/price_monotone_up/NOTES.md` has the
+four arms. Projecting the frozen `rl_best` checkpoint raises `score_aware`
+by about 45k and removes every charged decrease. Retraining under
+`mode: project` costs about 110k and flattens the path. Penalty weight 10,
+chosen on seeds 100–129, still marks down on every reported night. The
+recipe below is how to reproduce it.
 
 **Goal.** Add a config-driven constraint that forbids price from *decreasing*
 as the event date approaches — `direction: up`, so later buyers never pay less
 than earlier ones — then measure what the guarantee costs per night.
 
 **Why.** F4's weekend mean price path (`scripts/build_site_figures.py`,
-`runs/explain_rl_best/rollouts.csv`) opens at $109, dips to $104 near day 80,
-crests at $117 near day 42, sags, bumps, then plunges to $89 in the last three
-weeks. That final plunge is a markdown — a later buyer paying less than an
-earlier one — which is the one move a real venue cannot make; an early buyer
-who sees it feels cheated. **Expected outcome, stated up front:** forbidding it
-removes the policy's clearance mechanism, so the constrained retrain will very
-likely score *below* the unconstrained one. The number is the deliverable, not
-a win.
+`runs/explain_rl_best/rollouts.csv`, policy `rl_best`, `weekend == 1`) opens
+at $108.50 on day 100, is $104.32 on day 80, crests at $117.30 on day 37
+(day 42 is $116.74), and ends at $89.08 on day 1. Day 21 is still $114.67.
+The markdown a venue cannot run is the late plunge, from about $112.85 on
+day 16 down to $89.08 on day 1: a later buyer paying less than an earlier one.
+All 30 episodes in that file contain at least one decrease, so an unconstrained
+arm will show a violation count above zero. **Expected outcome, stated up
+front:** forbidding the plunge removes the policy's clearance mechanism, so
+the constrained retrain will very likely score *below* the unconstrained one.
+The number is the deliverable, not a win.
 
 **Where it plugs in.** `make_env` in
 `src/reservation_pricing/envs/factory.py` is the single choke point for
 training, evaluation and tuning, so one wrapper there covers every entry point.
-The last executed price is already observation index 2 in
+After the first real step, the last executed price is observation index 2 in
 `ReservationEnv._raw_obs` (`src/reservation_pricing/envs/reservation.py`), so a
 constraint defined against yesterday's price keeps the MDP Markov **without
 touching the frozen observation layout or normalization bounds** — no
-checkpoint and no table in `runs/` is invalidated.
+checkpoint and no table in `runs/` is invalidated. At `reset()` that slot is
+the $80 placeholder; step 1 says how to exempt it.
 `src/reservation_pricing/envs/oversell_guard.py` is the structural template for
 the wrapper (unscale the action, let a controller clamp it, re-scale, forward,
 annotate `info`); `src/reservation_pricing/controls/oversell_cap.py` is the
@@ -282,40 +289,76 @@ template for the controller (`get_*` factory returning `None` when disabled,
    `last_projected` with a `1e-6` tolerance → clip). Needs a local
    `_clip_price(env, price)` — `_clip_sl` in `selling_limit.py` is SL-only.
    Factory `get_price_monotone(cfg)` returning `None` when absent/disabled.
-   Track a controller-local `last_executed_price`, `None` until the first
-   `step` and reset in `reset()` — `ReservationEnv.reset()` sets
-   `self.price = self.min_price` as a *placeholder*, not a decision, so the
-   first step must be exempt or the opening action is pinned. (Note
-   `OversellGuardEnv.reset` resets no controller state; do not copy that here.)
+   Knob defaults, and the experiment leaves them there:
+   `tolerance: 0` (a smaller move is neither a violation nor a projection;
+   the `1e-6` flag is only float-noise, same as `OversellCap`),
+   `max_step: null` (no per-day cap; a set value also limits the change to
+   `last ± max_step`), `apply_when_days_prior_le: null` (every decision day).
+   If the window is set, judge it on the decision day `days_prior - 1` — the
+   day `PriceOnlyWrapper` already shows every price controller
+   (`docs/DESIGN.md` § Control layer). `OversellGuardEnv` reads `days_prior`
+   with no shift; copying that makes the window a day late.
+   Track a controller-local `last_executed_price`, `None` until a real step
+   has executed, and clear it in the wrapper's `reset()`.
+   `ReservationEnv.reset()` sets `self.price = self.min_price` ($80) as a
+   *placeholder*, not a decision. The band is $80–$120, so for `direction: up`
+   that placeholder is already the floor and would not pin the opener; for
+   `direction: down` it ceilings the opener at $80. Either way, leave the
+   first step exempt. Write `last_executed_price` from `info["price"]` *after*
+   `env.step` (the price actually charged), and clear it on every `reset()`
+   so episode N's closing price cannot floor episode N+1.
+   `OversellGuardEnv.reset` clears no controller state; do not copy that.
    Penalty mode lives in the wrapper, not the env — it subtracts
    `penalty * (violation_dollars / price_span)` from the returned reward and
    does not clamp, so no new weight enters the frozen `env.reward` block.
+   `price_span` is `max_price - min_price` (40). A step's shaped revenue is
+   `accepted * price * revenue_scale` (`revenue_scale` is `0.0001`), about 1
+   on a typical day, which is why the penalty sweep below is `{1, 10, 100}`.
 2. Add `src/reservation_pricing/envs/price_guard.py` —
    `MonotonePriceEnv(gym.Wrapper)`, outermost, reading `action[0]` so it
    handles both the 2D joint action space and the 1D price-only space. Reuse
    the `_unscale`/`_scale` idiom and the `__getattr__` forwarding from
    `oversell_guard.py` (Gymnasium 1.x wrappers do not forward attributes).
-   Write `info["price_monotone"]`, `["price_monotone_floor"]`,
+   `reset()` clears `last_executed_price` before returning. Write
+   `info["price_monotone"]`, `["price_monotone_floor"]`,
    `["price_monotone_projected"]`, `["price_monotone_violation"]`,
    `["policy_price"]`.
-3. **`validate_config` must reject `early_promo` and `mpc` combined with
-   `price_monotone.enabled`. This is not optional.** Both override price
+3. **`validate_config` must reject `early_promo`, its `promo` alias, and `mpc`
+   when any of them is enabled together with `price_monotone.enabled`. This
+   is not optional.** `get_early_promo` treats `control.promo` as the same
+   controller as `control.early_promo`. Both promo and MPC override price
    *inside* `PriceOnlyWrapper` (`src/reservation_pricing/envs/price_only.py`,
    the RL price → early_promo → mpc → SL-controller chain) — i.e. *after* any
    outer projection — so without the rejection the guarantee is **silently
    violated** in exactly those configs (`experiment_price_only_promo_ppo.yaml`,
-   `experiment_pace_mpc.yaml`).
+   `experiment_pace_mpc.yaml`). Check the `enabled` flags, not mere presence
+   of the block: the default config carries both blocks with `enabled: false`.
 4. Wire it in, each step a silent failure if skipped:
-   - Add `price_monotone` to `_CONTROL_OVERRIDE_KEYS` in `envs/factory.py`, or
-     it is popped and silently dropped with no error.
-   - Add it to the hardcoded bare-block exclusion tuple in
-     `controls/oversell_cap.py` (not derived from that constant), or a bare
-     `safe_sl` block silently absorbs it.
-   - Add an inert `control.price_monotone` block (`enabled: false`) to
+   - Add `price_monotone` to `_CONTROL_OVERRIDE_KEYS` in `envs/factory.py`.
+     A key left out of that tuple is not popped: it stays in `overrides`, is
+     copied onto the env dict, then dropped by the `_ENV_KEYS` filter, and
+     never merged into `control`. No error.
+   - Call `get_price_monotone(control)` and wrap only when it returns a
+     controller, after both the price-only branch and the oversell-guard
+     branch, so the wrapper is outermost on either action space. When the
+     factory returns `None`, do not wrap at all — that is what keeps the
+     default config a true no-op, same as the oversell cap.
+   - Add `price_monotone` to the hardcoded bare-block exclusion tuple in
+     `controls/oversell_cap.py` (not derived from that constant). That branch
+     keeps every other key, and `OversellCap` swallows unknown kwargs via
+     `**_ignored`. `make_env` takes the nested `safe_sl` branch today, so this
+     is defensive; skip it and a bare block absorbs the monotone config.
+     `get_price_mpc` / `get_early_promo` are a different path: a monotone
+     block handed to them returns `None` or raises on `mode`. Leave them.
+   - Add an inert `control.price_monotone` block (`enabled: false`,
+     `direction: up`, `mode: project`, `tolerance: 0`, `max_step: null`,
+     `penalty: 10`, `apply_when_days_prior_le: null`) to
      `configs/default.yaml` **and** `src/reservation_pricing/configs/default.yaml`
      — identically; a test enforces they stay byte-identical.
    - Add `KNOWN_MONOTONE_DIRECTIONS`/`KNOWN_MONOTONE_MODES` to
-     `config/load.py` and extend the schema assertion in `tests/test_configs.py`.
+     `config/load.py` and extend the schema assertion in `tests/test_configs.py`
+     so `price_monotone.enabled` is false on the default config. The existing
+     assertion is a superset, so a missing block would otherwise still pass.
    - Export from `controls/__init__.py` and `envs/__init__.py`.
 5. Add `configs/experiment_monotone_up_sac.yaml` and
    `experiment_monotone_up_penalty_sac.yaml`, matching
@@ -334,11 +377,22 @@ template for the controller (`get_*` factory returning `None` when disabled,
      Free, and it prices the constraint against a policy that was never told
      about it.
    - Arm 2 — SAC retrained under `mode: project` (~30–40 min).
-   - Arm 3 — SAC retrained under `mode: penalty`, one weight (~30–40 min); the
-     weight is selected on seeds 100–129 and reported only on 0–29.
-   Use `paired_difference` from `src/reservation_pricing/evaluate/intervals.py`
-   for the arm-vs-arm intervals, not `write_saved_intervals` — that needs a
-   full soft-aware run directory this script will not produce.
+   - Arm 3 — SAC retrained under `mode: penalty`. The weight is a sweep, not
+     one training. Train `penalty` in `{1, 10, 100}` (one 200k-step SAC each,
+     seed 7, ~30–40 min each): a $4 markdown then costs 0.1, 1, or 10 against
+     a step reward of about 1. Rank the three on seeds 100–129. Evaluate and
+     report only the winner on seeds 0–29. Seeds 100–129 never appear as a
+     result.
+   `evaluate_policy_soft_aware` returns `(summary, rows)`. The cap-transfer
+   script discards `rows` (`sa, _`). This script keeps them. Build
+   `{seed: EpisodeMetrics}` with `episode_from_mapping` and pass those maps
+   to `paired_difference` (`src/reservation_pricing/evaluate/intervals.py`).
+   Do not call `write_saved_intervals` — that needs `episode_metrics.csv`,
+   `soft_aware_summary.json`, and `soft_aware_table.csv`, which this script
+   does not produce. Episode metrics store `mean_price` only, so count
+   decreases on successive `info["price"]` values during the rollout. Skip
+   `reset()`'s placeholder $80. Arm 0's decrease count is > 0; every
+   `mode: project` arm's count is 0.
 8. Redraw the price path for the retrained checkpoint with
    `scripts/explain_rl_best.py --config ... --model ... --out
    runs/price_monotone_up/explain/` (it already takes those three flags; no new
@@ -351,14 +405,19 @@ template for the controller (`get_*` factory returning `None` when disabled,
 **Verify.**
 
 - Zero violations under `mode: project`, asserted on the env's own
-  **`info["price"]`** (not the wrapper's computed value — this is what catches
-  a silent inner override by promo/MPC). The unconstrained arm's violation
-  count is > 0, proving the constraint actually binds.
+  **`info["price"]`** (the price `ReservationEnv.step` charged — this is what
+  catches a silent inner override by promo/MPC). Compare executed prices from
+  the second step on; `reset()`'s $80 is not a prior decision. The
+  unconstrained arm's violation count is > 0 (30/30 episodes in the published
+  rollouts already decrease), proving the constraint actually binds.
 - `cmp configs/default.yaml src/reservation_pricing/configs/default.yaml` → exit 0.
-- Default config unchanged in effect: the full `pytest -q` suite still passes
-  with the new tests added, and no number elsewhere in `runs/` moves.
+- Default config unchanged in effect: with `enabled: false` the factory does
+  not wrap, the full `pytest -q` suite still passes with the new tests added,
+  and no number elsewhere in `runs/` moves.
 - The redrawn price path in `runs/price_monotone_up/explain/` is non-decreasing
-  toward the date, with the day-21 markdown gone.
+  as `days_prior` falls. The late clearance — weekend mean about $112.85 at
+  day 16 down to $89.08 at day 1 — is gone. Day 21 ($114.67) was never the
+  markdown.
 - `ruff check . && ruff format --check . && pytest -q` (full suite, since
   `runs/` is touched) before any commit.
 

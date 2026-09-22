@@ -181,7 +181,8 @@ def get_oversell_cap(cfg: dict[str, Any] | None = None, **overrides: Any) -> Opt
         block = {
             k: v
             for k, v in cfg.items()
-            if k not in ("price_only", "selling_limit", "early_promo", "promo", "mpc")
+            if k
+            not in ("price_only", "selling_limit", "early_promo", "promo", "mpc", "price_monotone")
         }
     else:
         return None

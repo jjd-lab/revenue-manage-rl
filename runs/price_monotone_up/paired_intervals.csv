@@ -1,0 +1,4 @@
+policy,baseline,point_diff,ci_low,ci_high,covers_zero
+project_frozen,unconstrained,44711.73421058152,20944.95127632664,66164.01220597335,False
+project_retrained,unconstrained,-110158.38579131942,-146417.60922164403,-73686.61892921211,False
+penalty,unconstrained,-81708.67160034645,-134173.8930659224,-32539.272016546587,False

@@ -458,3 +458,26 @@ four-arm experiment — into [[next-steps]] Task 4 as executable instructions fo
 whoever picks it up next. Expected result stated up front: the constrained
 retrain will likely score below the unconstrained one; the number is the
 deliverable. No code, config, or `runs/` directory exists yet.
+
+## [2026-09-22] review | Task 4 spec corrected before anyone builds it
+
+Checked the queued monotone-price spec against the code and the published
+weekend path. Both hazards hold: promo/MPC (including the `promo` alias)
+override price inside `PriceOnlyWrapper` after an outer wrapper, and
+`reset()`'s $80 is a placeholder `OversellGuardEnv` would leak across
+episodes. Corrected the F4 days (crest is day 37, the plunge is day 16→1,
+day 21 was never the markdown), stated knob defaults, and replaced the single
+penalty training with a `{1, 10, 100}` sweep ranked on seeds 100–129. The run
+script must keep `evaluate_policy_soft_aware`'s per-seed rows for
+`paired_difference`. Still no code. Status: [[next-steps]].
+
+## [2026-09-22] ingest | Monotone price constraint, and what it costs
+
+Added `price_monotone` as a fifth control: outermost wrapper, project or
+penalty, first step exempt, rejected together with promo (including the
+`promo` alias) and MPC. Four arms on seeds 0–29 are in
+`runs/price_monotone_up/`. Projecting frozen `rl_best` raises `score_aware`
+about 45k and removes every charged markdown. Retraining under the clamp
+costs about 110k and flattens the path. Penalty weight 10 still marks down.
+`explain_rl_best.py` now records the charged price, so a clamped path is what
+the figure shows. Status: [[next-steps]].

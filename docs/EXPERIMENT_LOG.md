@@ -421,6 +421,38 @@ the test set.
 
 ---
 
+## 12. What a non-decreasing price costs
+
+F4's weekend path marks down late: about $112.85 on day 16 to $89.08 on day 1.
+`control.price_monotone` with `direction: up` forbids that. `mode: project`
+clamps the charged price. `mode: penalty` leaves it and subtracts
+`penalty * (violation_dollars / price_span)` from the step reward. The first
+step of each episode is exempt, because `reset()`'s price is a placeholder.
+Promo and MPC are rejected alongside it: both rewrite price inside
+`PriceOnlyWrapper` after the outer clamp. Results: `runs/price_monotone_up/`.
+
+Same reference throughout: frozen joint SAC `rl_best`, seeds 0–29, `score_aware`,
+paired against the unconstrained arm. The penalty weight is 10, chosen from
+`{1, 10, 100}` on seeds 100–129. Those selection scores are not reported.
+
+| arm | score_aware | paired vs unconstrained | 95% interval | charged decreases |
+| --- | ---: | ---: | --- | --- |
+| unconstrained `rl_best` | 2,033,264 | 0 | — | 1,672 steps, 30/30 nights |
+| project, frozen checkpoint | **2,077,976** | **+44,712** | [20,945, 66,164] | **0** |
+| project, retrained | 1,923,106 | −110,158 | [−146,418, −73,687] | **0** |
+| penalty 10, retrained | 1,951,555 | −81,709 | [−134,174, −32,539] | 1,323 steps, 30/30 nights |
+
+None of the three intervals covers zero.
+
+**Takeaways**
+
+- **The markdown is real.** The unconstrained policy decreases price on every held-out night.
+- **Projecting the published policy is not a sacrifice.** Clamping `rl_best` with no retrain raises score by about 45k and removes every charged decrease.
+- **Retraining under the clamp gives the guarantee back expensively, and flat.** The project retrain is about 110k below the reference. Its charged weekend mean stays at $116.31 from day 100 to day 1; weekday nights sit on the $80 floor (`explain/rollouts.csv`). The plunge is gone because the path no longer moves.
+- **The penalty does not enforce the rule.** Weight 10 still marks down on every night and scores about 82k below the reference.
+
+---
+
 ## Experiment takeaways
 
 1. **The earlier prototype fell short on engineering and metrics**, not because “RL cannot do RM.”
@@ -453,6 +485,7 @@ the test set.
    and the RL policies exactly 0.00%. Privileged knowledge of the *cancellation*
    model, by contrast, is worth ≤1.11% to anyone.
 10. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
+11. **Clamping the published joint SAC to a non-decreasing price raises its score; retraining under that clamp costs about 110k** (§12). The frozen projection removes every markdown and gains about 45k. The retrain flattens the path. A penalty does not enforce the rule.
 
 ---
 
@@ -478,6 +511,7 @@ the test set.
 | `runs/forecast_misspecification/` | Section 11b: policies under a wrong demand forecast |
 | `runs/soft_aware_report_demo/` | Section 6 demo of the stratified report |
 | `runs/training_seeds/` | Whether the §7 BC→SAC lead repeats across training seeds |
+| `runs/price_monotone_up/` | Section 12: cost of a non-decreasing price |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |
 | `artifacts/bc_sac/rl_bc_sac_final.zip` | BC→SAC (recommended, under the safe-SL cap) |
 | `artifacts/pace_ppo/rl_pace_ppo.zip` | Best price-only PPO |
