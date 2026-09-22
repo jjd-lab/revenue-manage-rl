@@ -424,7 +424,7 @@ the test set.
 ## 12. What a non-decreasing price costs
 
 F4's weekend path marks down late: about $112.85 on day 16 to $89.08 on day 1.
-`control.price_monotone` with `direction: up` forbids that. `mode: project`
+`control.price_monotone` with `direction: up` forbids that. `mode: clamp`
 clamps the charged price. `mode: penalty` leaves it and subtracts
 `penalty * (violation_dollars / price_span)` from the step reward. The first
 step of each episode is exempt, because `reset()`'s price is a placeholder.

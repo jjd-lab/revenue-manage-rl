@@ -203,7 +203,7 @@ early_promo, before SL.
 ## Monotone price
 
 Config under `control.price_monotone`. Applied by `MonotonePriceEnv`, the
-outermost wrapper in `make_env`, on either action shape. `mode: project`
+outermost wrapper in `make_env`, on either action shape. `mode: clamp`
 clamps; `mode: penalty` charges the violation in the wrapper reward. Do not
 enable it together with early promo or MPC. See `controls/price_monotone.py`
 and `configs/experiment_monotone_up_sac.yaml`.
@@ -213,9 +213,11 @@ control:
   price_monotone:
     enabled: true
     direction: up          # up | down
-    mode: project          # project | penalty
+    mode: clamp            # clamp | penalty | ratchet
+    reference: last        # last | high_water
+    apply_on: always       # always | peak_only
     tolerance: 0
-    max_step: null
+    max_step: null         # required by ratchet: dollars per day
     penalty: 10
     apply_when_days_prior_le: null
 ```

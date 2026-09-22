@@ -4,8 +4,8 @@
 Four arms, held-out seeds 0–29, ``score_aware``:
 
 - unconstrained — frozen ``artifacts/tree_long/best/rl_best.zip``
-- project_frozen — the same checkpoint under ``mode: project`` (no retrain)
-- project_retrained — SAC trained under ``mode: project``
+- clamp_frozen — the same checkpoint under ``mode: clamp`` (no retrain)
+- clamp_retrained — SAC trained under ``mode: clamp``
 - penalty — SAC trained under ``mode: penalty``
 
 The penalty weight is chosen from ``{1, 10, 100}`` on seeds 100–129. Only the
@@ -101,16 +101,16 @@ def main() -> None:
         raise SystemExit(f"missing reference checkpoint: {RL_BEST}")
 
     cfg_plain = load_config()
-    cfg_project = load_config(str(ROOT / "configs" / "experiment_monotone_up_sac.yaml"))
+    cfg_clamp = load_config(str(ROOT / "configs" / "experiment_monotone_up_sac.yaml"))
     soft_cfg = SoftAwareConfig.from_dict(cfg_plain["eval"]["soft_aware"])
 
-    project_zip = _best_zip("monotone_up_project")
+    clamp_zip = _best_zip("monotone_up_clamp")
     penalty_zips = {
         weight: _best_zip(f"monotone_up_penalty_{weight}") for weight in PENALTY_WEIGHTS
     }
     missing = [f"monotone_up_penalty_{w}" for w, path in penalty_zips.items() if path is None]
-    if project_zip is None:
-        missing.append("monotone_up_project")
+    if clamp_zip is None:
+        missing.append("monotone_up_clamp")
     if missing:
         raise SystemExit(
             "missing checkpoints under artifacts/price_monotone/: "
@@ -121,8 +121,8 @@ def main() -> None:
     def plain_factory():
         return make_env(cfg_plain, use_held_out=True)
 
-    def project_factory():
-        return make_env(cfg_project, use_held_out=True)
+    def clamp_factory():
+        return make_env(cfg_clamp, use_held_out=True)
 
     def penalty_factory(weight: float):
         cfg = load_config(str(ROOT / "configs" / "experiment_monotone_up_penalty_sac.yaml"))
@@ -153,15 +153,15 @@ def main() -> None:
     print("scoring the four arms on seeds 0-29 ...", flush=True)
     oracle = collect_soft_oracle_revenues(plain_factory, REPORT_SEEDS, soft_cfg)
     frozen = sb3_policy(load_sb3_model(str(RL_BEST), algo="sac"), deterministic=True)
-    retrained = sb3_policy(load_sb3_model(str(project_zip), algo="sac"), deterministic=True)
+    retrained = sb3_policy(load_sb3_model(str(clamp_zip), algo="sac"), deterministic=True)
     penalised = sb3_policy(
         load_sb3_model(str(penalty_zips[winner]), algo="sac"), deterministic=True
     )
 
     arms = [
         ("unconstrained", frozen, plain_factory, None),
-        ("project_frozen", frozen, project_factory, None),
-        ("project_retrained", retrained, project_factory, None),
+        ("clamp_frozen", frozen, clamp_factory, None),
+        ("clamp_retrained", retrained, clamp_factory, None),
         ("penalty", penalised, penalty_factory(winner), winner),
     ]
 
@@ -221,7 +221,7 @@ def main() -> None:
 
     if decreases["unconstrained"][0] <= 0:
         raise SystemExit("unconstrained arm never decreased price; the constraint is not binding")
-    for name in ("project_frozen", "project_retrained"):
+    for name in ("clamp_frozen", "clamp_retrained"):
         if decreases[name][0] != 0:
             raise SystemExit(f"{name} charged a price decrease ({decreases[name][0]} steps)")
 

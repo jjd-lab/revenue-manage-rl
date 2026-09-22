@@ -25,7 +25,7 @@ produces, not what you will find after a fresh clone.
 | `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | `artifacts/promo_ppo/rl_promo_ppo.zip` | §5b |
 | `bc_sac_safe_sl` | `experiment_bc_sac_safe_sl.yaml` | `runs/both_goals/` | reuses the `bc_sac` checkpoint | §5c |
 | `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
-| `monotone_up_project` | `experiment_monotone_up_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_project/best/best_model.zip` | §12 |
+| `monotone_up_clamp` | `experiment_monotone_up_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_clamp/best/best_model.zip` | §12 |
 | `monotone_up_penalty_10` | `experiment_monotone_up_penalty_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
@@ -33,7 +33,7 @@ trained joint action down, and the price MPC post-processes a trained price. Bot
 run an existing checkpoint under a different config, which is why they ship no
 weights of their own.
 
-`monotone_up_project` is a retrain. The penalty arm sweeps weights `{1, 10, 100}`
+`monotone_up_clamp` is a retrain. The penalty arm sweeps weights `{1, 10, 100}`
 from `experiment_monotone_up_penalty_sac.yaml` (that file is weight 10, run name
 `monotone_up_penalty_10`). Weights 1 and 100 load the same file, set
 `control.price_monotone.penalty`, and train as `monotone_up_penalty_1` and

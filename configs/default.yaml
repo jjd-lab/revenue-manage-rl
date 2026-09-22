@@ -84,7 +84,9 @@ control:
   price_monotone:                # one-sided price path; off, so the agent is unconstrained
     enabled: false
     direction: up                # up | down
-    mode: project                # project | penalty
+    mode: clamp                  # clamp | penalty | ratchet (ratchet needs max_step)
+    reference: last              # last | high_water; high_water is the one that bounds tolerance
+    apply_on: always             # always | peak_only (peak_only frees weekday off-peak nights)
     tolerance: 0
     max_step: null
     penalty: 10

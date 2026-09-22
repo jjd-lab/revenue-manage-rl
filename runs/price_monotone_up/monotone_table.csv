@@ -1,5 +1,5 @@
 arm,score_aware,paired_vs_unconstrained,ci_low,ci_high,n_decrease_steps,n_episodes_with_decrease,penalty
 unconstrained,2033263.9,0.0,0.0,0.0,1672,30,
-project_frozen,2077975.64,44711.73,20944.95,66164.01,0,0,
-project_retrained,1923105.52,-110158.39,-146417.61,-73686.62,0,0,
+clamp_frozen,2077975.64,44711.73,20944.95,66164.01,0,0,
+clamp_retrained,1923105.52,-110158.39,-146417.61,-73686.62,0,0,
 penalty,1951555.23,-81708.67,-134173.89,-32539.27,1323,30,10

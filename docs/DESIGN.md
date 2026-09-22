@@ -216,9 +216,22 @@ dynamics). Soft-only mode avoids harming peak days. Example:
 When `control.price_monotone.enabled`, `MonotonePriceEnv` is the outermost
 wrapper and keeps the agent's action shape, joint or price-only.
 `direction: up` forbids a later day from charging less than the previous
-charged price. `mode: project` clamps the action. `mode: penalty` leaves the
+charged price. `mode: clamp` clamps the action. `mode: penalty` leaves the
 action and subtracts `penalty * (violation_dollars / price_span)` from the
-step reward, outside the frozen `env.reward` weights.
+step reward, outside the frozen `env.reward` weights. `mode: ratchet` reads
+the action as a *move* from the reference rather than an absolute price, so
+the feasible set is covered without two actions charging the same thing — the
+mode to train under, since `clamp` makes every sub-floor action identical and
+leaves a learner no gradient there. It requires `max_step`.
+
+`reference` picks what the bounds are measured from: `last` is yesterday's
+charged price, `high_water` the episode's running extreme. They coincide under
+`clamp` with `tolerance: 0`. Elsewhere `high_water` is the correct one — under
+`last` a `tolerance` of *t* permits a *t*-per-day glide without limit, because
+the floor re-tracks each lowered price, and a penalty charged against yesterday
+makes a slow staircase a series of small fines rather than a bar on leaving the
+peak. `apply_on: peak_only` restricts the guarantee to weekends and peak months,
+on the calendar alone so an operator knows in advance which nights carry it.
 
 The first step of an episode is exempt. `reset()` writes `min_price` as a
 placeholder, and the wrapper clears the last charged price so one episode's

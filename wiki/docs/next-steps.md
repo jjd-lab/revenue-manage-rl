@@ -243,7 +243,7 @@ policies at a different demand level only measures out-of-distribution behaviour
 **Status (2026-09-22).** Built. `runs/price_monotone_up/NOTES.md` has the
 four arms. Projecting the frozen `rl_best` checkpoint raises `score_aware`
 by about 45k and removes every charged decrease. Retraining under
-`mode: project` costs about 110k and flattens the path. Penalty weight 10,
+`mode: clamp` costs about 110k and flattens the path. Penalty weight 10,
 chosen on seeds 100–129, still marks down on every reported night. The
 recipe below is how to reproduce it.
 
@@ -286,7 +286,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
    `apply_when_days_prior_le`; method `apply(env, price) -> float` mirroring
    `OversellCap.project`'s shape (reset diagnostics → early-return untouched
    when disabled → compute the bound → one-sided projection →
-   `last_projected` with a `1e-6` tolerance → clip). Needs a local
+   `last_clamped` with a `1e-6` tolerance → clip). Needs a local
    `_clip_price(env, price)` — `_clip_sl` in `selling_limit.py` is SL-only.
    Factory `get_price_monotone(cfg)` returning `None` when absent/disabled.
    Knob defaults, and the experiment leaves them there:
@@ -321,7 +321,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
    `oversell_guard.py` (Gymnasium 1.x wrappers do not forward attributes).
    `reset()` clears `last_executed_price` before returning. Write
    `info["price_monotone"]`, `["price_monotone_floor"]`,
-   `["price_monotone_projected"]`, `["price_monotone_violation"]`,
+   `["price_monotone_clamped"]`, `["price_monotone_violation"]`,
    `["policy_price"]`.
 3. **`validate_config` must reject `early_promo`, its `promo` alias, and `mpc`
    when any of them is enabled together with `price_monotone.enabled`. This
@@ -351,7 +351,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
      `get_price_mpc` / `get_early_promo` are a different path: a monotone
      block handed to them returns `None` or raises on `mode`. Leave them.
    - Add an inert `control.price_monotone` block (`enabled: false`,
-     `direction: up`, `mode: project`, `tolerance: 0`, `max_step: null`,
+     `direction: up`, `mode: clamp`, `tolerance: 0`, `max_step: null`,
      `penalty: 10`, `apply_when_days_prior_le: null`) to
      `configs/default.yaml` **and** `src/reservation_pricing/configs/default.yaml`
      — identically; a test enforces they stay byte-identical.
@@ -363,7 +363,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
 5. Add `configs/experiment_monotone_up_sac.yaml` and
    `experiment_monotone_up_penalty_sac.yaml`, matching
    `configs/tree_long_sac.yaml`'s hyperparameters (200k steps, seed 7), with
-   `mode: project` and `mode: penalty` respectively.
+   `mode: clamp` and `mode: penalty` respectively.
 6. Add `tests/test_price_monotone.py`: a unit test on a `SimpleNamespace` fake
    env (per `tests/test_controls_extra.py`) plus an integration test that loads
    a shipped config and asserts on `info`.
@@ -373,10 +373,10 @@ template for the controller (`get_*` factory returning `None` when disabled,
    factory and shared, which is what makes the comparison paired). Four arms
    on held-out seeds 0–29 with `score_aware`:
    - Arm 0 — frozen `artifacts/tree_long/best/rl_best.zip`, unconstrained. Reference.
-   - Arm 1 — the same frozen checkpoint under `mode: project`, no retraining.
+   - Arm 1 — the same frozen checkpoint under `mode: clamp`, no retraining.
      Free, and it prices the constraint against a policy that was never told
      about it.
-   - Arm 2 — SAC retrained under `mode: project` (~30–40 min).
+   - Arm 2 — SAC retrained under `mode: clamp` (~30–40 min).
    - Arm 3 — SAC retrained under `mode: penalty`. The weight is a sweep, not
      one training. Train `penalty` in `{1, 10, 100}` (one 200k-step SAC each,
      seed 7, ~30–40 min each): a $4 markdown then costs 0.1, 1, or 10 against
@@ -392,7 +392,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
    does not produce. Episode metrics store `mean_price` only, so count
    decreases on successive `info["price"]` values during the rollout. Skip
    `reset()`'s placeholder $80. Arm 0's decrease count is > 0; every
-   `mode: project` arm's count is 0.
+   `mode: clamp` arm's count is 0.
 8. Redraw the price path for the retrained checkpoint with
    `scripts/explain_rl_best.py --config ... --model ... --out
    runs/price_monotone_up/explain/` (it already takes those three flags; no new
@@ -404,7 +404,7 @@ template for the controller (`get_*` factory returning `None` when disabled,
 
 **Verify.**
 
-- Zero violations under `mode: project`, asserted on the env's own
+- Zero violations under `mode: clamp`, asserted on the env's own
   **`info["price"]`** (the price `ReservationEnv.step` charged — this is what
   catches a silent inner override by promo/MPC). Compare executed prices from
   the second step on; `reset()`'s $80 is not a prior decision. The

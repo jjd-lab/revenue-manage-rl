@@ -30,6 +30,11 @@ from reservation_pricing.envs import make_env
 from reservation_pricing.evaluate.compare import sb3_policy
 from reservation_pricing.metrics import _mid_horizon_base, classify_soft
 
+# Series key for the RL policy in every frame and plot. ``main`` sets it from
+# --label, so a run against a different checkpoint does not record itself as
+# "rl_best" beside the genuine runs/explain_rl_best/.
+RL_LABEL = "rl_best"
+
 
 def rollout_rows(policy, name: str, seeds, cfg) -> pd.DataFrame:
     rows: list[dict] = []
@@ -101,7 +106,7 @@ def rollout_rows(policy, name: str, seeds, cfg) -> pd.DataFrame:
 def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
     # 01 paths
     fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    for name, color in [("rl_best", "#2563eb"), ("myopic", "#64748b")]:
+    for name, color in [(RL_LABEL, "#2563eb"), ("myopic", "#64748b")]:
         g = (
             df[df.policy == name]
             .groupby("days_prior")[["price", "remain"]]
@@ -129,7 +134,7 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
 
     # 02 weekend
     fig, ax = plt.subplots(figsize=(7, 4))
-    rl = df[df.policy == "rl_best"]
+    rl = df[df.policy == RL_LABEL]
     for label, mask, color in [
         ("Weekend", rl.weekend == 1, "#dc2626"),
         ("Weekday", rl.weekend == 0, "#2563eb"),
@@ -149,7 +154,7 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
 
     # 03 soft vs peak boxes
     fig, axes = plt.subplots(1, 2, figsize=(9, 4))
-    sub = ep[ep.policy == "rl_best"]
+    sub = ep[ep.policy == RL_LABEL]
     for ax, col, title in [
         (axes[0], "mean_price", "Mean price by regime"),
         (axes[1], "revenue", "Revenue by regime"),
@@ -201,18 +206,18 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
 
     # 06 example trajectories
     fig, axes = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
-    peak_seeds = ep[(ep.policy == "rl_best") & (ep.is_soft == 0) & (ep.weekend == 1)][
+    peak_seeds = ep[(ep.policy == RL_LABEL) & (ep.is_soft == 0) & (ep.weekend == 1)][
         "seed"
     ].tolist()
-    soft_seeds = ep[(ep.policy == "rl_best") & (ep.is_soft == 1)]["seed"].tolist()
+    soft_seeds = ep[(ep.policy == RL_LABEL) & (ep.is_soft == 1)]["seed"].tolist()
     if not peak_seeds:
-        peak_seeds = ep[(ep.policy == "rl_best") & (ep.is_soft == 0)]["seed"].tolist()
+        peak_seeds = ep[(ep.policy == RL_LABEL) & (ep.is_soft == 0)]["seed"].tolist()
     ps, ss = int(peak_seeds[0]), int(soft_seeds[0])
     for ax, seed, title in [
         (axes[0], ps, f"Peak-ish episode (seed {ps})"),
         (axes[1], ss, f"Soft episode (seed {ss})"),
     ]:
-        for name, color, ls in [("rl_best", "#2563eb", "-"), ("myopic", "#64748b", "--")]:
+        for name, color, ls in [(RL_LABEL, "#2563eb", "-"), ("myopic", "#64748b", "--")]:
             g = df[(df.policy == name) & (df.seed == seed)].sort_values(
                 "days_prior", ascending=False
             )
@@ -225,7 +230,7 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
                 label=f"{name} price",
             )
         ax2 = ax.twinx()
-        g = df[(df.policy == "rl_best") & (df.seed == seed)].sort_values(
+        g = df[(df.policy == RL_LABEL) & (df.seed == seed)].sort_values(
             "days_prior", ascending=False
         )
         ax2.plot(
@@ -256,11 +261,11 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
     ax.bar(
         x - w / 2,
         [
-            ep[(ep.policy == "rl_best") & (ep.is_soft == 1)]["revenue"].mean(),
-            ep[(ep.policy == "rl_best") & (ep.is_soft == 0)]["revenue"].mean(),
+            ep[(ep.policy == RL_LABEL) & (ep.is_soft == 1)]["revenue"].mean(),
+            ep[(ep.policy == RL_LABEL) & (ep.is_soft == 0)]["revenue"].mean(),
         ],
         w,
-        label="rl_best",
+        label=RL_LABEL,
         color="#2563eb",
     )
     ax.bar(
@@ -285,13 +290,22 @@ def make_plots(df: pd.DataFrame, ep: pd.DataFrame, out: Path) -> None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    global RL_LABEL
+
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--config", default="configs/default.yaml")
     p.add_argument("--model", default="artifacts/tree_long/best/rl_best.zip")
     p.add_argument("--algo", default="sac")
     p.add_argument("--seeds", type=int, default=30)
     p.add_argument("--out", default="runs/explain_rl_best")
+    p.add_argument(
+        "--label",
+        default="rl_best",
+        help="series name for the RL policy in the CSVs and plots",
+    )
     args = p.parse_args(argv)
+
+    RL_LABEL = str(args.label)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -302,7 +316,7 @@ def main(argv: list[str] | None = None) -> None:
     myopic = myopic_greedy_policy()
     seeds = list(range(int(args.seeds)))
 
-    df_rl = rollout_rows(rl_pol, "rl_best", seeds, cfg)
+    df_rl = rollout_rows(rl_pol, RL_LABEL, seeds, cfg)
     df_my = rollout_rows(myopic, "myopic", seeds, cfg)
     df = pd.concat([df_rl, df_my], ignore_index=True)
     df.to_csv(out / "rollouts.csv", index=False)
@@ -328,9 +342,9 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Wrote plots + CSVs to {out.resolve()}")
     print(
         "soft",
-        int(((ep.policy == "rl_best") & (ep.is_soft == 1)).sum()),
+        int(((ep.policy == RL_LABEL) & (ep.is_soft == 1)).sum()),
         "peak",
-        int(((ep.policy == "rl_best") & (ep.is_soft == 0)).sum()),
+        int(((ep.policy == RL_LABEL) & (ep.is_soft == 0)).sum()),
     )
     print(
         "weekend px",

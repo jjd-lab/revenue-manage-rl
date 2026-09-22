@@ -9,7 +9,7 @@ control:
   price_monotone:
     enabled: true
     direction: up
-    mode: project
+    mode: clamp
     tolerance: 0
     max_step: null
     apply_when_days_prior_le: null
@@ -31,5 +31,5 @@ train:
   total_timesteps: 200000
   seed: 7
   model_dir: artifacts/price_monotone
-  run_name: monotone_up_project
+  run_name: monotone_up_clamp
   log_dir: runs/price_monotone_up

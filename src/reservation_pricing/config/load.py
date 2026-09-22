@@ -12,7 +12,9 @@ KNOWN_ALGOS = {"ppo", "sac", "td3", "baseline"}
 KNOWN_SL_KINDS = {"analytic", "optimize_1d"}
 KNOWN_SAFE_SL_KINDS = {"analytic", "chance"}
 KNOWN_MONOTONE_DIRECTIONS = {"up", "down"}
-KNOWN_MONOTONE_MODES = {"project", "penalty"}
+KNOWN_MONOTONE_MODES = {"clamp", "penalty", "ratchet"}
+KNOWN_MONOTONE_REFERENCES = {"last", "high_water"}
+KNOWN_MONOTONE_SCOPES = {"always", "peak_only"}
 
 
 def deep_merge(base: dict, override: dict) -> dict:
@@ -108,11 +110,28 @@ def _reject_monotone_with_price_overrides(control: dict[str, Any]) -> None:
             f"Unknown control.price_monotone.direction={direction!r}; "
             f"expected one of {sorted(KNOWN_MONOTONE_DIRECTIONS)}"
         )
-    mode = str(mono.get("mode", "project")).lower().strip()
+    mode = str(mono.get("mode", "clamp")).lower().strip()
     if mode not in KNOWN_MONOTONE_MODES:
         raise ValueError(
             f"Unknown control.price_monotone.mode={mode!r}; "
             f"expected one of {sorted(KNOWN_MONOTONE_MODES)}"
+        )
+    reference = str(mono.get("reference", "last")).lower().strip()
+    if reference not in KNOWN_MONOTONE_REFERENCES:
+        raise ValueError(
+            f"Unknown control.price_monotone.reference={reference!r}; "
+            f"expected one of {sorted(KNOWN_MONOTONE_REFERENCES)}"
+        )
+    apply_on = str(mono.get("apply_on", "always")).lower().strip()
+    if apply_on not in KNOWN_MONOTONE_SCOPES:
+        raise ValueError(
+            f"Unknown control.price_monotone.apply_on={apply_on!r}; "
+            f"expected one of {sorted(KNOWN_MONOTONE_SCOPES)}"
+        )
+    if mode == "ratchet" and mono.get("max_step") is None:
+        raise ValueError(
+            "control.price_monotone.mode='ratchet' requires max_step: the action "
+            "is a move from the reference, so it needs a scale in dollars per day"
         )
     if (
         _block_enabled(control, "early_promo")
@@ -122,7 +141,7 @@ def _reject_monotone_with_price_overrides(control: dict[str, Any]) -> None:
         raise ValueError(
             "control.price_monotone cannot be combined with an enabled "
             "early_promo, promo, or mpc block: those override price inside "
-            "PriceOnlyWrapper after the outer projection, so the guarantee "
+            "PriceOnlyWrapper after the outer clamp, so the guarantee "
             "would be silently violated"
         )
 
