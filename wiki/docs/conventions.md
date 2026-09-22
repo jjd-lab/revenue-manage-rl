@@ -48,6 +48,12 @@ scripts are `run_*.py`/`final_eval.py` in lowercase, never SCREAMING_CASE.
 
 ## Config layering
 
+The control layer has five blocks: `selling_limit`, `early_promo`, `safe_sl`,
+`mpc`, and `price_monotone`. A new one needs adding to `_CONTROL_OVERRIDE_KEYS`
+in `envs/factory.py` and to the bare-block exclusion tuple in
+`controls/oversell_cap.py`, which is hardcoded rather than derived from it —
+miss either and the block is silently ignored with no error.
+
 `configs/default.yaml` carries the full schema: `demand`, `env`, `control`,
 `algorithm`, `train`, `eval`, `tune`, with every control switched off. A
 byte-identical copy ships inside the package (`src/reservation_pricing/configs/`)

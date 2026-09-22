@@ -4,63 +4,53 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-Config-driven **revenue management** framework for a two-lever problem: the agent
-sets a **price** and an **availability control** (a selling limit) on every day of
-the booking window. Pluggable demand models (tree base + linear elasticity by
-default), classical baselines, Stable-Baselines3 **PPO / SAC** (TD3 is registered
-and smoke-tested but appears in no published result), and a control layer that can
-take the second lever back off the agent.
+Config-driven revenue management for a fictional 10,000-seat amphitheater. Each day of a 100-day booking window the agent sets a price, from $80 to $120, and a selling limit, from 10,000 to 15,000. Demand is synthetic. A tree sets the base from the calendar and from how far out the night is. Price scales that base around $100. Cancellations follow a Weibull curve. No-shows run near 16 percent. No real box office is in this repository.
 
-Both levers matter, and which of them the agent should hold is the question the
-experiments answer: a joint policy sets price and limit together, a price-only
-policy delegates the limit to an analytic controller, and an oversell cap can
-constrain a trained joint policy after the fact.
+A joint policy sets the price and the selling limit. A price-only policy sets the price, and a formula sets the limit. The cap is applied after training. It lowers a joint policy's selling limit when expected show-ups would pass 1.02 times the 10,000 seats. It does not retrain the policy. Pluggable demand models, classical baselines, and Stable-Baselines3 PPO and SAC are included. TD3 is registered and smoke-tested, and it appears in no published result.
 
 ## The result
 
-On thirty held-out nights, scored so that structurally unfillable soft nights are
-measured against a floor-price oracle rather than against capacity, paired
-intervals separate one tier from the rest. BC→SAC raw and BC→SAC under the
-oversell cap are a tie with each other, and both beat every other row. The cap
-turns denied admission on 71% of peak nights into none; its score cost covers
-zero, which is why it is the recommended package. Joint SAC `rl_best` does not
-clear pace PPO — that 1.2% point gap is a tie. The full readout is
-[§7](docs/EXPERIMENT_LOG.md).
+Thirty held-out nights, seeds 0 to 29, in June and December. Thirteen are soft. Seventeen are peak. On a soft night, even $80 with the selling limit wide open leaves more than 1,500 seats empty, so those nights are scored against a price of $80 rather than against empty seats. On a peak night the score is revenue, minus $200 for each unsold seat and $400 for each oversold seat. An oversold seat is a denied admission: a show-up with no seat.
 
-| Policy | Levers | `score_aware` | Peak nights with denied admission |
+On the published training, seed 42, raw Joint BC to SAC and the same policy under the cap tie each other. Both beat every other row. The cap takes denied admission from 0.71 of peak nights to zero. The paired interval on the score cost of that cap covers zero, so the two scores are a tie.
+
+Capped Joint BC to SAC scores 3.6 percent higher than pace PPO, and the paired interval on that gap sits above zero. Joint SAC against pace PPO, and Joint PPO against pace PPO, have paired intervals that cover zero. A gap ranks two policies only when its paired interval excludes zero.
+
+That 3.6 percent lead does not repeat on every training seed. Seeds 43 and 44 beat a pace run from the same seed. Seed 46 ties its matched pace run and scores below the published pace checkpoint. On seeds 43 and 44 the cap leaves denied admission on 0.24 and 0.47 of peak nights.
+
+Myopic sets a selling limit of 12,353 and never holds more than 11,402 bookings, so changing that limit does not change revenue. Pace PPO is the price-only comparison, because it sets only the price.
+
+| Policy | Controls | `score_aware` | Peak nights with denied admission |
 | --- | --- | ---: | ---: |
-| BC→SAC (raw) | joint | 2.094M | 0.71 |
-| **BC→SAC + oversell cap** | joint | **2.081M** | **0.00** |
-| Joint SAC `rl_best` | joint | 2.033M | 0.18 |
+| Joint BC to SAC, no cap | price and selling limit | 2.094M | 0.71 |
+| Joint BC to SAC with the cap | price and selling limit | 2.081M | 0.00 |
+| Joint SAC | price and selling limit | 2.033M | 0.18 |
 | Pace PPO | price only | 2.010M | 0.00 |
-| Myopic (perfect-forecast baseline) | price only | 1.972M | 0.00 |
+| Myopic | price, limit does not bind | 1.972M | 0.00 |
 
-The table above is point estimates. Apply the cap to every joint policy and all
-three reach zero denied admission for 0.6–2.4% of score. The interval supports a
-lead only for capped BC→SAC. Capped joint SAC's point estimate ties pace PPO, and
-capped joint PPO's falls below both price-only policies; those two capped rows
-were not saved night by night, so they have no interval
-([§10](docs/EXPERIMENT_LOG.md)). Under a safety constraint, "both levers beat
-one" belongs to the behaviour-cloned policy, not to joint control in general.
-Taking the second lever away is still expensive for all of them
-([§9](docs/EXPERIMENT_LOG.md)) — it is load-bearing, just not sufficient.
+The table is point estimates on seeds 0 to 29. Apply the cap to Joint SAC and Joint PPO as well and all three joint policies reach zero denied admission, giving up 0.6 to 2.4 percent of score. The paired interval supports a lead over pace PPO only for capped Joint BC to SAC. Capped Joint SAC's point estimate ties pace PPO. Capped Joint PPO's point estimate falls below both price-only policies. Those two capped rows were not saved night by night, so they have no paired interval ([§10](docs/EXPERIMENT_LOG.md)).
 
-Full table: [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) §7. The chart-led
-reading is the public page: **<https://jjd-lab.github.io/revenue-manage-rl/>**
-(source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
+Pinning a joint policy's selling limit, and leaving the price alone, costs $90,000 to $344,000 and sends the share of peak nights with denied admission to 0.82 ([§9](docs/EXPERIMENT_LOG.md)). The limit changes the result. It does not, by itself, make every joint policy beat pace PPO.
 
-![Joint SAC vs myopic: average price and inventory paths over the booking horizon](runs/explain_rl_best/01_price_inventory_paths.png)
+Full table: [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) §7. The same numbers, with the charts, are at **<https://jjd-lab.github.io/revenue-manage-rl/>** (source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
 
-*Joint SAC learns a booking curve — protect early, clear late, weekends near $109
-and weekdays near $84 — against a flat $92 from the myopic rule. Figures and the
-guide: [`runs/explain_rl_best/`](runs/explain_rl_best/README.md).*
+![Joint SAC price over the booking window, weekend nights against weekday nights, with myopic flat at $92](runs/explain_rl_best/01_price_inventory_paths.png)
+
+*Joint SAC. Nine weekend nights go from about $109 a hundred days out to $117 around day 37, then down to $89. Twenty-one weekday nights ease from about $90 to $80. Myopic is $92 on every night. Figures: [`runs/explain_rl_best/`](runs/explain_rl_best/README.md).*
+
+### Later buyers never pay less
+
+That weekend line rises to $117 and then falls to $89. A buyer on the last day pays less than one who booked three weeks earlier. A venue cannot do that to the people who booked early, so `control.price_monotone` forbids it: the price may rise and may never fall.
+
+Blocking the drops earns more than allowing them. Take the trained policy unchanged and refuse any price below yesterday's, and `score_aware` goes from 2,033,264 to 2,077,976, with the paired interval above zero. The weekend path climbs from $108.50 to $118.20 and holds. No retraining. The block overrides the policy on 2,610 of its 3,000 daily decisions, so the late markdown was not a small mistake.
+
+Training under the rule is the part that does not work. Every retrained arm lands about 110,000 below the blocked policy, and the retrained price path stops moving: $116.31 on every weekend day, the $80 floor on weekdays. Opening cheap is what keeps the most options under a rule that only lets the price rise. Cloning the blocked policy reaches 2,038,966 with no markdowns, a tie with the unconstrained reference — but only without fine-tuning, which undid it at every setting tried. A penalty is not a substitute: the best of four weights still cut the price 1,377 times.
+
+The recommendation is to train without the rule and apply it at decision time ([§12](docs/EXPERIMENT_LOG.md), [`runs/price_monotone_up/`](runs/price_monotone_up/NOTES.md)).
 
 ## Scenario
 
-A fictional 10,000-seat amphitheater sells seats for a nightly performance across a
-100-day advance booking window. Each day the operator sets a **ticket price** and a
-**selling limit**, against cancellations, no-shows, weekend and seasonal demand
-swings, and a hard capacity wall on the performance date.
+A fictional 10,000-seat house sells one night's seats over 100 days. Each day the policy sets a price and a selling limit. People cancel, and some of those who keep the booking do not arrive, so the selling limit may sit above 10,000. Bookings above the seats that exist are the buffer against cancellation and no-show.
 
 Everything here is **synthetic**. The base-demand corpus comes from
 `synthetic_base_demand_mean` in `src/reservation_pricing/demand/synthesize.py`, and
@@ -143,7 +133,7 @@ One YAML can set demand, env, control, algorithm, eval, and tune:
 | --- | --- |
 | `demand.kind` | `tree_elastic` (default) or `linear_legacy` |
 | `env.*` | capacity, horizon, cancel/noshow, reward shaping (`env.reward`) |
-| `control.*` | `price_only`, `selling_limit`, `early_promo`, `safe_sl`, `mpc` — all off by default |
+| `control.*` | `price_only`, `selling_limit`, `early_promo`, `safe_sl`, `mpc`. All off by default. |
 | `algorithm.name` | `ppo` \| `sac` \| `td3` |
 | `train.*` | timesteps, seed, run name, output paths |
 | `eval.*` / `tune.*` | episodes, seeds, soft-aware thresholds, selection weight |
@@ -159,8 +149,7 @@ base = TreeModel(days_prior, dow, month, is_weekend, is_peak_month, booking_curv
 expected_gross = max(0, base * (1 + elasticity * (price - ref_price) / ref_price))
 ```
 
-Myopic baseline optimizes price on a 1D grid via `predict_mean` (no free closed
-form under tree demand). See `docs/DESIGN.md`.
+Myopic baseline optimizes price on a 1D grid via `predict_mean` (no closed form under tree demand). Defaults are `elasticity: -1.2` and `ref_price: 100`. See `docs/DESIGN.md`.
 
 ## Layout
 
@@ -214,16 +203,16 @@ the one you want to keep to the expected path. And SB3 training is not
 bit-reproducible across machines, so your numbers will sit near, not exactly on,
 the tables in `runs/`.
 
-The oversell cap is config, not a separate checkpoint: `configs/experiment_bc_sac_safe_sl.yaml`.
+The cap is config, not a separate checkpoint: `configs/experiment_bc_sac_safe_sl.yaml`. It lowers the selling limit after training. The code and the config key are still named `safe_sl`.
 
 The reproduce scripts read from `artifacts/` and skip rows whose checkpoint is
 missing. Every one evaluates on held-out seeds 0–29.
 
 ```bash
 python runs/joint_vs_price_only_soft_aware/run_headline.py   # the headline table
-python runs/both_goals/final_eval.py                       # oversell cap + MPC table
-python runs/ablate_selling_limit/run_ablation.py           # is the second lever load-bearing?
-python runs/oversell_cap_transfer/run_cap_transfer.py      # does the oversell cap transfer?
+python runs/both_goals/final_eval.py                       # the cap, and the price MPC
+python runs/ablate_selling_limit/run_ablation.py           # pin the selling limit, leave the price alone
+python runs/oversell_cap_transfer/run_cap_transfer.py      # the cap on each joint policy
 python runs/forecast_misspecification/run_misspecification.py   # policies under a wrong forecast
 python runs/keep_rate_dependence/run_probe.py              # what privileged knowledge is worth
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
@@ -232,18 +221,18 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 
 ## Docs
 
-- [`site/index.html`](site/index.html) — the public reading: problem, where it sits in the literature, and the charts
+- [`site/index.html`](site/index.html) — the public page: problem, policies, setting, findings, and limits
 - [`docs/DESIGN.md`](docs/DESIGN.md) — architecture, glossary, demand, reward vs metrics, the control layer
-- [`docs/EVALUATING_POLICIES.md`](docs/EVALUATING_POLICIES.md) — the policy-quality checklist and the soft-day-aware protocol behind `score_aware`
-- [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) — the full experiment arc, takeaways, and the headline table
+- [`docs/EVALUATING_POLICIES.md`](docs/EVALUATING_POLICIES.md) — how a score is read, including when myopic's selling limit does not bind
+- [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) — the experiment record and the headline table
 - [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) — index: which config ran, where its results and checkpoint land
 - [`docs/EXTENDING.md`](docs/EXTENDING.md) — add a demand model, algorithm, or controller; multi-product path
 - [`runs/explain_rl_best/README.md`](runs/explain_rl_best/README.md) — why the joint SAC behaves as it does, figure by figure
-- [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — does the second lever earn its place? (pin the limit, keep the price)
-- [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — does the oversell cap transfer to every joint policy, and what does safety cost?
+- [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — pin the selling limit, keep the price
+- [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — the cap on each joint policy, and the score given up
 - [`runs/forecast_misspecification/NOTES.md`](runs/forecast_misspecification/NOTES.md) — what each policy is worth when the demand forecast is wrong
-- [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — pricing the one place the controllers read the simulator's own parameters
-- [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the oversell cap, the price MPC, and the soft-night fill ceiling
+- [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — what the controllers gain by reading the simulator's cancel and no-show parameters
+- [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the cap, the price MPC, and the soft-night fill ceiling
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log
 
 ## Contributing and citing

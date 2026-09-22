@@ -44,4 +44,5 @@ Generated, not documented here. Where to look:
 | `runs/forecast_misspecification/`, `runs/keep_rate_dependence/` | What the system is allowed to know, and what that knowledge is worth (§11) |
 | `runs/both_goals/`, `runs/oracle_ceiling/` | Oversell cap, price MPC, and the soft-day fill ceiling (§5c) |
 | `runs/tree_long/`, `runs/bc_sac/`, `runs/price_only_long/`, `runs/pace_ppo/`, `runs/promo_ppo/` | One directory per training campaign (§2–§5b) |
+| `runs/price_monotone_up/` | What a no-markdown guarantee costs, and why training under it fails (§12) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on two policies |

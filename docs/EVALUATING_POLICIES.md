@@ -1,38 +1,23 @@
-# How to tell if an RL pricing policy is actually good
+# How to read a pricing policy
 
-Aggregate score (revenue − shortfall penalty) is necessary but not sufficient.
-A policy can win the table by accident, by overselling on lucky seeds, or by
-collapsing to a blunt rule. Use this checklist.
+A high score is not enough. A policy can win one draw of nights by denied admission on the peak nights, or by a selling limit that never refuses a booking. Use this checklist. In the tables, `oversell` is denied admission: `remain_inv < 0` on the night, a show-up with no seat.
 
-## 1. Beat honest baselines on held-out business metrics
+## 1. Compare baselines on the same held-out nights
 
 Compare on the **same** seeds / held-out months:
 
 - Fixed prices (low / mid / high)
-- Myopic (optimize today’s expected revenue via the demand API)
+- Myopic (the price that maximizes this period's expected revenue under the demand model)
 - Heuristic booking-limit
 
-Report **true revenue**, **load / remaining inventory**, **sellout / oversell rate**,
+Report **true revenue**, **load / remaining inventory**, **sellout**, **denied admission** (`oversell_rate` in the tables),
 and the selection **score**. Winning only on shaped training reward does not count.
 
 ### Know what your baseline is actually doing
 
-`myopic_greedy` emits a selling limit as well as a price, but **that limit never
-binds**. It is a fixed `capacity * 1.05 / 0.85 = 12,353`, and the most bookings the
-policy ever holds is **11,402**, so no booking is ever refused because of it. Only
-the late-horizon tighten (drop to `min_selling_limit` once remaining inventory falls
-under 5% of capacity) ever refuses anything. Measured consequence: the score is
-identical to the cent for any limit from ~11,400 up to the 15,000 cap — which is why
-`runs/price_only_long/` reports the same `1,049,488 / 730,305` for
-`myopic_greedy@joint` (fixed limit) and `myopic_greedy@price_only` (analytic
-controller, limit 15,000).
+Myopic sets a price and a selling limit. The limit is `capacity * 1.05 / 0.85 = 12,353`. The most bookings it holds is 11,402, so the limit never refuses a booking. The only refusal is the late-horizon tighten, which drops the limit to `min_selling_limit` once remaining inventory falls under 5% of capacity. Any limit from about 11,400 up to 15,000 leaves the score the same to the cent. That is why `runs/price_only_long/` reports the same `1,049,488 / 730,305` for `myopic_greedy@joint` (fixed limit) and `myopic_greedy@price_only` (analytic controller, limit 15,000).
 
-So myopic is effectively a **price-only policy with an open limit**, and a joint
-policy beating it is partly beating a one-lever opponent. That is the comparison the
-soft-aware table is making; read it that way, and read `price_only_pace_ppo` as the
-honest one-lever benchmark. Before trusting any baseline, check whether its
-constraints bind at all — an unbinding constraint is a knob that looks tuned and
-does nothing.
+A joint policy that beats myopic has beaten a policy whose selling limit did not change the result. Pace PPO (`price_only_pace_ppo`) is the price-only comparison on the headline table. Before you credit a baseline for a constraint, check that the constraint refuses a booking.
 
 ## 2. Check for policy collapse
 
@@ -56,6 +41,20 @@ versus **days prior**. Sensible perishable RM often:
 
 Red flags: always max price; always min price; selling limit stuck at the floor
 while seats remain; systematic large oversell.
+
+**A late discount is not automatically right.** The bullet above says a policy
+*may* discount late to clear perishable seats, and the shipped joint SAC does:
+its weekend mean falls from $117 near day 37 to $89 on the last day. Forbidding
+that with `control.price_monotone` — no retraining, just refusing any price
+below the previous charged price — *raises* `score_aware` by about 45k with the
+paired interval above zero. Check whether a late markdown pays before reading it
+as correct behaviour. See §12 of `EXPERIMENT_LOG.md`.
+
+**A flat path is the other red flag, and it is easy to induce.** Every policy
+retrained *under* the no-markdown rule stopped moving its price: $116.31 on
+every weekend day, the $80 floor on weekdays. The guarantee held and the score
+fell about 110k. A price that never moves satisfies a monotonicity rule
+trivially, so check the path, not just the rule.
 
 ## 4. Check state dependence (not just time)
 
