@@ -477,7 +477,14 @@ scores are not results.
   unconstrained reference and 116k above the clamp retrain. Fine-tuning then
   undoes it, at every setting tried: 1,966,735 at 200k steps and lr 3e-4,
   1,937,339 at lr 3e-5, 1,808,182 at 20k steps. SAC walks away from a policy
-  worth 2.04M back into the same basin. The recipe is **clone and stop**.
+  worth 2.04M back into the same basin. It is not an optimization failure.
+  The training reward rises from 54.6 to 96.2 over the same fine-tune. The
+  reward charges about $730 per unsold seat and forfeits the whole utilization
+  bonus on any oversold night, while `score_aware` charges nothing for unsold
+  soft seats and $400 per oversold seat. The fine-tune fills soft nights at the
+  $80 floor and stops overselling peak nights by selling less. That rules out
+  a KL-tethered fine-tune, whose best case is the clone. The recipe is **clone
+  and stop**.
 - **A penalty does not buy a guarantee at any weight.** Charged against
   yesterday's price, a slow staircase is a series of small fines; weight 10
   marks down on all 30 nights. Charged against the episode's high-water mark and

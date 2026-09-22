@@ -71,18 +71,50 @@ Behaviour cloning of `clamp_frozen` lands at **2,038,966** with zero markdowns �
 a tie with the unconstrained reference, and 116k above the clamp retrain. Then
 fine-tuning undoes it, and no gentler setting helps:
 
-| | score_aware |
-| --- | ---: |
-| BC-only, no fine-tuning | **2,038,966** |
-| + 200k steps, lr 3e-4 | 1,966,735 |
-| + 200k steps, lr 3e-5 | 1,937,339 |
-| + 20k steps, lr 3e-4 | 1,808,182 |
+| | score_aware | training reward |
+| --- | ---: | ---: |
+| BC-only, no fine-tuning | **2,038,966** | 54.6 |
+| + 200k steps, lr 3e-4 | 1,966,735 | **96.2** |
+| + 200k steps, lr 3e-5 | 1,937,339 | 82.7 |
+| + 20k steps, lr 3e-4 | 1,808,182 | 77.9 |
 
-SAC walks away from a policy worth 2.04M toward the same floor-pinning basin
-every from-scratch arm found. The training reward and `score_aware` disagree
-about soft nights, and under the constraint the policy cannot mark down to
-recover, so the reward-optimal answer is to open low. **The recipe that works is
-clone and stop.**
+Training reward is the mean shaped episode return under the clamp, on the same
+seeds 0–29 (`final_model.zip` for the fine-tuned rows). **The fine-tune does not
+fail. It raises the reward by 43–76% while the score falls.** SAC is optimizing
+the objective it was given, and that objective disagrees with `score_aware`.
+
+### Why: the reward and the score price seats differently
+
+In dollars (`revenue_scale` 1e-4, so 1 reward = $10,000), per night:
+
+| | training reward | `score_aware` |
+| --- | --- | --- |
+| unsold seat, soft night | −$650, plus the utilization bonus it did not earn (−$80) | $0 — soft score is revenue, less any shortfall against an $80 policy |
+| unsold seat, peak night | −$730, the same | −$200 |
+| oversold seat | −$450, **and the whole utilization bonus (up to $800,000) is forfeited once `remain_inv < 0`** | −$400 |
+
+Both gaps show up in what the fine-tune changes (clone → lr 3e-4, 200k):
+
+| | clone | fine-tuned | reward | score |
+| --- | ---: | ---: | ---: | ---: |
+| soft: mean price | $91.1 | $80.5 | | |
+| soft: unsold seats | 3,095 | 2,264 | +59.6 | −10.9k |
+| peak: oversold nights (of 17) | 8 | 0 | | |
+| peak: revenue | 1,317,069 | 1,189,764 | +27.8 | −61.5k |
+
+On soft nights the fine-tune drops to the $80 floor and fills 831 more seats. The
+reward values those seats at $730 each; the score values the lost $10.9k of
+revenue. On peak nights the clone oversells on 8 of 17 nights, which the reward
+treats as a cliff and the score as $400 a seat. The fine-tune stops overselling
+by selling less, and gives up $127k of peak revenue to do it. Unlike the
+from-scratch retrains above, most of this fine-tune's loss is on peak nights.
+
+**Consequence for a KL- or trust-region-tethered fine-tune: not worth running.**
+A tether trades reward for staying near the clone, and between the clone and
+the fine-tune the reward and the score move in opposite directions. Its
+best case is the clone itself. The shaping weights are frozen
+(`configs/default.yaml`), so the lever that could move the result is the
+objective, not a leash. **The recipe that works is clone and stop.**
 
 ## The penalty does not buy a guarantee at any weight
 
@@ -104,4 +136,7 @@ internalised the rule is wanted, clone the clamped one and do not fine-tune it.
 `experiment_monotone_up_bc_clamp_sac.yaml` and its two variants,
 `configs/experiment_monotone_up_bc_short_sac.yaml` (20k steps) and `configs/experiment_monotone_up_bc_gentle_sac.yaml` (lr 3e-5),
 each run with `rprl-bc-sac`. The BC-only number is `bc_only_model.zip`, written
-before any RL step, and is the `bc_clone` arm in the table above.
+before any RL step, and is the `bc_clone` arm in the table above. The two
+fine-tuned rows at 200k are `final_model.zip`. The `bc_clamp` arm in the results
+table is the same lr 3e-4 run's `best/best_model.zip` (1,911,249), which
+`EvalCallback` picked for training reward, not score.

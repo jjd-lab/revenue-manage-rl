@@ -510,3 +510,9 @@ selected (weight 1, seeds 100-129) it is the best-scoring retrained arm and
 still marks down 1,377 times. No penalty weight buys the guarantee. Status:
 [[next-steps]].
 
+## [2026-09-22] decision | The clone fine-tunes optimize the reward, not the score
+
+They raise training reward 54.6 → 96.2 while `score_aware` falls: the frozen shaped
+reward charges every unsold seat and forfeits the whole bonus on an oversold night;
+the score does neither. A KL/trust-region tether was planned, not run — its best
+case is the clone. Breakdown in `runs/price_monotone_up/NOTES.md`; status [[next-steps]].

@@ -255,10 +255,17 @@ including the corrected high-water reference.
 **Still open.** `max_step` for `mode: ratchet` was fixed at $1.0 and never
 selected — the plan called for a sweep over `{0.5, 1.0, 2.0}` on seeds 100–129,
 and the observed drift (a neutral action climbs $0.5/day) suggests smaller
-values are worth trying. Whether a fine-tune that is *constrained to stay near
-the clone* (a KL or trust-region term, which SB3's SAC does not have) preserves
-the clone's score is untested, and it is the obvious next question given that
-every unconstrained fine-tune destroyed it.
+values are worth trying.
+
+**Closed without running (2026-09-22): a KL/trust-region tether on the clone
+fine-tune.** The fine-tunes do not fail. They raise the training reward from
+54.6 to 96.2 while `score_aware` falls. The reward charges about $730 per unsold
+seat on every night and forfeits the whole utilization bonus on any oversold
+night. `score_aware` charges nothing for unsold soft seats, $200 per unsold peak
+seat, and $400 per oversold seat. Between the clone and the fine-tune the two
+move in opposite directions, so a tether's best case is the clone itself.
+Breakdown: `runs/price_monotone_up/NOTES.md`. Moving the result needs a
+different objective, and the shaping weights are frozen.
 
 **Goal.** Add a config-driven constraint that forbids price from *decreasing*
 as the event date approaches — `direction: up`, so later buyers never pay less
