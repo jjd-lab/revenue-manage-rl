@@ -458,9 +458,10 @@ but 2 peak nights still deny admission.
 
 **Still open, in order of what each would settle.**
 1. Retrain the default reward at seed 7 on current code. That separates the
-   objective from code drift since 2026-09-17.
-2. Raise the price of a denied admission above the score's $400. This checks
-   whether the gain survives once overbooking costs what a venue would say it costs.
+   objective from run-to-run training noise.
+2. Raise the price of a denied admission above the score's $400. By arithmetic,
+   the uncapped lead is gone at about $652, so train at a price above that and
+   check whether the policy still beats `rl_best`.
 3. Split the two changes: remove the cliff but keep $650 per unsold seat. This
    checks whether the cliff alone explains the overbooking.
 

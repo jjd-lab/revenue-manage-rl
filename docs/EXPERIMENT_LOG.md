@@ -513,8 +513,12 @@ same hyperparameters. Results: `runs/objective/`.
   fewer empty seats. Soft nights are unchanged ($83.22 against $83.73).
 - **The cap no longer reaches zero.** 2 of 17 peak nights still deny admission
   behind it, where every policy in §10 reached zero.
-- Each policy wins on its own objective. One training seed, and `rl_best` is
-  from 2026-09-17 code.
+- **The ranking hangs on the price of a denied admission.** The score charges
+  $400, the same as the new reward. `cu200` denies 216.3 more seats per peak
+  night, so its lead is gone at about $652 per denied admission
+  ($400 + 54,486 / 216.3).
+- Each policy wins on its own objective. One training seed, and no same-day
+  retrain of the default reward to rule out training noise.
 
 ## Experiment takeaways
 
@@ -533,7 +537,7 @@ same hyperparameters. Results: `runs/objective/`.
    - If the demand forecast might be wrong: a joint policy. Those policies see bookings and the calendar. They do not read a demand model (§11). A wrong elasticity costs myopic 3.5 to 5.8 percent. It costs the joint policies nothing. A wrong cancellation model is worth at most 1.11 percent.
 9. Further fill on the soft nights needs a different demand model. It does not come from another training run of these policies.
 10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
-11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero (§13).
+11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero. The lead holds only while a denied admission costs less than about $652 (§13).
 
 ---
 

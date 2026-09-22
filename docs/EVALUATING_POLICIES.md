@@ -169,7 +169,12 @@ score_soft  = mean_rev_soft − gap_to_oracle          # soft_score_mode: gap_to
 score_aware = score_peak + score_soft
 ```
 
-- Shortfall on peak uses the usual `max(remain,0) + 2·max(−remain,0)`.
+- Shortfall on peak uses the usual `max(remain,0) + 2·max(−remain,0)`. With
+  λ = 200 that prices a denied admission at $400. That price is a choice, and
+  it can decide a ranking between policies that overbook by different amounts.
+  In `runs/objective/`, the policy that overbooks more leads by 54,486 at $400
+  and loses above about $652. When two policies differ in denied admission,
+  report the break-even price along with the score.
 - Soft score **does not** subtract undersell shortfall (structural leftover is
   expected). Prefer gap-to-oracle, or oversell-only if no oracle roll is available.
 - Legacy overall `score = rev − λ·shortfall` and `undersell>1500` stay in the

@@ -150,6 +150,14 @@ as a fast path. Production systems would use the same `predict_mean` API.
 **Training reward (shaped):** per-step `accepted * price * revenue_scale` plus terminal
 undersell / oversell penalties and a utilization bonus.
 
+Read the weights as prices. At `revenue_scale` 1e-4 and capacity 10,000, the
+default charges about $730 per empty seat ($650 penalty plus $80 of bonus not
+earned) and $450 per denied admission, and it forfeits the whole bonus (up to
+$800,000) on any night with a denied admission. The policy follows those
+prices. An experiment config can override them under `env:` to train on
+different costs, leaving `default.yaml` untouched (EXPERIMENT_LOG §13,
+`runs/objective/`).
+
 Optional denser shaping (config under `env.reward` or flat `env.*`):
 
 - **`pace_reward`** — each step, if load factor is behind a target booking-curve

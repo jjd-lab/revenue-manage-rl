@@ -87,13 +87,35 @@ in `runs/oversell_cap_transfer/`. A policy trained to overbook pushes past it.
 against $28.22, and the crest comes 8 days later. This objective alone does not
 remove the markdown.
 
+## The costs in the objective set the answer
+
+Each reward weight is a price the policy is told to pay, and the policy follows
+those prices:
+
+| cost in the reward | default | `cu200` | what the policy did |
+| --- | --- | --- | --- |
+| an empty seat | ~$730 | $200 | soft nights: nothing, because they can't fill at any price |
+| a denied admission | $450 + the whole fill bonus on that night | $400 flat | peak nights: overbooked 11 of 17, up from 3 |
+
+The score is a set of prices too, and it prices a denied admission at $400,
+the same as `cu200`. The ranking depends on that price. `cu200` denies 216.3 more
+seats per peak night than `rl_best` (221.4 against 5.1), so each extra dollar
+charged per denied admission takes 216.3 off its lead of 54,486:
+
+> break-even = $400 + 54,486 / 216.3 ≈ **$652 per denied admission**
+
+If a venue thinks turning a ticket holder away costs less than about $652 (the
+refund, the compensation, the lost customer), `cu200` is the better policy.
+Above that, `rl_best` is. This is arithmetic on the rollouts above, not a new
+evaluation. The capped break-even was not worked out.
+
 ## Caveats
 
 - One training seed. `runs/training_seeds/` shows seed variance can flip
   rankings within a family.
-- `rl_best` was trained on 2026-09-17 code, so this is not a same-day matched
-  retrain. Part of the gap could be code drift rather than the objective. A
-  retrain of the default reward at seed 7 would settle it.
+- This is not a same-day matched retrain. `rl_best` re-scores exactly today, so
+  the simulator and scoring are unchanged. But retrains don't match bit for bit,
+  so part of the gap could be run-to-run training noise rather than the
+  objective. A retrain of the default reward at seed 7 would settle it.
 - The score values a denied admission at $400, the same price `cu200` trains
-  on. A venue that prices a denied admission higher would get less overbooking,
-  and a different winner.
+  on. See the break-even above.

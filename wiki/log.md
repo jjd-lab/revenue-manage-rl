@@ -524,3 +524,10 @@ New `runs/objective/` (§13), config `experiment_objective_cu200_sac.yaml`: join
 bonus — only `env:` weights overridden. It wins `score_aware` by an interval that
 excludes zero, entirely by overbooking peak nights; behind the cap 2 peak nights still
 deny admission. One seed, and `rl_best` predates current code. [[conventions]], [[next-steps]].
+
+## [2026-09-22] decision | The reward weights are prices, and the score's $400 decides the objective ranking
+
+Docs only, arithmetic on existing rollouts: cu200 denies 216.3 more seats per peak night
+than `rl_best`, so its lead is gone at about $652 per denied admission. New rule in root
+`docs/EVALUATING_POLICIES.md`: report the break-even price when policies differ in denied
+admission. `rl_best` re-scores exactly, so the caveat is training noise, not code drift. [[next-steps]]
