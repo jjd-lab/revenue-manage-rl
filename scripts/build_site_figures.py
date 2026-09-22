@@ -210,7 +210,7 @@ def oracle_ceiling(episodes: pd.DataFrame, threshold: float, out: Path) -> pd.Da
     )
     ax.set_xticks(range(n), labels)
     ax.set_xlim(-0.6, n + 1.8)
-    ax.set_xlabel("Held-out soft night (seed number)")
+    ax.set_xlabel("Seed number of the soft night")
     ax.set_ylabel("Unsold seats, best any price can do")
     _despine(ax)
     fig.tight_layout()
