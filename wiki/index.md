@@ -9,6 +9,7 @@ Start here. See [SCHEMA.md](SCHEMA.md) for the maintenance contract and
 | --- | --- |
 | [dev-commands](docs/dev-commands.md) | Env setup, extras, lint and CI, what the tests cover, regenerating tables and figures |
 | [conventions](docs/conventions.md) | Directory ownership, config layering, experiment identity, values frozen by the checkpoints |
+| [next-steps](docs/next-steps.md) | What the 2026-09-22 audit found in plain language, and the queued work with agent-ready instructions |
 
 ## Reader-facing docs (repo root `docs/`)
 

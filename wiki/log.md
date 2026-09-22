@@ -364,3 +364,24 @@ seeds §7 reports on. Re-run on a disjoint block (100–129,
 `runs/both_goals/validate_mix_alpha.py`) the identical rule picks 0.25 again,
 because 0.4 denies admission on 41–45% of peak nights either way. The shipped
 value is not a test-set artefact.
+
+## [2026-09-22] decision | Handover page: session findings and the queued work
+
+Added [[next-steps]], a two-audience page: a plain-language account of what this
+session found (the myopic limit is inert; the learned limit is load-bearing and it
+is the *movement* that pays; the cap transfers but its cost inverts with oversell
+volume; the RL policies need no demand forecast), and executable instructions for
+whoever picks the work up.
+
+The seed protocol recommendation is measured, not guessed. Pairing is what matters:
+revenue std across nights is 231,113 for one policy, but the std of the *paired*
+difference between joint SAC and pace PPO is 13,274 — a 17x reduction, because both
+policies see the same nights. A paired 95% interval resolves ±4,847 at n=30 and
+±1,877 at n=200, so the big comparisons are already decidable at thirty nights
+while the three joint policies against each other need ~70–100. The fix is
+therefore **paired bootstrap intervals first, more seeds second** — and the
+bootstrap must recompute `score_aware` per resample, since it is a stratified
+aggregate rather than a mean.
+
+Housekeeping is explicitly sequenced *after* the seed protocol so the two
+regenerations do not happen twice.
