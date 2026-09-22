@@ -37,6 +37,7 @@ checkpoint under a different config, which is why they ship no weights of their 
 | $80 soft-day oracle ceiling | `runs/oracle_ceiling/run_oracle.py` | `runs/oracle_ceiling/` | §5c |
 | Final soft-aware head-to-head | `runs/joint_vs_price_only_soft_aware/REPRODUCE.py` | same directory | §7 |
 | Soft-aware report demo (two policies) | `runs/soft_aware_eval/run_demo.py` | `runs/soft_aware_eval/` | §6 |
+| Second-lever ablation (pin the selling limit) | `runs/ablate_selling_limit/run_ablation.py` | `runs/ablate_selling_limit/` | §9 |
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 

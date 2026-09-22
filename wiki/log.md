@@ -279,3 +279,25 @@ sibling-project detail. `site/` rebuilt: all five charts from one script and one
 palette, dot chart instead of a truncated bar chart, self-hosted fonts, metadata,
 repo links. Git history squashed to a single commit for release (tag
 `pre-public-squash` kept locally).
+
+## [2026-09-22] decision | Ablation: the second lever is load-bearing, and the movement is what pays
+
+Section 7's 1.2–3.6% joint-vs-price-only gap had two readings — the joint policies
+use the selling limit well, or their price policy is simply better and the limit is
+along for the ride. Nothing published separated them, so `runs/ablate_selling_limit/`
+re-scores each joint policy with its price untouched and its limit pinned, once wide
+open and once to the myopic baseline's flat rule.
+
+Removing the limit costs **90k–344k** of `score_aware`, an order of magnitude more
+than the gap it was meant to explain, and peak denied admission jumps to 0.82. The
+flat-rule arm is the finding: `rl_best`'s limit *averages* 12,578, within 2% of the
+flat 12,353 it is pinned to, and that pinning still costs 120k — so the value is not
+the level the limit sits at, it is when it moves. That prices §8's figure 05
+(limit tracking remaining inventory), which until now was only qualitative.
+
+Recorded as §9 plus takeaway 6 in `docs/EXPERIMENT_LOG.md`, a paragraph in §05 of
+the site, and a row in [[conventions]]-adjacent `docs/EXPERIMENTS.md`. The caveat
+travels with it everywhere: pinned arms are off-distribution (each policy priced for
+the limit it learned), so this measures coupling, not what a policy purpose-trained
+for a fixed limit would score — the price-only rows in §7 remain the honest
+cross-policy number.

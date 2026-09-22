@@ -253,6 +253,39 @@ structural demand floor found in 5c, seen from the policy side.
 
 ---
 
+## 9. Ablation: does the second lever earn its place?
+
+Section 7's 1.2–3.6% joint-vs-price-only gap admits two readings — the joint
+policies use the limit well, or their *price* policy is better and the limit is
+along for the ride. This re-scores each joint policy with its price untouched and
+its limit replaced by a constant.
+
+**Protocol:** same 30 held-out seeds, same `score_aware`.
+Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_ablation.py`).
+
+| policy | learned limit | pinned open 15,000 | pinned flat 12,353 |
+| --- | ---: | ---: | ---: |
+| joint SAC `rl_best` | **2.033M** | 1.689M (−344k) | 1.914M (−120k) |
+| joint BC→SAC raw | **2.094M** | 1.855M (−239k) | 1.943M (−152k) |
+| joint PPO `long_007` | **2.011M** | 1.903M (−108k) | 1.921M (−90k) |
+
+**Takeaways**
+
+- **The gap is not a price-policy artifact.** Removing the limit costs 90k–344k,
+  an order of magnitude more than the 1.2–3.6% that separates joint from price-only.
+- **A sensible constant does not recover it.** `rl_best`'s limit *averages* 12,578,
+  within 2% of the flat 12,353 — and pinning it there still costs 120k. The value
+  is not where the limit sits, it is **when it moves** (§8's figure 05, priced).
+- **The limit is what holds denied admission down.** Peak oversell goes 0.18 → 0.82
+  for `rl_best` the moment the limit stops moving.
+- **Caveat:** pinned arms are off-distribution — each policy priced for the limit it
+  learned. This measures how tightly the levers are **coupled**, not what a policy
+  trained for a fixed limit would score. That comparison is the price-only row in
+  §7 (2.003M–2.010M, above every pinned arm), which is why §7's gap stays the
+  number to quote for the second lever's worth.
+
+---
+
 ## Experiment takeaways
 
 1. **The earlier prototype fell short on engineering and metrics**, not because “RL cannot do RM.”
@@ -263,12 +296,15 @@ structural demand floor found in 5c, seen from the policy side.
    myopic on `score_aware` but trails every SAC-based joint policy on peak harvest.
 5. **Soft-day undersell is mostly structural** under current demand — do not use
    overall remain>1500 as the primary KPI; use soft-aware eval.
-6. **Recommended packages**
+6. **The second lever is load-bearing, and it is the *movement* that pays** (§9).
+   Pinning a joint policy's limit — even to a sensible constant near its own
+   average — costs 90k–344k and sends peak denied admission to 0.82.
+7. **Recommended packages**
    - Best `score_aware` with zero denied admission: **BC→SAC + safe SL**
    - Highest raw `score_aware`, if 71% peak oversell is acceptable: **BC→SAC**
    - The pure joint policy, and the one to read for what the levers buy: **joint SAC `rl_best`**
    - Simple 1D + zero oversell: **pace PPO**
-7. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
+8. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
 
 ---
 
@@ -288,6 +324,7 @@ structural demand floor found in 5c, seen from the policy side.
 | `runs/price_only_long/` | Section 4 tables |
 | `runs/pace_ppo/` | Section 5a table |
 | `runs/promo_ppo/` | Section 5b table |
+| `runs/ablate_selling_limit/` | Section 9 second-lever ablation |
 | `runs/soft_aware_eval/` | Section 6 demo of the stratified report |
 | `runs/tree_demand_sanity.md` | Early 30k-step sanity check, superseded by section 2 |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |

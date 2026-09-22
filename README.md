@@ -206,6 +206,7 @@ missing. Every one evaluates on held-out seeds 0–29.
 ```bash
 python runs/joint_vs_price_only_soft_aware/REPRODUCE.py   # the headline table
 python runs/both_goals/final_eval.py                       # oversell cap + MPC table
+python runs/ablate_selling_limit/run_ablation.py           # is the second lever load-bearing?
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -219,6 +220,7 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`docs/EXPERIMENTS.md`](docs/EXPERIMENTS.md) — index: which config ran, where its results and checkpoint land
 - [`docs/EXTENDING.md`](docs/EXTENDING.md) — add a demand model, algorithm, or controller; multi-product path
 - [`runs/explain_rl_best/README.md`](runs/explain_rl_best/README.md) — why the joint SAC behaves as it does, figure by figure
+- [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — does the second lever earn its place? (pin the limit, keep the price)
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the oversell cap, the price MPC, and the soft-night fill ceiling
 - [`runs/tree_demand_sanity.md`](runs/tree_demand_sanity.md) — early 30k-step sanity check, superseded by the campaigns
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

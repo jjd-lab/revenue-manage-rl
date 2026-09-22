@@ -1,0 +1,10 @@
+policy,limit_arm,score_aware,peak_oversell,mean_selling_limit,delta_vs_learned
+joint_sac_rl_best,learned,2033263.9,0.1765,12578.5,0.0
+joint_sac_rl_best,open_15000,1688778.38,0.8235,15000.0,-344485.53
+joint_sac_rl_best,fixed_12353,1913626.02,0.8824,12352.9,-119637.89
+joint_bc_sac_raw,learned,2094381.48,0.7059,12721.9,0.0
+joint_bc_sac_raw,open_15000,1855361.74,0.8235,15000.0,-239019.75
+joint_bc_sac_raw,fixed_12353,1942613.07,0.8235,12352.9,-151768.42
+joint_ppo_long_007,learned,2010885.26,0.3529,11687.5,0.0
+joint_ppo_long_007,open_15000,1903203.59,0.8235,15000.0,-107681.67
+joint_ppo_long_007,fixed_12353,1921221.44,0.9412,12352.9,-89663.81
