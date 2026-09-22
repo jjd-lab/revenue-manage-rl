@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Demo: soft-aware eval for bc_sac+safe_sl vs pace_ppo vs myopic.
 
-Writes runs/soft_aware_eval/comparison.md (and soft_aware_comparison.md).
+Writes runs/soft_aware_report_demo/soft_aware_comparison.md.
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ def main() -> None:
         extra_policies=extra,
     )
     print(out["table"].to_string(index=False))
-    print(f"\nWrote {OUT / 'comparison.md'}")
+    print(f"\nWrote {OUT / 'soft_aware_comparison.md'}")
 
 
 if __name__ == "__main__":

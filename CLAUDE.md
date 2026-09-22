@@ -32,7 +32,7 @@ trained weights, is **untracked raw material**, and must be retrained locally
   means `rprl-bc-sac` no longer reproduces the shipped checkpoint.
 - **`runs/` is findings, `artifacts/` is raw material.** Never commit `artifacts/`
   or move checkpoints into `runs/`. Do not hand-edit generated files in `runs/`
-  (`*.csv`, `*.png`, `comparison.md`, `soft_aware_*.md`) — rerun the `REPRODUCE.py`
+  (`*.csv`, `*.png`, `comparison.md`, `soft_aware_*.md`) — rerun the `run_headline.py`
   / `final_eval.py` there. `NOTES.md` and `README.md` in `runs/` are hand-written.
   Every run uses held-out seeds 0–29.
 - **Use `.venv` at the repo root** — `scripts/run_smoke.sh` sources it by path.

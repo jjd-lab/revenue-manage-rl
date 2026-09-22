@@ -12,7 +12,7 @@ from reservation_pricing.envs import make_env
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIGS = sorted((ROOT / "configs").glob("*.yaml")) + [
-    ROOT / "runs" / "soft_aware_eval" / "config_soft_aware.yaml"
+    ROOT / "runs" / "soft_aware_report_demo" / "config_soft_aware.yaml"
 ]
 
 
