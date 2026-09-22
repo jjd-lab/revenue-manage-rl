@@ -383,15 +383,6 @@
           <figcaption><strong>Closer-in is more expensive only on weekends, and only until about 40 days out.</strong> This is Joint SAC. Nine weekend nights go from about $109 a hundred days out to $117 around day 37, then down to $89. The seats left at the end would otherwise go unsold. Twenty-one weekday nights ease from about $90 to the $80 floor. Myopic is $92 on every night. More figures: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/explain_rl_best"><code>runs/explain_rl_best/</code></a>.</figcaption>
         </figure>
 
-        <h3 class="group-label">The late markdown was losing money</h3>
-        <p>Look again at the weekend line above. It rises to $117 around day 37, then falls to $89. A buyer on the last day pays less than a buyer three weeks earlier. A real venue cannot do that to the people who booked early.</p>
-        <p>So we forbade it. The rule is: the price may never go down. It may still go up.</p>
-        <p>Blocking the drops does not cost anything. It earns more. Take the trained policy, leave it exactly as it is, and refuse any price below yesterday's price. The score goes from 2,033,000 to 2,078,000, and the paired interval on that gain sits above zero. The weekend path now climbs from $108.50 to $118.20 and stays there. No retraining, and no markdown on any of the thirty nights.</p>
-        <p>The block is doing a lot of work. It overrides the policy on 2,610 of its 3,000 daily decisions. The policy keeps asking to cut the price, and it is wrong to ask every time.</p>
-        <p>Training a policy under the rule is a different story, and a worse one. Every attempt scored about 110,000 below the blocked policy. A retrained policy stops moving the price at all: $116.31 on every weekend day from a hundred days out to the last, and the $80 floor on weekdays. Under a rule that only lets the price rise, opening cheap is the move that keeps the most options open, so that is what it learns. Copying the blocked policy gets most of the way back, to 2,039,000 with no markdowns, but only if you stop there. Training on top of the copy undid it every time we tried.</p>
-        <p>The training did not fail. It did what it was told. The copy earns 54.6 on the training reward, and after training it earns 96.2. Over the same steps the score fell from 2,039,000 to 1,967,000. The reward and the score disagree about seats. The reward charges about $730 for any unsold seat. On a night with even one denied admission, it also takes away the whole bonus for filling the house. The score charges nothing for an unsold seat on a soft night. On a peak night it charges $200 for an unsold seat and $400 for a denied admission. So training dropped the soft nights to the $80 floor to fill 831 more seats, which cost $10,900 a night. On peak nights the copy overbooked 8 of 17. Training stopped that by selling fewer tickets, and gave up $127,000 of peak revenue a night. Holding the training closer to the copy would only slow that slide, so we did not try it.</p>
-        <p>A fine instead of a block does not work. We tried four strengths. The best one still cut the price 1,377 times. If the promise is that later buyers never pay less, it has to be a block. Details: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/price_monotone_up"><code>runs/price_monotone_up/</code></a>.</p>
-
         <figure>
           <img src="figures/f5_lift.png" alt="Grouped bars of mean revenue per night on thirteen soft nights and seventeen peak nights, joint SAC against myopic. Soft nights: 863 thousand against 871 thousand. Peak nights: 1,255 thousand against 1,186 thousand.">
           <figcaption><strong>The gain is about $69,000 a night on peak nights. Soft nights give back about $8,000.</strong> Soft revenue is still above a price of $80, so the soft part of the score does not charge that gap.</figcaption>
@@ -516,16 +507,61 @@
         </div>
         <p class="aside">With denied admission at zero, only Joint BC to SAC with the cap beats a price-only policy. The other joint policies do not.</p>
 
-        <h3 class="group-label">The reward decides the overbooking</h3>
-        <p>Every policy on this page learned from the same reward. It charges about $730 for an unsold seat, which is more than the ticket. On a night with even one denied admission, it also takes away the whole bonus for filling the house. The score is gentler: $200 for an unsold seat on a peak night, and $400 for each denied admission.</p>
-        <p>So we trained Joint SAC again with one change: a simpler reward. Revenue, minus $200 for each unsold seat and $400 for each denied admission, on every night. A venue could write that rule down. It does not need to know in advance which nights are quiet. Same settings, same training seed.</p>
-        <p>The score goes from 2,033,000 to 2,088,000, and the paired interval on that gain sits above zero. All of the gain is on peak nights, and it comes from overbooking. The new policy sells past capacity on 11 of 17 peak nights, up from 3. It charges more and leaves fewer seats empty. Quiet nights do not change. Each policy scores best on the reward it trained on.</p>
-        <p>With the cap, the new policy scores 2,096,000, close to capped Joint BC to SAC. But the cap no longer takes denied admission to zero. Two peak nights still turn people away. That is why it is not in the table above.</p>
-        <p>Read the reward as a price list. Each charge is what the policy is told a mistake costs, and the policy acts on those prices. Changing the price of an empty seat did nothing on quiet nights, because those nights cannot fill at any price. Changing the price of a denied admission changed how often the policy turned people away.</p>
-        <p>The score is a price list too. It charges $400 for a denied admission, the same as the new reward. The new policy turns away about 216 more people per peak night than Joint SAC, so every extra dollar per denied admission costs it about 216 points. Its lead is gone at about $652. If turning a ticket holder away costs the venue less than that, counting refunds, compensation and the lost customer, the new reward is the better choice. If it costs more, the old one is. This is one training run. Details: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/objective"><code>runs/objective/</code></a>.</p>
-
         <p>What if the forecast is wrong? The myopic rule and the selling-limit controllers use the same demand model that generates the nights. A real venue does not get that model. If that forecast is wrong about price sensitivity by a plausible amount, myopic alone loses 3.5 to 5.8 percent. Capped Joint BC to SAC over pace is 3.6 percent, and that interval sits above zero. The joint policies do not move. Scores stay the same, and mean prices stay the same to the cent, because those policies never read a demand model. They see bookings and the calendar.</p>
         <p>A joint policy does not need the forecast to be right, because it does not use a forecast. A forecast that is wrong only about the level of demand changes no price, for any policy here. Demand enters as a multiple, so that level cancels out of the sum that picks a price. Only a wrong price sensitivity changes the price.</p>
+
+        <h3 class="group-label">The late markdown was losing money</h3>
+        <p>Look again at the weekend line in the price-path chart above. It rises to $117 around day 37, then falls to $89, so a buyer on the last day pays less than one who booked three weeks earlier. A venue cannot do that to its early buyers. So we added a rule: the price may rise, but never fall.</p>
+        <p>Blocking the drops earns more. Keep the trained policy as it is and refuse any price below yesterday's. The score goes from 2,033,000 to 2,078,000, and the paired interval on that gain sits above zero. The block overrides 2,610 of the policy's 3,000 daily decisions, and none of the thirty nights has a markdown.</p>
+        <p>Training a policy under the rule does worse, by about 110,000. The retrained policy stops moving the price and opens cheap, because under a rule that only lets the price rise, opening cheap keeps the most options open. Copying the blocked policy gets back to 2,039,000 with no markdowns, but further training undoes it. That training follows the reward, which charges about $730 for every empty seat. So it drops quiet nights to the $80 floor and sells fewer tickets on busy nights to avoid overbooking, and both cost score.</p>
+        <p>A fine instead of a block does not work. The best of four strengths still cut the price 1,377 times. Details: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/price_monotone_up"><code>runs/price_monotone_up/</code></a>.</p>
+
+        <h3 class="group-label">The reward decides the overbooking</h3>
+        <p>The training reward in the Setting section is a price list: it tells the policy what each mistake costs. We changed two of those prices and trained Joint SAC again, with the same settings and the same training seed. The new prices are ones a venue could write down without knowing in advance which nights will be quiet.</p>
+
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <caption>Same policy, two price lists</caption>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Original reward</th>
+                <th>New reward</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>An empty seat costs</td>
+                <td>$730</td>
+                <td>$200</td>
+              </tr>
+              <tr>
+                <td>A denied admission costs</td>
+                <td>$450, and the first one loses the whole bonus</td>
+                <td>$400</td>
+              </tr>
+              <tr>
+                <td>Peak nights that turn people away</td>
+                <td>3 of 17</td>
+                <td>11 of 17</td>
+              </tr>
+              <tr class="lead">
+                <td>Score</td>
+                <td>2.033</td>
+                <td>2.088</td>
+              </tr>
+              <tr>
+                <td>Score with the cap</td>
+                <td>2.009</td>
+                <td>2.096</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="aside">Scores are in millions. The empty-seat price in the original reward is the $650 charge plus the $80 of bonus the seat does not earn. The paired interval on the 0.055 gain sits above zero.</p>
+
+        <p>Under the original reward, the first person turned away costs the whole bonus, so the policy keeps a safety margin. Under the new one, each denied admission costs a flat $400, so the policy overbooks whenever it expects enough no-shows. That is where the gain comes from: peak nights, which sell more and leave fewer seats empty. Quiet nights barely change, because they cannot fill at any price.</p>
+        <p>Two warnings. First, the cap no longer takes denied admission to zero: two peak nights still turn people away, which is why the new policy is not in the table above. Second, the score also charges $400 for a denied admission, the same as the new reward. The new policy turns away about 216 more people per peak night, so its lead disappears if a denied admission really costs the venue more than about $652, counting refunds, compensation and the lost customer. This is one training run. Details: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/objective"><code>runs/objective/</code></a>.</p>
 
         <div class="sheet-wrap">
           <table class="sheet kv">
