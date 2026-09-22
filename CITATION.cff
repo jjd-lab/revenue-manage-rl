@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Reservation pricing and availability control with reinforcement learning"
+authors:
+  - name: "jjd-lab"
+type: software
+license: MIT
+repository-code: "https://github.com/jjd-lab/revenue-manage-rl"
+abstract: >-
+  A two-lever revenue-management environment (price and selling limit over a
+  100-day booking window for a fictional 10,000-seat amphitheater), classical
+  baselines, Stable-Baselines3 agents, a control layer that can hold the second
+  lever, and a soft-day-aware evaluation protocol. All demand data is synthetic.
+keywords:
+  - reinforcement learning
+  - revenue management
+  - dynamic pricing
+  - overbooking

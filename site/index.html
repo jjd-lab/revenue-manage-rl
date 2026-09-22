@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Both levers, or just the price — RL for reservation pricing and availability control</title>
+  <meta name="description" content="A reinforcement-learning experiment on a fictional 10,000-seat amphitheater: does an agent that sets both the ticket price and the selling limit beat one that sets the price alone? Five charts, synthetic demand, held-out nights, and an oracle ceiling before any fill rate is trusted.">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Both levers, or just the price">
+  <meta property="og:description" content="Price and selling limit from one policy, or price alone with the limit from a formula? A revenue-management experiment with reinforcement learning on synthetic demand.">
+  <meta property="og:image" content="https://jjd-lab.github.io/revenue-manage-rl/figures/f1_score.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f7f4ef'/%3E%3Ccircle cx='11' cy='16' r='5' fill='%238c3a2f'/%3E%3Ccircle cx='22' cy='16' r='5' fill='%231c1917'/%3E%3C/svg%3E">
+  <style>
+    @font-face { font-family: "Fraunces"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("fonts/fraunces-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap; src: url("fonts/public-sans-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Source Serif 4"; font-style: normal; font-weight: 200 900; font-display: swap; src: url("fonts/source-serif-4-latin.woff2") format("woff2"); }
+    @font-face { font-family: "Source Serif 4"; font-style: italic; font-weight: 200 900; font-display: swap; src: url("fonts/source-serif-4-italic-latin.woff2") format("woff2"); }
+
+    :root {
+      --ink: #1c1917;
+      --muted: #6f675f;
+      --rule: #d9d3c9;
+      --paper: #f7f4ef;
+      --accent: #8c3a2f;
+      --measure: 38rem;
+      --figure: 46rem;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: 1.125rem;
+      line-height: 1.58;
+    }
+    a { color: inherit; text-decoration-color: var(--rule); text-underline-offset: 0.15em; }
+    a:hover { text-decoration-color: var(--accent); }
+    .skip { position: absolute; left: -999px; top: 0; background: var(--ink); color: var(--paper); padding: 0.5rem 0.8rem; }
+    .skip:focus { left: 1rem; z-index: 2; }
+    .layout {
+      display: grid;
+      grid-template-columns: 11rem 1fr;
+      gap: 2rem;
+      max-width: 60rem;
+      margin: 0 auto;
+      padding: 3.5rem 1rem 5rem;
+    }
+    nav {
+      position: sticky;
+      top: 2rem;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    nav a { text-decoration: none; color: var(--muted); }
+    nav a:hover { color: var(--ink); }
+    main { min-width: 0; }
+    header, section, footer { max-width: var(--figure); }
+    header > *, section > p, section > ol, section > ul, footer > p, figcaption { max-width: var(--measure); }
+    .kicker {
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 0 0 1rem;
+    }
+    h1 {
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 500;
+      font-size: 3.4rem;
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      margin: 0 0 1.25rem;
+    }
+    .standfirst {
+      font-size: 1.28rem;
+      line-height: 1.4;
+      margin: 0 0 2.5rem;
+    }
+    h2 {
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 500;
+      font-size: 1.65rem;
+      margin: 3rem 0 0.8rem;
+    }
+    h2 span {
+      display: block;
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    p { margin: 0 0 0.9rem; }
+    ol.diffs { margin: 0.4rem 0 1rem; padding-left: 1.2rem; }
+    ol.diffs li { margin: 0.35rem 0; }
+    .names {
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .policies { list-style: none; padding: 0; margin: 0 0 1.2rem; }
+    .policies li { margin: 0.55rem 0; }
+    .flow {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      padding: 0;
+      margin: 0.5rem 0 0;
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.3;
+    }
+    .flow li {
+      margin: 0;
+      padding-top: 0.55rem;
+      border-top: 1px solid var(--ink);
+    }
+    figure { margin: 2rem 0 2.4rem; }
+    figure img { width: 100%; height: auto; display: block; }
+    figcaption {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-style: italic;
+      font-size: 0.98rem;
+      color: var(--ink);
+      margin-top: 0.65rem;
+    }
+    figcaption strong { font-style: normal; font-weight: 560; color: var(--accent); }
+    .choices { list-style: none; padding: 0; margin: 1.4rem 0 0; }
+    .choices li { margin: 0.3rem 0; }
+    .refs {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.92rem;
+    }
+    .refs li { margin: 0.45rem 0; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--rule);
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    code { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-size: 0.86em; }
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; padding-top: 2rem; gap: 1rem; }
+      nav { position: static; flex-direction: row; flex-wrap: wrap; gap: 0.5rem 1rem; }
+      h1 { font-size: 2.4rem; }
+      .flow { grid-template-columns: 1fr 1fr; }
+    }
+    @media print {
+      nav, .skip { display: none; }
+      body { background: #fff; }
+      figure { break-inside: avoid; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#problem">Skip to content</a>
+  <div class="layout">
+    <nav aria-label="Sections">
+      <a href="#problem">01 Problem</a>
+      <a href="#place">02 Literature</a>
+      <a href="#policies">03 Policies</a>
+      <a href="#setting">04 Setting</a>
+      <a href="#findings">05 Findings</a>
+      <a href="#limits">06 Limits</a>
+      <a href="#references">07 References</a>
+    </nav>
+    <main>
+      <header>
+        <p class="kicker">A revenue-management experiment</p>
+        <h1>Both levers, or just the price</h1>
+        <p class="standfirst">One policy sets the ticket price and the selling limit together. Another sets only the price. On a fictional amphitheater, with synthetic demand, the joint policies win — and not by filling the quiet nights.</p>
+      </header>
+
+      <section id="problem">
+        <h2><span>01</span>Problem</h2>
+        <p>Ten thousand seats expire on one night, sold over a hundred-day booking horizon. Demand is stochastic and price-sensitive, and cancellations mean the house can be sold past the seats that exist.</p>
+        <p>Two controls each day. <strong>Price</strong>, $80 to $120. The <strong>selling limit</strong>, 10,000 to 15,000: the most bookings on hand the venue will accept, so everything above 10,000 is an overbooking buffer.</p>
+        <p>Selling past ten thousand is deliberate. People cancel, and some who do not cancel fail to arrive, so a house that stops selling at capacity opens with empty seats — and a seat empty on the night is revenue nobody can recover the next morning. Airlines overbook for the same reason. The selling limit is the ceiling on how far past capacity the venue will go, and it is the second thing the agent has to decide. Revenue management calls it a booking limit or an authorization level; the standard treatment is Talluri and van Ryzin (2004).</p>
+        <p>Maximize revenue, charged for both ways of getting the night wrong: <strong>denied admission</strong>, more show-ups than seats, and <strong>spoilage</strong>, seats empty when the curtain rises. One policy for both controls, or price only, with the limit from a formula?</p>
+        <p class="names">In the code and the tables: <code>selling_limit</code>, <code>remain_inv</code> (negative means denied admission), <code>oversell</code>.</p>
+      </section>
+
+      <section id="place">
+        <h2><span>02</span>Where this sits</h2>
+        <p>Quantity control protects seats at given fares — Littlewood (1972), then Belobaba’s expected marginal seat revenue heuristics. Dynamic pricing sets the price path from capacity left — Gallego and van Ryzin (1994). McGill and van Ryzin (1999) survey both lines. Gosavi, Bandla, and Das (2002) reported gains over a nested-EMSR heuristic with reinforcement learning, in a simulation with discrete fare classes. This is not that benchmark.</p>
+        <ol class="diffs">
+          <li><strong>Both controls, one policy.</strong> Price-only is run on the same nights, so the cost of dropping the limit is measured.</li>
+          <li><strong>No demand forecast in view.</strong> The agent sees only where bookings stand and what day it is, and still learns a booking curve.</li>
+          <li><strong>Spoilage is the wrong headline.</strong> At the floor price, every soft date is still more than 1,500 seats short.</li>
+          <li><strong>Overbooking risk after training.</strong> A cap, not a new reward, cuts peak denied admission from 0.71 of nights to none.</li>
+        </ol>
+      </section>
+
+      <section id="policies">
+        <h2><span>03</span>The policies</h2>
+        <ul class="policies">
+          <li><strong>Myopic.</strong> Not learned. Each day, the price that maximizes this period’s expected revenue under the true demand model — what a forecast-and-optimize rule does with a perfect forecast.</li>
+          <li><strong>Floor price.</strong> Not learned. Always $80, limit wide open.</li>
+          <li><strong>PPO.</strong> Learns on-policy, from fresh rollouts. <strong>Joint PPO</strong> sets both controls. <strong>Price-only PPO</strong> sets the price; an analytic controller sets the limit. <strong>Pace PPO</strong> is price-only PPO trained with a booking-curve pace penalty and extra weight on soft nights.</li>
+          <li><strong>Joint SAC.</strong> An actor-critic that learns off-policy, from a replay buffer, with a bonus for trying actions. It fits two continuous levers.</li>
+          <li><strong>BC to SAC.</strong> Behaviour cloning: watch the myopic rule play three hundred nights and copy it, so training does not start from noise, then let SAC improve on the copy. The imitation takes both of the expert’s numbers, the limit as well as the price. It fills hardest and oversells most.</li>
+          <li><strong>The cap.</strong> Not a policy but a projection applied after training: when a joint policy’s limit would let expected show-ups pass 1.02 times capacity, the limit is lowered. No retraining.</li>
+        </ul>
+        <ol class="flow" aria-label="Behaviour cloning, then SAC">
+          <li>Expert rollouts</li>
+          <li>Clone the actor</li>
+          <li>Seed the buffer</li>
+          <li>Fine-tune</li>
+        </ol>
+      </section>
+
+      <section id="setting">
+        <h2><span>04</span>Setting</h2>
+        <p>Demand is synthetic. A tree predicts base demand from the calendar and from how far out the night is; price then bends it linearly around $100. Cancellations are Weibull. No-shows run near 16 percent. No real box office is in this repository.</p>
+        <p>Thirty held-out nights, June and December, seeds 0 to 29 — the same thirty nights for every policy, every table, and every chart on this page. They split into thirteen soft nights and seventeen peak nights. The score adds a peak part and a soft part. Peak: revenue, less $200 for every seat left unsold and $400 for every seat oversold. Soft: revenue, less its gap to a floor-price oracle — and that gap is zero for every policy published here. So peak revenue, and denied admission, decide the order.</p>
+      </section>
+
+      <section id="findings">
+        <h2><span>05</span>Findings</h2>
+
+        <figure>
+          <img src="figures/f1_score.png" alt="Dot plot of soft-aware score for eight policies, from 1.82 million for the floor price up to 2.09 million. In order: BC to SAC 2.09, BC to SAC with the cap 2.08, joint SAC 2.03, joint PPO 2.01, pace PPO 2.01, price-only PPO 2.00, myopic 1.97, floor price 1.82.">
+          <figcaption><strong>Joint policies take the top three places.</strong> Raw BC to SAC scores highest but see the next chart; with the cap it leads the best price-only policy by 3.6 percent, and joint SAC leads it by 1.2. Red is the top score, ink is joint, brown is price-only, gray is not learned. Dots on an axis that starts near 1.8 million, so read the printed values.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="figures/f2_frontier.png" alt="Scatter of soft-aware score against the share of peak nights with denied admission. BC to SAC is highest and at 0.71. The cap moves it to zero denied admission with almost no drop in score. Joint SAC sits at 0.18, joint PPO at 0.35. Every price-only policy and both baselines sit at zero.">
+          <figcaption><strong>The cap gives back the denied admissions and keeps the score</strong> — from 0.71 of peak nights to none, for 0.6 percent of score, no retraining.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="figures/f3_ceiling.png" alt="Thirteen bars of unsold seats on soft nights, one per seed. Every bar clears a dashed line at 1,500. The shortest still sits near 1,900; most sit near 2,350.">
+          <figcaption><strong>No price fills these thirteen nights.</strong> Dashed line: 1,500 unsold seats. Limit wide open, demand noise off, every price on the grid tried.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="figures/f4_booking_curve.png" alt="Mean price against days before the performance. The myopic price is flat at 92 dollars. The joint SAC price rises through the middle of the horizon and drops through the last three weeks.">
+          <figcaption><strong>A booking curve against a flat $92.</strong> Joint SAC prices weekends near $109 and weekdays near $84, with no demand model in view, and clears in the last three weeks. More figures: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/explain_rl_best"><code>runs/explain_rl_best/</code></a>.</figcaption>
+        </figure>
+
+        <figure>
+          <img src="figures/f5_lift.png" alt="Grouped bars of mean revenue per night on thirteen soft nights and seventeen peak nights, joint SAC against myopic. Soft nights: 863 thousand against 871 thousand. Peak nights: 1,255 thousand against 1,186 thousand.">
+          <figcaption><strong>The gain is peak harvest, about $69,000 a night. Soft nights give back about $8,000</strong> — still above the floor-price oracle, so the soft score charges nothing for it.</figcaption>
+        </figure>
+
+        <ul class="choices">
+          <li><strong>Best score with no denied admission.</strong> BC to SAC, plus the cap.</li>
+          <li><strong>Highest raw score, if denied admission is acceptable.</strong> BC to SAC.</li>
+          <li><strong>The one whose behaviour is easiest to read.</strong> Joint SAC — the booking curve and the calendar premium above are its.</li>
+          <li><strong>One lever, no denied admission.</strong> Pace PPO.</li>
+        </ul>
+      </section>
+
+      <section id="limits">
+        <h2><span>06</span>Limits</h2>
+        <p>One synthetic demand model, one product, one venue, one set of thirty seeds. Training is not bit-for-bit the same on another machine. An earlier draw of thirty nights put joint SAC first among the three joint policies; their order among themselves is within seed noise, their lead over every price-only policy held in both draws. The ranking belongs to this environment.</p>
+        <p>The myopic rule also flatters the comparison, in a way worth stating plainly. It nominally sets both controls, but its limit never binds: the limit sits at 12,353 while the rule never holds more than 11,402 bookings at once — a ceiling it never reaches, like a credit limit well above anything you ever spend. Move that limit anywhere from there up to the 15,000 cap and the revenue is identical to the cent. So myopic is really a price-only policy with a second control that does nothing, and beating it is not by itself an answer to the two-lever question. Pace PPO, price-only by construction, is the honest one-lever benchmark: the joint policies clear it by 1.2 to 3.6 percent. Nothing is wrong with the myopic rule — at $80 rather than its own $92 the same venue presses the same ceiling hard — its price simply keeps it away from the constraint.</p>
+        <p>What travels is the method: check an oracle ceiling before trusting a fill rate, check whether a baseline’s constraints bind before crediting them, and keep overbooking risk in a projection rather than in the reward.</p>
+      </section>
+
+      <section id="references">
+        <h2><span>07</span>References and further reading</h2>
+        <ul class="refs">
+          <li>Littlewood, K. (1972). Forecasting and control of passenger bookings. AGIFORS Symposium.</li>
+          <li>Belobaba, P. (1989). Application of a probabilistic decision model to airline seat inventory control. <em>Operations Research</em>.</li>
+          <li>Gallego, G. and van Ryzin, G. (1994). Optimal dynamic pricing of inventories with stochastic demand over finite horizons. <em>Management Science</em>.</li>
+          <li>McGill, J. and van Ryzin, G. (1999). Revenue management: research overview and prospects. <em>Transportation Science</em>.</li>
+          <li>Gosavi, A., Bandla, N., and Das, T. (2002). A reinforcement learning approach to a single leg airline revenue management problem with multiple fare classes and overbooking. <em>IIE Transactions</em>.</li>
+          <li>Talluri, K. and van Ryzin, G. (2004). <em>The Theory and Practice of Revenue Management</em>. Springer.</li>
+        </ul>
+      </section>
+
+      <footer>
+        <p>Code, tables, and the experiment log: <a href="https://github.com/jjd-lab/revenue-manage-rl">github.com/jjd-lab/revenue-manage-rl</a>. Synthetic demand, generated in this repository; the running record is <a href="https://github.com/jjd-lab/revenue-manage-rl/blob/main/docs/EXPERIMENT_LOG.md"><code>docs/EXPERIMENT_LOG.md</code></a>.</p>
+        <p>How these charts were made: <code>scripts/build_site_figures.py</code> redraws all five from the CSV tables committed under <code>runs/</code>; no checkpoint is needed to rebuild them.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

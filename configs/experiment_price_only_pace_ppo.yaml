@@ -1,0 +1,41 @@
+# Price-only PPO with pace (booking-curve) reward + soft-day upweight.
+# Analytic SL; tree_elastic via default.yaml merge.
+#
+# Training reward is shaped (pace + soft-day mult). Business metrics in info /
+# eval (true_revenue, remain_inv, undersell rates) stay unshaped.
+
+control:
+  price_only: true
+  selling_limit:
+    kind: analytic
+    overbook_factor: 1.05
+    low_remain_frac: 0.05
+
+env:
+  reward:
+    pace_reward: true
+    pace_schedule: linear   # or concave (front-loaded target)
+    pace_penalty: 5.0
+    pace_target_final: 0.95
+    soft_day_upweight: true
+    soft_day_weekday_factor: 1.5
+    soft_day_offpeak_factor: 1.25
+    soft_day_base_threshold: 90.0   # tree base below this also counts as soft
+    soft_day_base_factor: 1.25
+    soft_day_sample_boost: 2.0      # train months: resample hard peak weekends less
+
+algorithm:
+  name: ppo
+  ent_coef: 0.02
+  n_envs: 2
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 42
+  model_dir: artifacts/pace_ppo
+  run_name: ppo_pace
+  log_dir: runs/pace_ppo
+
+eval:
+  n_episodes: 30

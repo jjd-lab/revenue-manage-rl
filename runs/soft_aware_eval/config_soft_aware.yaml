@@ -1,0 +1,25 @@
+demand:
+  kind: tree_elastic
+eval:
+  n_episodes: 30
+  soft_aware:
+    rule: structural
+    peak_months:
+    - 7
+    - 8
+    - 11
+    - 12
+    weekend_dow:
+    - 5
+    - 6
+    soft_focus_months:
+    - 6
+    base_demand_threshold: 90.0
+    soft_oracle: min_price
+    floor_price_tol: 1.0
+    undersell_threshold: 1500.0
+    lambda_peak: 200.0
+    mu_soft: 200.0
+    soft_score_mode: gap_to_oracle
+tune:
+  shortfall_weight: 200.0

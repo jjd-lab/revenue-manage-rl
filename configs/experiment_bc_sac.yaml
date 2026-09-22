@@ -1,0 +1,44 @@
+# BC warm-start from myopic_greedy on tree_elastic → SAC fine-tune
+# Usage: rprl-bc-sac -c configs/experiment_bc_sac.yaml
+demand:
+  kind: tree_elastic
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 1000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+  train_freq: 1
+  gradient_steps: 1
+
+bc:
+  expert_policy: myopic_greedy
+  n_episodes: 300          # train-month rollouts for the BC dataset
+  n_grid: 41
+  epochs: 50
+  batch_size: 256
+  lr: 0.001
+  log_std_target: -1.0
+  seed_replay_buffer: true
+  critic_warm_steps: 1000
+  learning_starts: 500     # buffer already has expert data
+
+train:
+  total_timesteps: 150000
+  seed: 42
+  model_dir: artifacts/bc_sac
+  run_name: bc_sac
+  log_dir: runs/bc_sac
+
+eval:
+  n_episodes: 30
+
+tune:
+  shortfall_weight: 200.0

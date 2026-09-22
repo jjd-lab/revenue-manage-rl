@@ -1,0 +1,69 @@
+# Experiment index
+
+One row per experiment. The **ID** is the single name that ties a config to its run
+directory and its checkpoint: every runnable config sets `train.run_name` to its ID,
+so training writes `<model_dir>/<ID>/` and `<log_dir>/<ID>/` with no guesswork.
+
+`docs/EXPERIMENT_LOG.md` remains the source of truth for what each result *means*;
+this page only says where things live. `artifacts/` is untracked — see
+"Model checkpoints" in `README.md` — so the checkpoint column is what a retrain
+produces, not what you will find after a fresh clone.
+
+## Training experiments
+
+| ID | Config | Results in | Curated checkpoint | Log |
+| --- | --- | --- | --- | --- |
+| `long_sac` | `tree_long_sac.yaml` | `runs/tree_long/` | `artifacts/tree_long/best/rl_best.zip` | §2, §7 |
+| `long_007` | `tree_long_007.yaml` | `runs/tree_long/` | `artifacts/tree_long/best/rl_ppo_long_007.zip` | §2, §7 |
+| `long_000` | `tree_long_000.yaml` | `runs/tree_long/` | not kept | §2 |
+| `long_003` | `tree_long_003.yaml` | `runs/tree_long/` | not kept | §2 |
+| `ppo_screen` | `tree_long_screen.yaml` | `runs/tree_long/` | not kept | §2 |
+| `bc_sac` | `experiment_bc_sac.yaml` | `runs/bc_sac/` | `artifacts/bc_sac/rl_bc_sac_final.zip` | §3 |
+| `ppo_analytic` | `experiment_price_only_ppo_long.yaml` | `runs/price_only_long/` | `artifacts/price_only_long/rl_ppo_analytic.zip` | §4 |
+| `sac_optimize1d` | `experiment_price_only_sac_long.yaml` | `runs/price_only_long/` | not kept | §4 |
+| `ppo_pace` | `experiment_price_only_pace_ppo.yaml` | `runs/pace_ppo/` | `artifacts/pace_ppo/rl_pace_ppo.zip` | §5a |
+| `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | not kept | §5b |
+| `bc_sac_safe_sl` | `experiment_bc_sac_safe_sl.yaml` | `runs/both_goals/` | reuses the `bc_sac` checkpoint | §5c |
+| `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
+
+The last two are wrappers, not new policies: safe SL projects a trained joint action
+down, and the price MPC post-processes a trained price. Both run an existing
+checkpoint under a different config, which is why they ship no weights of their own.
+
+## Analyses (no training)
+
+| What | Entry point | Results in | Log |
+| --- | --- | --- | --- |
+| $80 soft-day oracle ceiling | `runs/oracle_ceiling/run_oracle.py` | `runs/oracle_ceiling/` | §5c |
+| Final soft-aware head-to-head | `runs/joint_vs_price_only_soft_aware/REPRODUCE.py` | same directory | §7 |
+| Soft-aware report demo (two policies) | `runs/soft_aware_eval/run_demo.py` | `runs/soft_aware_eval/` | §6 |
+| Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
+| Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
+
+Every analysis and every training campaign evaluates on held-out seeds 0–29.
+
+## Configs that are not experiments
+
+| Config | Role |
+| --- | --- |
+| `default.yaml` | Full schema; every other config overrides a subset of it |
+| `algo_ppo/algo_sac/algo_td3.yaml` | Algorithm swap only |
+| `demand_linear_legacy.yaml` | Demand swap only, for the A/B against `tree_elastic` |
+| `experiment_tree_ppo.yaml` | The README quick-start demo; names its run with `--run-name` |
+| `experiment_price_only_ppo.yaml` | Short price-only variant used by the tests and as the eval config for the shipped price-only PPO (its `control` block equals the long config's) |
+| `experiment_price_only_sac.yaml` | Short price-only SAC variant (`optimize_1d` limit); an example, not a published run |
+
+These deliberately set no `run_name`: a fragment merged onto `default.yaml` has no
+single identity, and an ad-hoc run should fall back to the timestamped name rather
+than silently overwrite a named experiment's directory.
+
+## Naming rule for new experiments
+
+1. Pick an ID that reads as `<algo>_<variant>` (`ppo_pace`, `sac_optimize1d`).
+2. Set `train.run_name` to it, plus `model_dir` / `log_dir` for the family it belongs to.
+   The config's filename is a family prefix (`experiment_price_only_*`,
+   `tree_long_*`), not the ID; this table is the mapping.
+3. Add a row here.
+
+CLI `--run-name` still overrides the config, so a one-off sweep never collides with
+a named experiment.

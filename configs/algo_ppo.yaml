@@ -1,0 +1,17 @@
+algorithm:
+  name: ppo
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  gamma: 1.0
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.02
+  net_arch:
+  - 256
+  - 256
+  n_envs: 4
+
+train:
+  total_timesteps: 200000
+  seed: 42

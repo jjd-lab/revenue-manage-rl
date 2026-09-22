@@ -1,0 +1,9 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.testing.pytestEnabled": true,
+  "python.analysis.extraPaths": ["src"],
+  "files.watcherExclude": {
+    "**/.venv.nosync/**": true,
+    "**/artifacts/**": true
+  }
+}

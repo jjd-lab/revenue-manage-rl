@@ -1,0 +1,23 @@
+# Price-only PPO long run: analytic SL, tree_elastic
+control:
+  price_only: true
+  selling_limit:
+    kind: analytic
+    overbook_factor: 1.05
+    low_remain_frac: 0.05
+
+algorithm:
+  name: ppo
+  ent_coef: 0.02
+  n_envs: 2
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 42
+  model_dir: artifacts/price_only_long
+  run_name: ppo_analytic
+  log_dir: runs/price_only_long
+
+eval:
+  n_episodes: 30

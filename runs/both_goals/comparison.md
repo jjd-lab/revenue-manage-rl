@@ -1,0 +1,25 @@
+# Both goals evaluation comparison
+
+demand.kind: `tree_elastic` | held-out months 6 & 12 | n=30 | `score = mean_true_revenue - 200 * mean_capacity_shortfall`
+
+| policy | n_episodes | mean_true_revenue | mean_load_factor | mean_remain_inv | oversell_rate | undersell_gt1500_rate | sellout_rate | score |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| bc_sac+safe_sl_mix0.4 | 30 | 1106687.44 | 0.8897 | 1103.46 | 0.2333 | 0.4333 | 0.2333 | 874292.66 |
+| bc_sac_raw | 30 | 1114825.22 | 0.8964 | 1036.19 | 0.4 | 0.4333 | 0.4 | 870575.76 |
+| bc_sac+safe_sl | 30 | 1098025.17 | 0.8826 | 1174.03 | 0.0 | 0.4333 | 0.0 | 863219.56 |
+| pace_ppo | 30 | 1072382.06 | 0.8797 | 1202.7 | 0.0 | 0.4333 | 0.0 | 831842.17 |
+| pace/mpc | 30 | 1072382.06 | 0.8797 | 1202.7 | 0.0 | 0.4333 | 0.0 | 831842.17 |
+| bc_sac+safe_sl_hard | 30 | 1085093.9 | 0.8714 | 1286.48 | 0.0 | 0.4333 | 0.0 | 827798.07 |
+| rl_best | 30 | 1085362.93 | 0.8697 | 1302.87 | 0.1 | 0.4333 | 0.1 | 823061.29 |
+
+## Artifact paths
+
+- `bc_sac_raw`: `artifacts/bc_sac/rl_bc_sac_final.zip`
+- `bc_sac+safe_sl`: `artifacts/bc_sac/rl_bc_sac_final.zip`
+- `bc_sac+safe_sl_hard`: `artifacts/bc_sac/rl_bc_sac_final.zip`
+- `bc_sac+safe_sl_mix0.4`: `artifacts/bc_sac/rl_bc_sac_final.zip`
+- `pace_ppo`: `artifacts/pace_ppo/rl_pace_ppo.zip`
+- `pace/mpc`: `artifacts/pace_ppo/rl_pace_ppo.zip`
+- `rl_best`: `artifacts/tree_long/best/rl_best.zip`
+
+**Recommended safe-SL variant:** `bc_sac+safe_sl` (score=863220, oversell=0.000)

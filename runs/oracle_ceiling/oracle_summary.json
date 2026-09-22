@@ -1,0 +1,64 @@
+{
+  "soft": {
+    "slice": "soft",
+    "n": 13,
+    "always_min_price_80": {
+      "mean_remain": 2250.0043217830384,
+      "mean_load": 0.7749995678216961,
+      "mean_revenue": 858099.8309238541,
+      "undersell_gt1500_rate": 1.0,
+      "oversell_rate": 0.0,
+      "min_remain": 1895.4040268618655,
+      "max_remain": 2356.457927879779
+    },
+    "myopic_grid_max_sl": {
+      "mean_remain": 3150.0038109578654,
+      "mean_load": 0.6849996189042133,
+      "mean_revenue": 872216.9571827861,
+      "undersell_gt1500_rate": 1.0,
+      "oversell_rate": 0.0,
+      "min_remain": 2836.5829047152292,
+      "max_remain": 3244.095062921021
+    },
+    "best_constant_price": {
+      "mean_remain": 2250.0043217830384,
+      "mean_load": 0.7749995678216961,
+      "mean_revenue": 858099.8309238541,
+      "undersell_gt1500_rate": 1.0,
+      "oversell_rate": 0.0,
+      "min_remain": 1895.4040268618655,
+      "max_remain": 2356.457927879779
+    }
+  },
+  "all": {
+    "slice": "all_heldout",
+    "n": 30,
+    "always_min_price_80": {
+      "mean_remain": -339.10114909764815,
+      "mean_load": 1.0339101149097647,
+      "mean_revenue": 1113640.0263141312,
+      "undersell_gt1500_rate": 0.43333333333333335,
+      "oversell_rate": 0.5666666666666667,
+      "min_remain": -3500.0000000000127,
+      "max_remain": 2356.457927879779
+    },
+    "myopic_grid_max_sl": {
+      "mean_remain": 468.26036915238933,
+      "mean_load": 0.953173963084761,
+      "mean_revenue": 1175434.7655840004,
+      "undersell_gt1500_rate": 0.43333333333333335,
+      "oversell_rate": 0.3,
+      "min_remain": -3500.0000000000036,
+      "max_remain": 3244.095062921021
+    },
+    "best_constant_price": {
+      "mean_remain": 795.5030936093892,
+      "mean_load": 0.920449690639061,
+      "mean_revenue": 1177506.6329847379,
+      "undersell_gt1500_rate": 0.43333333333333335,
+      "oversell_rate": 0.2,
+      "min_remain": -1093.110807307421,
+      "max_remain": 2356.457927879779
+    }
+  }
+}

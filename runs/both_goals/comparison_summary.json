@@ -1,0 +1,142 @@
+[
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1114825.2198786708,
+    "std_true_revenue": 248018.6902903702,
+    "mean_shaped_return": 76.56163485008005,
+    "mean_load_factor": 0.8963807139993798,
+    "mean_remain_inv": 1036.192860006204,
+    "mean_sellout_day": 6.5,
+    "sellout_rate": 0.4,
+    "score": 870575.7579248835,
+    "extras": {
+      "mean_capacity_shortfall": 1221.2473097689362,
+      "oversell_rate": 0.4,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "bc_sac_raw",
+    "model_path": "artifacts/bc_sac/rl_bc_sac_final.zip",
+    "oversell_rate": 0.4,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1098025.1734227138,
+    "std_true_revenue": 235177.10156965198,
+    "mean_shaped_return": 104.09846866822167,
+    "mean_load_factor": 0.8825971935971922,
+    "mean_remain_inv": 1174.0280640280782,
+    "mean_sellout_day": NaN,
+    "sellout_rate": 0.0,
+    "score": 863219.5606170981,
+    "extras": {
+      "mean_capacity_shortfall": 1174.0280640280782,
+      "oversell_rate": 0.0,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "bc_sac+safe_sl",
+    "model_path": "artifacts/bc_sac/rl_bc_sac_final.zip",
+    "oversell_rate": 0.0,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1085093.9001587143,
+    "std_true_revenue": 229695.99957307836,
+    "mean_shaped_return": 94.59641062715777,
+    "mean_load_factor": 0.8713520830291593,
+    "mean_remain_inv": 1286.4791697084065,
+    "mean_sellout_day": NaN,
+    "sellout_rate": 0.0,
+    "score": 827798.066217033,
+    "extras": {
+      "mean_capacity_shortfall": 1286.4791697084065,
+      "oversell_rate": 0.0,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "bc_sac+safe_sl_hard",
+    "model_path": "artifacts/bc_sac/rl_bc_sac_final.zip",
+    "oversell_rate": 0.0,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1106687.4396554038,
+    "std_true_revenue": 240426.37391691652,
+    "mean_shaped_return": 89.14780722886569,
+    "mean_load_factor": 0.8896535726146009,
+    "mean_remain_inv": 1103.4642738539903,
+    "mean_sellout_day": 4.142857142857143,
+    "sellout_rate": 0.23333333333333334,
+    "score": 874292.662450707,
+    "extras": {
+      "mean_capacity_shortfall": 1161.973886023484,
+      "oversell_rate": 0.23333333333333334,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "bc_sac+safe_sl_mix0.4",
+    "model_path": "artifacts/bc_sac/rl_bc_sac_final.zip",
+    "oversell_rate": 0.23333333333333334,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1072382.0648002678,
+    "std_true_revenue": 224047.3923495651,
+    "mean_shaped_return": 38.17986359497753,
+    "mean_load_factor": 0.8797300512450424,
+    "mean_remain_inv": 1202.699487549575,
+    "mean_sellout_day": NaN,
+    "sellout_rate": 0.0,
+    "score": 831842.1672903528,
+    "extras": {
+      "mean_capacity_shortfall": 1202.699487549575,
+      "oversell_rate": 0.0,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "pace_ppo",
+    "model_path": "artifacts/pace_ppo/rl_pace_ppo.zip",
+    "oversell_rate": 0.0,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1072382.0648002678,
+    "std_true_revenue": 224047.3923495651,
+    "mean_shaped_return": 99.44114388890782,
+    "mean_load_factor": 0.8797300512450424,
+    "mean_remain_inv": 1202.699487549575,
+    "mean_sellout_day": NaN,
+    "sellout_rate": 0.0,
+    "score": 831842.1672903528,
+    "extras": {
+      "mean_capacity_shortfall": 1202.699487549575,
+      "oversell_rate": 0.0,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "pace/mpc",
+    "model_path": "artifacts/pace_ppo/rl_pace_ppo.zip",
+    "oversell_rate": 0.0,
+    "undersell_gt1500_rate": 0.43333333333333335
+  },
+  {
+    "n_episodes": 30,
+    "mean_true_revenue": 1085362.9255072563,
+    "std_true_revenue": 227228.42105557641,
+    "mean_shaped_return": 85.08710605084623,
+    "mean_load_factor": 0.8697132729265212,
+    "mean_remain_inv": 1302.8672707347864,
+    "mean_sellout_day": 2.3333333333333335,
+    "sellout_rate": 0.1,
+    "score": 823061.2896506039,
+    "extras": {
+      "mean_capacity_shortfall": 1311.5081792832623,
+      "oversell_rate": 0.1,
+      "undersell_gt1500_rate": 0.43333333333333335
+    },
+    "policy": "rl_best",
+    "model_path": "artifacts/tree_long/best/rl_best.zip",
+    "oversell_rate": 0.1,
+    "undersell_gt1500_rate": 0.43333333333333335
+  }
+]

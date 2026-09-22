@@ -1,0 +1,56 @@
+# Price-only PPO + early promo on low tree base demand (soft-day undersell fix).
+# Analytic SL; tree_elastic via default.yaml merge.
+#
+# Combines with pace + soft-day reward shaping from the pace experiment so the
+# agent still gets a booking-curve signal, while the promo wrapper *forces*
+# low price early/mid horizon when predicted price-unaware base is soft.
+# Joint 2D (price, SL) is NOT reopened — SL stays analytic.
+#
+# Promo post-process (PriceOnlyWrapper): if base < threshold AND
+# days_prior >= apply_when_days_prior_ge → set price to promo_price (min band).
+# Late horizon (< 30 days prior) is left to RL for clearing.
+
+control:
+  price_only: true
+  selling_limit:
+    kind: analytic
+    overbook_factor: 1.05
+    low_remain_frac: 0.05
+  early_promo:
+    enabled: true
+    base_demand_threshold: 90.0   # absolute tree base (matches soft_day_base_threshold)
+    promo_price: 80.0             # min_price — strongest soft-day stimulus
+    mode: set                     # force promo; alt: clip + max_price_when_soft
+    # max_price_when_soft: 85.0   # only needed for mode=clip
+    apply_when_days_prior_ge: 30  # early/mid only; late clearing untouched
+    weekdays_only: false
+    offpeak_only: false
+
+env:
+  reward:
+    pace_reward: true
+    pace_schedule: linear
+    pace_penalty: 5.0
+    pace_target_final: 0.95
+    soft_day_upweight: true
+    soft_day_weekday_factor: 1.5
+    soft_day_offpeak_factor: 1.25
+    soft_day_base_threshold: 90.0
+    soft_day_base_factor: 1.25
+    soft_day_sample_boost: 2.0
+
+algorithm:
+  name: ppo
+  ent_coef: 0.02
+  n_envs: 2
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 42
+  model_dir: artifacts/promo_ppo
+  run_name: ppo_promo
+  log_dir: runs/promo_ppo
+
+eval:
+  n_episodes: 30

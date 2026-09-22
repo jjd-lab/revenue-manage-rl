@@ -1,0 +1,26 @@
+# Price-only RL: agent chooses 1D price; selling limit from analytic controller.
+# Merges onto configs/default.yaml (tree_elastic demand).
+#
+# Switch SL optimizer instead of analytic:
+#   control.selling_limit.kind: optimize_1d
+#   # optional: n_grid, oversell_weight, undersell_weight, keep_rate, overbook_factor
+#
+# See also: configs/experiment_price_only_sac.yaml
+
+control:
+  price_only: true
+  selling_limit:
+    kind: analytic
+    overbook_factor: 1.05
+    # keep_rate: null  # null/omit => estimate from env cancel/noshow
+    # keep_rate: 0.85  # fixed alternative
+    low_remain_frac: 0.05
+
+algorithm:
+  name: ppo
+  ent_coef: 0.02
+  n_envs: 2
+
+train:
+  total_timesteps: 50000
+  seed: 42

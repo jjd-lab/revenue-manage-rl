@@ -1,0 +1,20 @@
+demand:
+  kind: tree_elastic
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/tree_long/long
+  run_name: long_sac
+  log_dir: runs/tree_long/long

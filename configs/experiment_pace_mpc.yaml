@@ -1,0 +1,38 @@
+# Price-only pace_ppo + short-horizon price MPC on soft states only.
+# Analytic SL unchanged. No retrain — wrap frozen pace_ppo.
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: true
+  selling_limit:
+    kind: analytic
+    overbook_factor: 1.05
+    low_remain_frac: 0.05
+  mpc:
+    enabled: true
+    horizon: 5
+    n_grid: 21
+    base_demand_threshold: 90.0
+    soft_only: true
+    prefer_min_when_soft: true
+    pace_target_final: 0.95
+    behind_pace_gap: 0.05
+    oversell_weight: 800.0
+    undersell_weight: 600.0
+    revenue_scale: 1.0
+
+algorithm:
+  name: ppo
+  device: cpu
+
+eval:
+  n_episodes: 30
+
+tune:
+  shortfall_weight: 200.0
+
+train:
+  model_dir: artifacts/both_goals
+  run_name: pace_mpc
+  log_dir: runs/both_goals

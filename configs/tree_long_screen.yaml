@@ -1,0 +1,20 @@
+# Tree-elastic long-campaign screen (merge onto default.yaml)
+demand:
+  kind: tree_elastic
+
+algorithm:
+  name: ppo
+  n_envs: 4
+  gamma: 1.0
+  net_arch: [256, 256]
+
+train:
+  model_dir: artifacts/tree_long
+  run_name: ppo_screen
+  log_dir: runs/tree_long
+
+tune:
+  method: grid
+  timesteps_per_trial: 50000
+  eval_episodes: 15
+  shortfall_weight: 200.0

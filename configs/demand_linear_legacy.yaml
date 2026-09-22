@@ -1,0 +1,10 @@
+# A/B: prototype-style linear demand (overrides default tree_elastic)
+demand:
+  kind: linear_legacy
+  demand_noise_std: 8.0
+  intercept: 80.0
+  price_coef: -0.2
+  dow_boost: 60.0
+  month_boost: 40.0
+  days_prior_coef: -0.1
+  days_prior_threshold: 30.0

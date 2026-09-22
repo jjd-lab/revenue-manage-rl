@@ -1,0 +1,25 @@
+# Price-only SAC + optimize_1d selling-limit controller (example).
+# For analytic SL, set control.selling_limit.kind: analytic (see experiment_price_only_ppo.yaml).
+
+control:
+  price_only: true
+  selling_limit:
+    kind: optimize_1d
+    overbook_factor: 1.05
+    n_grid: 41
+    oversell_weight: 800.0
+    undersell_weight: 200.0
+    low_remain_frac: 0.05
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  buffer_size: 100000
+  batch_size: 256
+  learning_starts: 1000
+  n_envs: 1
+  device: cpu
+
+train:
+  total_timesteps: 50000
+  seed: 42

@@ -1,0 +1,20 @@
+demand:
+  kind: tree_elastic
+algorithm:
+  name: ppo
+  learning_rate: 0.0003
+  ent_coef: 0.0
+  n_steps: 2048
+  batch_size: 64
+  gamma: 1.0
+  clip_range: 0.2
+  n_envs: 4
+  net_arch: [256, 256]
+  device: cpu
+  n_epochs: 5
+train:
+  total_timesteps: 300000
+  seed: 49
+  model_dir: artifacts/tree_long/long
+  run_name: long_007
+  log_dir: runs/tree_long/long

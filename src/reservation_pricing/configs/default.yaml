@@ -1,0 +1,128 @@
+# Default experiment: production-like tree base + linear elasticity (one product)
+demand:
+  kind: tree_elastic
+  elasticity: -1.2
+  ref_price: 100.0
+  price_mode: multiplicative
+  demand_noise_std: 8.0
+
+env:
+  capacity: 10000
+  booking_horizon: 100
+  min_price: 80.0
+  max_price: 120.0
+  min_selling_limit: 10000.0
+  max_selling_limit: 15000.0
+  demand_noise_std: 8.0
+  noshow_noise_std: 0.01
+  cancel_rho_noise_std: 0.02
+  cancel_lambda: 2000.0
+  cancel_rho_weekday: 0.4
+  cancel_rho_weekend: 0.5
+  noshow_base: 0.16
+  noshow_dow_coef: 0.02
+  noshow_month_coef: 0.02
+  revenue_scale: 0.0001
+  undersell_penalty: 650.0
+  oversell_penalty: 450.0
+  utilization_bonus: 80.0
+  normalize_obs: true
+  held_out_months:
+  - 6
+  - 12
+  # Training-only reward shaping; business metrics are never shaped. Off here,
+  # on in experiment_price_only_pace_ppo.yaml. Nested so an experiment's
+  # env.reward block merges key by key.
+  reward:
+    pace_reward: false
+    pace_schedule: linear        # linear | concave
+    pace_penalty: 5.0
+    pace_target_final: 0.95
+    soft_day_upweight: false
+    soft_day_weekday_factor: 1.5
+    soft_day_offpeak_factor: 1.25
+    soft_day_base_threshold: null
+    soft_day_base_factor: 1.25
+    soft_day_sample_boost: 2.0
+
+# Control layer: everything off, so the agent holds both levers. Values are the
+# controllers' own defaults; experiment YAMLs switch pieces on.
+control:
+  price_only: false              # true → agent sets price, selling_limit fills the limit
+  selling_limit:
+    kind: analytic               # analytic | optimize_1d
+    overbook_factor: 1.05
+    keep_rate: null              # null → estimated from the cancel / no-show structure
+    low_remain_frac: 0.05
+  early_promo:
+    enabled: false
+    base_demand_threshold: 90.0
+    promo_price: 80.0
+    mode: set                    # set | clip
+    apply_when_days_prior_ge: 30
+  safe_sl:                       # oversell cap projected onto a joint policy's limit
+    enabled: false
+    kind: analytic               # analytic | chance
+    overbook_factor: 1.02
+    low_remain_frac: 0.05
+    mix_alpha: 0.0
+  mpc:                           # short-horizon price MPC, price-only mode only
+    enabled: false
+    horizon: 5
+    n_grid: 21
+    base_demand_threshold: 90.0
+    soft_only: true
+
+algorithm:
+  name: ppo
+  learning_rate: 0.0003
+  n_steps: 2048
+  batch_size: 64
+  gamma: 1.0
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.02
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  policy: MlpPolicy
+  net_arch:
+  - 256
+  - 256
+  n_envs: 4
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 42
+  log_dir: runs
+  model_dir: artifacts
+
+eval:
+  n_episodes: 30
+  seeds:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  # Soft-day-aware eval (rprl-eval --soft-aware): do not over-penalize structural
+  # undersell on soft episodes. See docs/EVALUATING_POLICIES.md.
+  soft_aware:
+    rule: structural          # structural | any
+    peak_months: [7, 8, 11, 12]
+    weekend_dow: [5, 6]
+    soft_focus_months: [6]    # June-like held-out soft calendar
+    base_demand_threshold: 90.0
+    soft_oracle: min_price    # min_price | myopic
+    floor_price_tol: 1.0
+    undersell_threshold: 1500.0   # secondary / diagnostic overall
+    lambda_peak: 200.0
+    mu_soft: 200.0
+    soft_score_mode: gap_to_oracle  # gap_to_oracle | oversell_only
+
+tune:
+  method: grid
+  n_trials: 8
+  shortfall_weight: 200.0      # the `score` weight of every table in runs/
+  timesteps_per_trial: 40000
+  eval_episodes: 15

@@ -1,0 +1,102 @@
+{
+  "run_name": "sac_optimize1d",
+  "algo": "sac",
+  "seed": 42,
+  "total_timesteps": 150000,
+  "model_path": "artifacts/price_only_long/sac_optimize1d/final_model.zip",
+  "best_model_dir": "artifacts/price_only_long/sac_optimize1d/best",
+  "run_dir": "runs/price_only_long/sac_optimize1d",
+  "demand_kind": "tree_elastic",
+  "config": {
+    "demand": {
+      "kind": "tree_elastic",
+      "elasticity": -1.2,
+      "ref_price": 100.0,
+      "price_mode": "multiplicative",
+      "demand_noise_std": 8.0
+    },
+    "env": {
+      "capacity": 10000,
+      "booking_horizon": 100,
+      "min_price": 80.0,
+      "max_price": 120.0,
+      "min_selling_limit": 10000.0,
+      "max_selling_limit": 15000.0,
+      "demand_noise_std": 8.0,
+      "noshow_noise_std": 0.01,
+      "cancel_rho_noise_std": 0.02,
+      "cancel_lambda": 2000.0,
+      "cancel_rho_weekday": 0.4,
+      "cancel_rho_weekend": 0.5,
+      "noshow_base": 0.16,
+      "noshow_dow_coef": 0.02,
+      "noshow_month_coef": 0.02,
+      "revenue_scale": 0.0001,
+      "undersell_penalty": 650.0,
+      "oversell_penalty": 450.0,
+      "utilization_bonus": 80.0,
+      "normalize_obs": true,
+      "held_out_months": [
+        6,
+        12
+      ]
+    },
+    "algorithm": {
+      "name": "sac",
+      "learning_rate": 0.0003,
+      "n_steps": 2048,
+      "batch_size": 256,
+      "gamma": 1.0,
+      "gae_lambda": 0.95,
+      "clip_range": 0.2,
+      "ent_coef": 0.02,
+      "vf_coef": 0.5,
+      "max_grad_norm": 0.5,
+      "policy": "MlpPolicy",
+      "net_arch": [
+        256,
+        256
+      ],
+      "n_envs": 1,
+      "device": "cpu",
+      "buffer_size": 100000,
+      "learning_starts": 1000
+    },
+    "train": {
+      "total_timesteps": 150000,
+      "seed": 42,
+      "log_dir": "runs/price_only_long",
+      "model_dir": "artifacts/price_only_long"
+    },
+    "eval": {
+      "n_episodes": 30,
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "held_out": true
+    },
+    "tune": {
+      "method": "grid",
+      "n_trials": 8,
+      "metric": "score",
+      "shortfall_weight": 200.0,
+      "timesteps_per_trial": 40000,
+      "eval_episodes": 15
+    },
+    "control": {
+      "price_only": true,
+      "selling_limit": {
+        "kind": "optimize_1d",
+        "overbook_factor": 1.05,
+        "n_grid": 41,
+        "oversell_weight": 800.0,
+        "undersell_weight": 200.0,
+        "low_remain_frac": 0.05
+      }
+    }
+  }
+}
