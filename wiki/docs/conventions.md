@@ -96,7 +96,10 @@ Changing any of them **invalidates all five checkpoints and every result table**
 because observations are normalized against these ranges. Treat them as frozen
 unless you intend to retrain and regenerate. Reward-shaping weights
 (`undersell_penalty`, `oversell_penalty`, `utilization_bonus`) are likewise baked
-into the trained policies.
+into the trained policies. An experiment config may override them under `env:`
+to train a *new* arm on a different objective (`experiment_objective_*`); that
+leaves `default.yaml` and the shipped checkpoints untouched, and its weights go
+to their own `artifacts/` subdirectory.
 
 ## Naming
 

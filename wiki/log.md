@@ -516,3 +516,11 @@ They raise training reward 54.6 → 96.2 while `score_aware` falls: the frozen s
 reward charges every unsold seat and forfeits the whole bonus on an oversold night;
 the score does neither. A KL/trust-region tether was planned, not run — its best
 case is the clone. Breakdown in `runs/price_monotone_up/NOTES.md`; status [[next-steps]].
+
+## [2026-09-22] decision | A label-free objective beats `rl_best` on its own score, all of it on peak nights
+
+New `runs/objective/` (§13), config `experiment_objective_cu200_sac.yaml`: joint SAC
+(seed 7, 200k) on revenue − $200/unsold seat − $400/denied admission, no utilization
+bonus — only `env:` weights overridden. It wins `score_aware` by an interval that
+excludes zero, entirely by overbooking peak nights; behind the cap 2 peak nights still
+deny admission. One seed, and `rl_best` predates current code. [[conventions]], [[next-steps]].

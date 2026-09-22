@@ -1,0 +1,5 @@
+policy,objective,mean_return
+rl_best,default,85.0871
+rl_best,cu200,82.3061
+cu200,default,74.2682
+cu200,cu200,85.4801

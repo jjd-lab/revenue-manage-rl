@@ -27,6 +27,7 @@ produces, not what you will find after a fresh clone.
 | `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
 | `monotone_up_clamp` | `experiment_monotone_up_clamp_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_clamp/best/best_model.zip` | §12 |
 | `monotone_up_penalty_10` | `experiment_monotone_up_penalty_last_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
+| `cu200` | `experiment_objective_cu200_sac.yaml` | `runs/objective/` | `artifacts/objective/cu200/final_model.zip` | §13 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
 trained joint action down, and the price MPC post-processes a trained price. Both
@@ -57,6 +58,7 @@ reported on seeds 0–29.
 | Cap `mix_alpha` re-selected on validation seeds | `runs/both_goals/validate_mix_alpha.py` | `runs/both_goals/` | §11 |
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
 | Monotone price, four arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
+| Training objective vs `rl_best`, uncapped and capped | `runs/objective/run_objective.py` | `runs/objective/` | §13 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

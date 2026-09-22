@@ -1,0 +1,29 @@
+# Joint SAC, same hyperparameters and seed as tree_long_sac (rl_best), trained on
+# one rule for every night: revenue - $200 per unsold seat - $400 per denied
+# admission. revenue_scale 1e-4 at capacity 10,000 makes each penalty dollars per
+# seat. The utilization bonus is off, which removes the cliff that forfeits it on
+# any oversold night. default.yaml's frozen weights are untouched.
+demand:
+  kind: tree_elastic
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/objective
+  run_name: cu200
+  log_dir: runs/objective

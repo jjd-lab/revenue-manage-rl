@@ -1,0 +1,3 @@
+arm,score_aware,score_aware_capped,peak_denied_nights_capped,soft_nights,soft_revenue,soft_mean_price,soft_unsold,soft_denied_nights,soft_denied_seats,peak_nights,peak_revenue,peak_mean_price,peak_unsold,peak_denied_nights,peak_denied_seats,weekend_open,weekend_crest,weekend_crest_days_prior,weekend_close
+rl_best,2033263.9,2008715.65,0,13,863085.79,83.73,2469.7,0,0.0,17,1255339.56,97.11,415.6,3,5.1,108.5,117.3,36,89.08
+cu200,2087750.4,2095566.47,2,13,862771.14,83.22,2460.3,0,0.0,17,1345164.95,100.61,158.1,11,221.4,112.43,118.07,28,95.49

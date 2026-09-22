@@ -45,4 +45,5 @@ Generated, not documented here. Where to look:
 | `runs/both_goals/`, `runs/oracle_ceiling/` | Oversell cap, price MPC, and the soft-day fill ceiling (§5c) |
 | `runs/tree_long/`, `runs/bc_sac/`, `runs/price_only_long/`, `runs/pace_ppo/`, `runs/promo_ppo/` | One directory per training campaign (§2–§5b) |
 | `runs/price_monotone_up/` | What a no-markdown guarantee costs, and why training under it fails (§12) |
+| `runs/objective/` | What the training objective does to the policy: a label-free reward that prices unsold seats and denied admissions (§13) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on two policies |

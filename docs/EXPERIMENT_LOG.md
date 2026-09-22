@@ -496,6 +496,26 @@ The operator-facing answer: train unconstrained and deploy behind the clamp.
 
 ---
 
+## 13. What the training objective does to the policy
+
+§12's diagnostic showed SAC optimizing its reward faithfully while the score
+fell. This asks how much of a policy's behaviour comes from its objective. The
+new reward is one rule for every night, one a venue could state without a
+soft/peak label: revenue − $200 per unsold seat − $400 per denied admission, no
+utilization bonus (`configs/experiment_objective_cu200_sac.yaml`, overriding
+`env:` weights only). Joint SAC, seed 7, 200k steps, against `rl_best` with the
+same hyperparameters. Results: `runs/objective/`.
+
+- **+54,486 on `score_aware`** (2,087,750; interval [26,377, 80,566]). Behind
+  the cap, +86,851 (2,095,566).
+- **All of it is peak nights, and it comes from overbooking.** Denied admission
+  on 11 of 17 peak nights against 3. Peak price $100.61 against $97.11, and 258
+  fewer empty seats. Soft nights are unchanged ($83.22 against $83.73).
+- **The cap no longer reaches zero.** 2 of 17 peak nights still deny admission
+  behind it, where every policy in §10 reached zero.
+- Each policy wins on its own objective. One training seed, and `rl_best` is
+  from 2026-09-17 code.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -513,6 +533,7 @@ The operator-facing answer: train unconstrained and deploy behind the clamp.
    - If the demand forecast might be wrong: a joint policy. Those policies see bookings and the calendar. They do not read a demand model (§11). A wrong elasticity costs myopic 3.5 to 5.8 percent. It costs the joint policies nothing. A wrong cancellation model is worth at most 1.11 percent.
 9. Further fill on the soft nights needs a different demand model. It does not come from another training run of these policies.
 10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
+11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero (§13).
 
 ---
 
@@ -537,6 +558,7 @@ The operator-facing answer: train unconstrained and deploy behind the clamp.
 | `runs/keep_rate_dependence/` | Section 11a: what the true cancellation model is worth |
 | `runs/forecast_misspecification/` | Section 11b: policies under a wrong demand forecast |
 | `runs/soft_aware_report_demo/` | Section 6 demo of the stratified report |
+| `runs/objective/` | Section 13: the training objective and overbooking |
 | `runs/training_seeds/` | Whether the §7 BC→SAC lead repeats across training seeds |
 | `runs/price_monotone_up/` | Section 12: cost of a non-decreasing price |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |

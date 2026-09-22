@@ -446,6 +446,28 @@ template for the controller (`get_*` factory returning `None` when disabled,
 `artifacts/price_monotone/` (untracked, retrain locally). Never hand-edit a
 generated file under `runs/price_monotone_up/`; rerun the script beside it.
 
+## Task 5 — Training objective (first run 2026-09-22)
+
+**Status.** One arm, `configs/experiment_objective_cu200_sac.yaml`, with results
+in `runs/objective/NOTES.md`. Its reward is one rule for every night, with no
+soft/peak label: revenue − $200 per unsold seat − $400 per denied admission, no
+utilization bonus. Joint SAC at seed 7 scores 2,087,750 against `rl_best`'s
+2,033,264, and the paired interval excludes zero. All of the gain is peak nights
+through overbooking: 11 of 17 deny admission. Behind the cap it scores 2,095,566,
+but 2 peak nights still deny admission.
+
+**Still open, in order of what each would settle.**
+1. Retrain the default reward at seed 7 on current code. That separates the
+   objective from code drift since 2026-09-17.
+2. Raise the price of a denied admission above the score's $400. This checks
+   whether the gain survives once overbooking costs what a venue would say it costs.
+3. Split the two changes: remove the cliff but keep $650 per unsold seat. This
+   checks whether the cliff alone explains the overbooking.
+
+**Gotcha.** Only `env:` weights change in the experiment config. `default.yaml`
+and every shipped checkpoint are untouched. Weights go to `artifacts/objective/`
+(untracked).
+
 ## What not to bother with
 
 - Rewriting `estimate_keep_rate` (measured at ≤1.11%; see ground rule 6).

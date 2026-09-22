@@ -48,6 +48,10 @@ Training under the rule is the part that does not work. Every retrained arm land
 
 The recommendation is to train without the rule and apply it at decision time ([§12](docs/EXPERIMENT_LOG.md), [`runs/price_monotone_up/`](runs/price_monotone_up/NOTES.md)).
 
+### The reward decides the overbooking
+
+Every policy above learned from one reward: about $730 per unsold seat, and the whole fill bonus lost on any night with a denied admission. Retraining Joint SAC on a simpler rule — revenue, minus $200 per unsold seat and $400 per denied admission, the same every night — raises `score_aware` from 2,033,264 to 2,087,750, with the paired interval above zero. All of the gain is peak nights, through overbooking: denied admission on 11 of 17 peak nights, up from 3. Behind the cap it scores 2,095,566, but 2 peak nights still deny admission, where the cap had reached zero on every other joint policy. The score prices a denied admission at $400, the same as that reward, and this is one training seed ([§13](docs/EXPERIMENT_LOG.md), [`runs/objective/`](runs/objective/NOTES.md)).
+
 ## Scenario
 
 A fictional 10,000-seat house sells one night's seats over 100 days. Each day the policy sets a price and a selling limit. People cancel, and some of those who keep the booking do not arrive, so the selling limit may sit above 10,000. Bookings above the seats that exist are the buffer against cancellation and no-show.
@@ -215,6 +219,7 @@ python runs/ablate_selling_limit/run_ablation.py           # pin the selling lim
 python runs/oversell_cap_transfer/run_cap_transfer.py      # the cap on each joint policy
 python runs/forecast_misspecification/run_misspecification.py   # policies under a wrong forecast
 python runs/keep_rate_dependence/run_probe.py              # what privileged knowledge is worth
+python runs/objective/run_objective.py                     # a different training reward
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -231,6 +236,7 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/ablate_selling_limit/NOTES.md`](runs/ablate_selling_limit/NOTES.md) — pin the selling limit, keep the price
 - [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — the cap on each joint policy, and the score given up
 - [`runs/forecast_misspecification/NOTES.md`](runs/forecast_misspecification/NOTES.md) — what each policy is worth when the demand forecast is wrong
+- [`runs/objective/NOTES.md`](runs/objective/NOTES.md) — what the training reward does to overbooking
 - [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — what the controllers gain by reading the simulator's cancel and no-show parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the cap, the price MPC, and the soft-night fill ceiling
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log
