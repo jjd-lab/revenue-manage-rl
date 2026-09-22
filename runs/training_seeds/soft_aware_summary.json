@@ -1,0 +1,1055 @@
+{
+  "soft_aware": {
+    "pace_s42": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1072382.0648002678,
+        "std_true_revenue": 224047.3923495651,
+        "mean_load_factor": 0.8797300512450424,
+        "mean_remain_inv": 1202.699487549575,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.7,
+        "mean_shortfall": 1202.699487549575,
+        "mean_oversell_amount": 0.0,
+        "score": 831842.1672903528,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 856768.1824868356,
+        "std_true_revenue": 19351.476623671682,
+        "mean_load_factor": 0.7774538677686227,
+        "mean_remain_inv": 2225.461322313774,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 1.0,
+        "mean_shortfall": 2225.461322313774,
+        "mean_oversell_amount": 0.0,
+        "score": 411675.91802408086,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": 0.0
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1237263.2689223043,
+        "std_true_revenue": 159876.51280680782,
+        "mean_load_factor": 0.9579412503740694,
+        "mean_remain_inv": 420.5874962593055,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.47058823529411764,
+        "mean_shortfall": 420.5874962593055,
+        "mean_oversell_amount": 0.0,
+        "score": 1153145.7696704431,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1153145.7696704431,
+      "score_soft": 856768.1824868356,
+      "score_aware": 2009913.9521572788,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_raw_s42": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1114825.2198786708,
+        "std_true_revenue": 248018.6902903702,
+        "mean_load_factor": 0.8963807139993798,
+        "mean_remain_inv": 1036.192860006204,
+        "oversell_rate": 0.4,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.23266666666666666,
+        "mean_shortfall": 1221.2473097689362,
+        "mean_oversell_amount": 61.684816587577494,
+        "score": 870575.7579248835,
+        "sellout_rate": 0.4
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 859785.1236336502,
+        "std_true_revenue": 19425.613745982595,
+        "mean_load_factor": 0.7673818457216688,
+        "mean_remain_inv": 2326.1815427833117,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.3623076923076922,
+        "mean_shortfall": 2326.1815427833117,
+        "mean_oversell_amount": 0.0,
+        "score": 394548.8150769879,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -3016.9411468146136
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1309855.8817130981,
+        "std_true_revenue": 143131.6446592681,
+        "mean_load_factor": 0.9950269073882173,
+        "mean_remain_inv": 49.73092611782736,
+        "oversell_rate": 0.7058823529411765,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.1335294117647059,
+        "mean_shortfall": 376.29760216970817,
+        "mean_oversell_amount": 108.85555868396028,
+        "score": 1234596.3612791565,
+        "sellout_rate": 0.7058823529411765
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1234596.3612791565,
+      "score_soft": 859785.1236336502,
+      "score_aware": 2094381.4849128067,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_cap_s42": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1098025.1734227138,
+        "std_true_revenue": 235177.10156965198,
+        "mean_load_factor": 0.8825971935971922,
+        "mean_remain_inv": 1174.0280640280782,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.22599999999999998,
+        "mean_shortfall": 1174.0280640280782,
+        "mean_oversell_amount": 0.0,
+        "score": 863219.5606170981,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 859785.1236336502,
+        "std_true_revenue": 19425.613745982595,
+        "mean_load_factor": 0.7673818457216688,
+        "mean_remain_inv": 2326.1815427833117,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.3623076923076922,
+        "mean_shortfall": 2326.1815427833117,
+        "mean_oversell_amount": 0.0,
+        "score": 394548.8150769879,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -3016.9411468146136
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1280208.7409084684,
+        "std_true_revenue": 143944.39271961196,
+        "mean_load_factor": 0.9707030478549453,
+        "mean_remain_inv": 292.96952145054684,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.12176470588235293,
+        "mean_shortfall": 292.96952145054684,
+        "mean_oversell_amount": 0.0,
+        "score": 1221614.836618359,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1221614.836618359,
+      "score_soft": 859785.1236336502,
+      "score_aware": 2081399.9602520093,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "pace_s43": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1038441.3516728168,
+        "std_true_revenue": 177669.87910228365,
+        "mean_load_factor": 0.8801149479830399,
+        "mean_remain_inv": 1198.8505201696005,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.7376666666666666,
+        "mean_shortfall": 1198.8505201696005,
+        "mean_oversell_amount": 0.0,
+        "score": 798671.2476388967,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 856768.1824868356,
+        "std_true_revenue": 19351.476623671682,
+        "mean_load_factor": 0.7774538677686227,
+        "mean_remain_inv": 2225.461322313774,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 1.0,
+        "mean_shortfall": 2225.461322313774,
+        "mean_oversell_amount": 0.0,
+        "score": 411675.91802408086,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": 0.0
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1177367.8928150376,
+        "std_true_revenue": 104305.14972010555,
+        "mean_load_factor": 0.958620479911712,
+        "mean_remain_inv": 413.79520088287984,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.5370588235294117,
+        "mean_shortfall": 413.79520088287984,
+        "mean_oversell_amount": 0.0,
+        "score": 1094608.8526384616,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1094608.8526384616,
+      "score_soft": 856768.1824868356,
+      "score_aware": 1951377.0351252973,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_raw_s43": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1107509.9274237251,
+        "std_true_revenue": 229468.1364362795,
+        "mean_load_factor": 0.914830886711576,
+        "mean_remain_inv": 851.6911328842398,
+        "oversell_rate": 0.26666666666666666,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.49399999999999994,
+        "mean_shortfall": 1463.7259452535484,
+        "mean_oversell_amount": 204.01160412310284,
+        "score": 814764.7383730155,
+        "sellout_rate": 0.26666666666666666
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 858106.6900604789,
+        "std_true_revenue": 19058.054104742325,
+        "mean_load_factor": 0.7731134414408438,
+        "mean_remain_inv": 2268.865585591563,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.863076923076923,
+        "mean_shortfall": 2268.865585591563,
+        "mean_oversell_amount": 0.0,
+        "score": 404333.57294216624,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -1338.5075736430992
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1298230.0501132663,
+        "std_true_revenue": 93292.88661243934,
+        "mean_load_factor": 1.0232030507421361,
+        "mean_remain_inv": -232.03050742136045,
+        "oversell_rate": 0.47058823529411764,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.21176470588235297,
+        "mean_shortfall": 848.030926171537,
+        "mean_oversell_amount": 360.02047786429915,
+        "score": 1128623.864878959,
+        "sellout_rate": 0.47058823529411764
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1128623.864878959,
+      "score_soft": 858106.6900604789,
+      "score_aware": 1986730.554939438,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_cap_s43": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1083265.1701139212,
+        "std_true_revenue": 216378.57148649046,
+        "mean_load_factor": 0.8894224938552552,
+        "mean_remain_inv": 1105.7750614474498,
+        "oversell_rate": 0.13333333333333333,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.47100000000000003,
+        "mean_shortfall": 1139.2846011501176,
+        "mean_oversell_amount": 11.169846567555942,
+        "score": 855408.2498838976,
+        "sellout_rate": 0.13333333333333333
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 858106.6900604789,
+        "std_true_revenue": 19058.054104742325,
+        "mean_load_factor": 0.7731134414408438,
+        "mean_remain_inv": 2268.865585591563,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.863076923076923,
+        "mean_shortfall": 2268.865585591563,
+        "mean_oversell_amount": 0.0,
+        "score": 404333.57294216624,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -1338.5075736430992
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1255445.1842724362,
+        "std_true_revenue": 118031.68939123004,
+        "mean_load_factor": 0.978364710407452,
+        "mean_remain_inv": 216.35289592548082,
+        "oversell_rate": 0.23529411764705882,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.1711764705882353,
+        "mean_shortfall": 275.4873777537182,
+        "mean_oversell_amount": 19.71149394274578,
+        "score": 1200347.7087216927,
+        "sellout_rate": 0.23529411764705882
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1200347.7087216927,
+      "score_soft": 858106.6900604789,
+      "score_aware": 2058454.3987821715,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "pace_s44": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 996239.8653008882,
+        "std_true_revenue": 127895.32218838643,
+        "mean_load_factor": 0.8805713462347448,
+        "mean_remain_inv": 1194.2865376525529,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.7020000000000001,
+        "mean_shortfall": 1194.2865376525529,
+        "mean_oversell_amount": 0.0,
+        "score": 757382.5577703776,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 856768.1824868356,
+        "std_true_revenue": 19351.476623671682,
+        "mean_load_factor": 0.7774538677686227,
+        "mean_remain_inv": 2225.461322313774,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 1.0,
+        "mean_shortfall": 2225.461322313774,
+        "mean_oversell_amount": 0.0,
+        "score": 411675.91802408086,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": 0.0
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1102894.6815704575,
+        "std_true_revenue": 48256.89012200692,
+        "mean_load_factor": 0.9594258885911908,
+        "mean_remain_inv": 405.74111408809006,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.47411764705882353,
+        "mean_shortfall": 405.74111408809006,
+        "mean_oversell_amount": 0.0,
+        "score": 1021746.4587528395,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1021746.4587528395,
+      "score_soft": 856768.1824868356,
+      "score_aware": 1878514.6412396752,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_raw_s44": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1131775.0709544206,
+        "std_true_revenue": 261630.18281515443,
+        "mean_load_factor": 0.9245486805932729,
+        "mean_remain_inv": 754.5131940672701,
+        "oversell_rate": 0.4,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.42400000000000004,
+        "mean_shortfall": 1548.4300809244746,
+        "mean_oversell_amount": 264.63896228573486,
+        "score": 822089.0547695257,
+        "sellout_rate": 0.4
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 858059.7512377512,
+        "std_true_revenue": 19364.568006718582,
+        "mean_load_factor": 0.7732975398126345,
+        "mean_remain_inv": 2267.024601873655,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.8807692307692307,
+        "mean_shortfall": 2267.024601873655,
+        "mean_oversell_amount": 0.0,
+        "score": 404654.83086302027,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -1291.5687509157085
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1341086.786031874,
+        "std_true_revenue": 139300.9991069949,
+        "mean_load_factor": 1.04021131766082,
+        "mean_remain_inv": -402.11317660820094,
+        "oversell_rate": 0.7058823529411765,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.07470588235294118,
+        "mean_shortfall": 998.9166237280423,
+        "mean_oversell_amount": 467.00993344541445,
+        "score": 1141303.4612862654,
+        "sellout_rate": 0.7058823529411765
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1141303.4612862654,
+      "score_soft": 858059.7512377512,
+      "score_aware": 1999363.2125240166,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_cap_s44": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1103571.6186830113,
+        "std_true_revenue": 239926.22444421033,
+        "mean_load_factor": 0.8965770751094644,
+        "mean_remain_inv": 1034.2292489053566,
+        "oversell_rate": 0.26666666666666666,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.42133333333333334,
+        "mean_shortfall": 1112.9809733765667,
+        "mean_oversell_amount": 26.250574823736862,
+        "score": 880975.424007698,
+        "sellout_rate": 0.26666666666666666
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 858059.7512377512,
+        "std_true_revenue": 19364.568006718582,
+        "mean_load_factor": 0.7732975398126345,
+        "mean_remain_inv": 2267.024601873655,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.8807692307692307,
+        "mean_shortfall": 2267.024601873655,
+        "mean_oversell_amount": 0.0,
+        "score": 404654.83086302027,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -1291.5687509157085
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1291315.9879058574,
+        "std_true_revenue": 141267.1332974767,
+        "mean_load_factor": 0.9908496609246872,
+        "mean_remain_inv": 91.50339075312813,
+        "oversell_rate": 0.47058823529411764,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.06999999999999999,
+        "mean_shortfall": 230.47702217291152,
+        "mean_oversell_amount": 46.32454380659446,
+        "score": 1245220.5834712752,
+        "sellout_rate": 0.47058823529411764
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1245220.5834712752,
+      "score_soft": 858059.7512377512,
+      "score_aware": 2103280.3347090264,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "pace_s46": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1037803.3080974425,
+        "std_true_revenue": 178822.05649027845,
+        "mean_load_factor": 0.8805038671603013,
+        "mean_remain_inv": 1194.9613283969863,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.7,
+        "mean_shortfall": 1194.9613283969863,
+        "mean_oversell_amount": 0.0,
+        "score": 798811.0424180452,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 856768.1824868356,
+        "std_true_revenue": 19351.476623671682,
+        "mean_load_factor": 0.7774538677686227,
+        "mean_remain_inv": 2225.461322313774,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 1.0,
+        "mean_shortfall": 2225.461322313774,
+        "mean_oversell_amount": 0.0,
+        "score": 411675.91802408086,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": 0.0
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1176241.9335643773,
+        "std_true_revenue": 109163.66091162144,
+        "mean_load_factor": 0.959306807871585,
+        "mean_remain_inv": 406.9319212841497,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.47058823529411764,
+        "mean_shortfall": 406.9319212841497,
+        "mean_oversell_amount": 0.0,
+        "score": 1094855.5493075473,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1094855.5493075473,
+      "score_soft": 856768.1824868356,
+      "score_aware": 1951623.731794383,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_raw_s46": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1062576.0924670452,
+        "std_true_revenue": 201338.0417574752,
+        "mean_load_factor": 0.8699009086340228,
+        "mean_remain_inv": 1300.9909136597703,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.3626666666666666,
+        "mean_shortfall": 1300.9909136597703,
+        "mean_oversell_amount": 0.0,
+        "score": 802377.9097350911,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 859368.7401368133,
+        "std_true_revenue": 18446.655763209947,
+        "mean_load_factor": 0.7687427867238992,
+        "mean_remain_inv": 2312.5721327610063,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.5138461538461538,
+        "mean_shortfall": 2312.5721327610063,
+        "mean_oversell_amount": 0.0,
+        "score": 396854.313584612,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -2600.5576499776394
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1217969.9501313402,
+        "std_true_revenue": 124704.67508967701,
+        "mean_load_factor": 0.9472571195064705,
+        "mean_remain_inv": 527.4288049352949,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.24705882352941178,
+        "mean_shortfall": 527.4288049352949,
+        "mean_oversell_amount": 0.0,
+        "score": 1112484.1891442812,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1112484.1891442812,
+      "score_soft": 859368.7401368133,
+      "score_aware": 1971852.9292810946,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    },
+    "bc_cap_s46": {
+      "overall": {
+        "n_episodes": 30,
+        "mean_true_revenue": 1060320.756099858,
+        "std_true_revenue": 201074.73606615214,
+        "mean_load_factor": 0.8675625425410188,
+        "mean_remain_inv": 1324.3745745898123,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.43333333333333335,
+        "mean_frac_at_floor": 0.36299999999999993,
+        "mean_shortfall": 1324.3745745898123,
+        "mean_oversell_amount": 0.0,
+        "score": 795445.8411818957,
+        "sellout_rate": 0.0
+      },
+      "soft": {
+        "n_episodes": 13,
+        "mean_true_revenue": 859368.7401368133,
+        "std_true_revenue": 18446.655763209947,
+        "mean_load_factor": 0.7687427867238992,
+        "mean_remain_inv": 2312.5721327610063,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 1.0,
+        "mean_frac_at_floor": 0.5138461538461538,
+        "mean_shortfall": 2312.5721327610063,
+        "mean_oversell_amount": 0.0,
+        "score": 396854.313584612,
+        "sellout_rate": 0.0,
+        "gap_to_oracle": 0.0,
+        "mean_oracle_revenue": 856768.1824868356,
+        "signed_gap_to_oracle": -2600.5576499776394
+      },
+      "peak": {
+        "n_episodes": 17,
+        "mean_true_revenue": 1213989.9447774808,
+        "std_true_revenue": 128819.03823991548,
+        "mean_load_factor": 0.9431305911070514,
+        "mean_remain_inv": 568.6940889294864,
+        "oversell_rate": 0.0,
+        "undersell_gt_thresh_rate": 0.0,
+        "mean_frac_at_floor": 0.24764705882352941,
+        "mean_shortfall": 568.6940889294864,
+        "mean_oversell_amount": 0.0,
+        "score": 1100251.1269915835,
+        "sellout_rate": 0.0
+      },
+      "n_soft": 13,
+      "n_peak": 17,
+      "score_peak": 1100251.1269915835,
+      "score_soft": 859368.7401368133,
+      "score_aware": 1959619.8671283969,
+      "cfg": {
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "rule": "structural",
+        "soft_focus_months": [
+          6
+        ],
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      },
+      "diagnostic": {
+        "undersell_gt_thresh_overall": 0.43333333333333335,
+        "undersell_threshold": 1500.0,
+        "note": "undersell>thresh overall is secondary when soft demand cannot fill at floor"
+      }
+    }
+  },
+  "soft_cfg": {
+    "peak_months": [
+      7,
+      8,
+      11,
+      12
+    ],
+    "weekend_dow": [
+      5,
+      6
+    ],
+    "base_demand_threshold": 90.0,
+    "rule": "structural",
+    "soft_focus_months": [
+      6
+    ],
+    "soft_oracle": "min_price",
+    "floor_price_tol": 1.0,
+    "undersell_threshold": 1500.0,
+    "lambda_peak": 200.0,
+    "mu_soft": 200.0,
+    "soft_score_mode": "gap_to_oracle"
+  },
+  "oracle_revenue_by_seed": {
+    "0": 1110894.8572266835,
+    "1": 842599.7101215505,
+    "2": 851895.8118663175,
+    "3": 853729.7858439562,
+    "4": 1067192.382086589,
+    "5": 842612.2174554451,
+    "6": 1055602.6021020534,
+    "7": 1067125.9268377,
+    "8": 1110331.7763267157,
+    "9": 889544.4023679541,
+    "10": 1108915.2186959994,
+    "11": 847995.7444610199,
+    "12": 1109981.1218959542,
+    "13": 1069084.6442832684,
+    "14": 848073.8451836626,
+    "15": 1111005.079243322,
+    "16": 850127.518377227,
+    "17": 889247.7676033432,
+    "18": 1068711.0993810017,
+    "19": 892731.0424320145,
+    "20": 1056254.933205838,
+    "21": 841783.5535150297,
+    "22": 1067973.1599950688,
+    "23": 1056518.7833174542,
+    "24": 832525.8388921276,
+    "25": 1110147.2208087693,
+    "26": 855119.1342092144,
+    "27": 1068371.8091435498,
+    "28": 1110252.0000547324,
+    "29": 1110498.8436834153
+  },
+  "demand_kind": "tree_elastic",
+  "n_episodes": 30,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29
+  ],
+  "interval_baseline": null,
+  "n_bootstrap": null
+}

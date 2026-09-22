@@ -44,8 +44,8 @@ DPI = 160
 # Display names and the family used to distinguish points.
 POLICIES = {
     "joint_sac_rl_best": ("Joint SAC", "joint"),
-    "joint_bc_sac_raw": ("BC to SAC", "joint"),
-    "rl_sac": ("BC to SAC + cap", "joint"),
+    "joint_bc_sac_raw": ("Joint BC to SAC", "joint"),
+    "rl_sac": ("Joint BC to SAC + cap", "joint"),
     "joint_ppo_long_007": ("Joint PPO", "joint"),
     "price_only_pace_ppo": ("Pace PPO", "price"),
     "price_only_ppo": ("Price-only PPO", "price"),
@@ -188,16 +188,28 @@ def oracle_ceiling(episodes: pd.DataFrame, threshold: float, out: Path) -> pd.Da
         raise SystemExit("oracle ceiling: a soft date fills, caption would be wrong")
     fig, ax = plt.subplots(figsize=(7.2, 4.2))
     labels = [str(int(s)) for s in best["seed"]]
-    ax.bar(labels, best["remain_inv"], color=INK, width=0.72)
-    ax.axhline(threshold, color=INK, linewidth=0.8, linestyle=(0, (3, 2)))
+    n = len(labels)
+    ax.bar(range(n), best["remain_inv"], color=INK, width=0.72)
+    line_right = n - 0.4
+    ax.plot(
+        [-0.55, line_right],
+        [threshold, threshold],
+        color=INK,
+        linewidth=0.8,
+        linestyle=(0, (3, 2)),
+    )
     ax.annotate(
         f"{threshold:,.0f} unsold",
-        (len(labels) - 0.5, threshold),
-        xytext=(0, 5),
+        xy=(line_right, threshold),
+        xytext=(8, 0),
         textcoords="offset points",
-        ha="right",
+        va="center",
+        ha="left",
         fontsize=9.5,
+        annotation_clip=False,
     )
+    ax.set_xticks(range(n), labels)
+    ax.set_xlim(-0.6, n + 1.8)
     ax.set_xlabel("Held-out soft night (seed number)")
     ax.set_ylabel("Unsold seats, best any price can do")
     _despine(ax)
@@ -208,33 +220,49 @@ def oracle_ceiling(episodes: pd.DataFrame, threshold: float, out: Path) -> pd.Da
 
 
 def booking_paths(rollouts: pd.DataFrame, out: Path) -> dict[str, float]:
-    """F4: mean price against days before the performance, joint SAC vs myopic."""
+    """F4: Joint SAC price on weekend vs weekday nights; myopic as a flat reference.
+
+    Weekend nights rise toward the date, then mark down. Weekday nights sit near
+    the floor. Averaging those into one peak line is what made the path wiggle.
+    """
     fig, ax = plt.subplots(figsize=FIGSIZE)
+    rl = rollouts[rollouts["policy"] == "rl_best"].copy()
+    rl["weekend"] = rl["weekend"].astype(int)
+    my = rollouts[rollouts["policy"] == "myopic"]
+    series: list[tuple[pd.DataFrame, str, str, tuple[int, int]]] = [
+        (rl[rl["weekend"] == 1], "Weekend nights", ACCENT, (8, 8)),
+        (rl[rl["weekend"] == 0], "Weekday nights", INK, (8, -11)),
+        (my, "Myopic", BASE, (8, 0)),
+    ]
     facts: dict[str, float] = {}
-    for policy, label, color in [("myopic", "Myopic", BASE), ("rl_best", "Joint SAC", ACCENT)]:
-        g = (
-            rollouts[rollouts["policy"] == policy]
-            .groupby("days_prior")["price"]
-            .mean()
-            .sort_index(ascending=False)
-        )
+    for sub, label, color, offset in series:
+        g = sub.groupby("days_prior")["price"].mean().sort_index(ascending=False)
         ax.plot(g.index, g.values, color=color, linewidth=2.2)
+        if label.startswith("Weekend"):
+            # The line ends just under myopic, so name it at the crest.
+            anchor = (float(g.idxmax()), float(g.max()))
+            offset = (0, 8)
+        else:
+            anchor = (float(g.index[-1]), float(g.values[-1]))
         ax.annotate(
             label,
-            (g.index[-1], g.values[-1]),
-            xytext=(6, 0),
+            anchor,
+            xytext=offset,
             textcoords="offset points",
-            va="center",
+            va="bottom" if label.startswith("Weekend") else "center",
+            ha="center" if label.startswith("Weekend") else "left",
             color=color,
             fontsize=10,
         )
-        facts[f"{policy}_mean_price"] = float(
-            rollouts.loc[rollouts["policy"] == policy, "price"].mean()
-        )
-    rl = rollouts[rollouts["policy"] == "rl_best"]
-    facts["rl_weekend_price"] = float(rl.loc[rl["weekend"] == 1, "price"].mean())
-    facts["rl_weekday_price"] = float(rl.loc[rl["weekend"] == 0, "price"].mean())
-    ax.set_xlim(rollouts["days_prior"].max() + 1, -8)
+        key = label.split()[0].lower()
+        facts[f"{key}_n"] = float(sub["seed"].nunique())
+        facts[f"{key}_open"] = float(g.loc[g.index.max()])
+        facts[f"{key}_last"] = float(g.loc[g.index.min()])
+        facts[f"{key}_max"] = float(g.max())
+        facts[f"{key}_max_day"] = float(g.idxmax())
+    lo, hi = ax.get_ylim()
+    ax.set_ylim(lo, hi + 4)
+    ax.set_xlim(rollouts["days_prior"].max() + 1, -18)
     ax.set_xlabel("Days before the performance")
     ax.set_ylabel("Mean price, dollars")
     _despine(ax)
@@ -308,8 +336,11 @@ def caption_facts(table: pd.DataFrame, ceiling: pd.DataFrame, paths: dict, lift:
         f"{ceiling['remain_inv'].min():,.0f} to {ceiling['remain_inv'].max():,.0f}"
     )
     print(
-        f"F4  myopic mean ${paths['myopic_mean_price']:.2f}; joint SAC weekend "
-        f"${paths['rl_weekend_price']:.2f}, weekday ${paths['rl_weekday_price']:.2f}"
+        f"F4  weekend n={paths['weekend_n']:.0f} ${paths['weekend_open']:.0f} open -> "
+        f"${paths['weekend_max']:.0f} at day {paths['weekend_max_day']:.0f} -> "
+        f"${paths['weekend_last']:.0f} last; "
+        f"weekday n={paths['weekday_n']:.0f} ${paths['weekday_open']:.0f} -> "
+        f"${paths['weekday_last']:.0f}; myopic ${paths['myopic_open']:.0f}"
     )
     print(
         f"F5  soft {lift['n_soft']} / peak {lift['n_peak']}; lift per night: "

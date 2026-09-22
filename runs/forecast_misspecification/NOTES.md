@@ -63,14 +63,15 @@ Prices in brackets are the policy's mean price under that forecast. Full CSV:
 | Does a demand-*level* error move pricing? | **NO** — 0.00% for myopic, exactly as the argmax algebra predicts |
 | Where does a level error land? | On the level consumers only: `optimize_1d` −1.06%, MPC −0.99% |
 
-**The result the project was missing.** §7's joint-vs-price-only gap is 1.2–3.6%
-*under a perfect forecast*. Give the forecast a plausible elasticity error and
-myopic alone gives up 3.5–5.8% — comparable to the entire margin being argued
-over — while the joint policies do not move at all, because their observation is
-booking state plus calendar one-hots (§8) and they consult no model.
+**The result the project was missing.** Under a perfect forecast the lead §7 can
+support is capped BC→SAC over pace, 3.6%, with the interval above zero. The 1.2%
+point gap is a tie. Give the forecast a plausible elasticity error and myopic
+alone gives up 3.5–5.8% — about that whole lead — while the joint policies do
+not move at all, because their observation is booking state plus calendar
+one-hots (§8) and they consult no model.
 
-That is the property an operator actually buys: **not "1.2% better", but "does
-not need your forecast to be right."** It is also the strongest argument in this
+That is the property an operator actually buys: **not a one-percent lead, but
+"does not need your forecast to be right."** It is also the strongest argument in this
 repo for the model-free approach, and it was invisible until the forecast and the
 world were allowed to differ.
 

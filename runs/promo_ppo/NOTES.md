@@ -3,13 +3,10 @@
 **Demand:** `tree_elastic` (default)  
 **Held-out:** 30 episodes, months 6 & 12, seeds 0..29  
 **Score:** `mean_true_revenue - 200 * mean_capacity_shortfall`  
-**Date:** 2026-09-17  
+**Date:** 2026-09-22  
 **Threads:** torch and OpenMP capped at 1 (the trainer's default)
 
-> The promo checkpoint was not kept, so this table was **not** regenerated after
-> the 2026-09-21 price-only decision-day fix. Its `pace_ppo@200k` row is the
-> pre-fix number (832,319); `runs/pace_ppo/` has the current one (831,842). The
-> verdict below is unaffected.
+Regenerated from a new training at seed 42. The pace row is the shipped checkpoint, scored again on the same nights (831,842).
 
 ## What changed
 
@@ -37,7 +34,7 @@ Docs: `docs/DESIGN.md`, `docs/EXTENDING.md`.
 
 | run | algo | SL | promo | timesteps | seed | wall clock |
 | --- | --- | --- | --- | ---: | ---: | --- |
-| `ppo_promo` | PPO (`n_envs=2`) | analytic (`overbook_factor=1.05`) | set@80 if base&lt;90 & dp≥30 | 200 000 | 42 | ~3.9 min |
+| `ppo_promo` | PPO (`n_envs=2`) | analytic (`overbook_factor=1.05`) | set@80 if base&lt;90 & dp≥30 | 200 000 | 42 | ~1.3 min |
 
 EvalCallback shaped-reward “best” peaked @40k (same pattern as pace / prior
 price-only). **Final** @200k used for primary verdict.
@@ -47,11 +44,11 @@ price-only). **Final** @200k used for primary verdict.
 | policy | mode | mean revenue | load | remain | oversell | undersell>1500 | score |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | **bc_sac_final** | joint | **1,114,825** | 0.896 | 1036 | 0.40 | 0.433 | **870,576** |
-| **pace_ppo@200k** | price_only | 1,072,480 | 0.880 | 1201 | 0.00 | 0.433 | **832,319** |
+| **pace_ppo@200k** | price_only | 1,072,382 | 0.880 | 1203 | 0.00 | 0.433 | **831,842** |
 | price_only_ppo_analytic@200k | price_only | 1,087,615 | 0.870 | 1304 | 0.00 | 0.467 | 826,857 |
-| rl_best_sac@200k | joint | 1,085,379 | 0.870 | 1303 | 0.10 | 0.433 | 823,019 |
-| **promo_ppo@200k** | price_only+promo | 1,061,456 | 0.879 | 1207 | 0.00 | 0.433 | 820,145 |
-| promo_ppo_bestckpt (@40k shaped) | price_only+promo | 1,055,452 | 0.853 | 1470 | 0.00 | 0.433 | 761,414 |
+| rl_best_sac@200k | joint | 1,085,363 | 0.870 | 1303 | 0.10 | 0.433 | 823,061 |
+| **promo_ppo@200k** | price_only+promo | 1,060,692 | 0.880 | 1198 | 0.00 | 0.433 | 821,090 |
+| promo_ppo_bestckpt (@40k shaped) | price_only+promo | 1,057,858 | 0.853 | 1468 | 0.00 | 0.433 | 764,302 |
 | myopic_greedy | price_only | 1,049,488 | 0.840 | 1596 | 0.00 | 0.433 | 730,305 |
 | fixed_price_80 | price_only | 961,979 | 0.880 | 1200 | 0.00 | 0.433 | 722,054 |
 
@@ -71,9 +68,9 @@ Full CSV/JSON: `runs/promo_ppo/comparison_table.csv`, `comparison_summary.json`,
 | --- | --- |
 | Did **undersell>1500** improve vs **pace_ppo**? | **NO** — tied at **0.433** |
 | Did undersell>1500 improve vs **price_only_ppo**? | **YES** — 0.467 → **0.433** (same as pace; no further gain) |
-| Did **score** beat **pace_ppo**? | **NO** — 820.1k vs 832.3k (**−12.2k**); revenue lost on forced $80 |
-| Did score beat **bc_sac_final**? | **NO** — 820.1k vs 870.6k (−50.4k) |
-| Prefer final or EvalCallback best? | **Final** — shaped best@40k undersells more (remain 1470) |
+| Did **score** beat **pace_ppo**? | **NO** — 821.1k vs 831.8k (**−10.8k**); revenue lost on forced $80 |
+| Did score beat **bc_sac_final**? | **NO** — 821.1k vs 870.6k (−49.5k) |
+| Prefer final or EvalCallback best? | **Final** — shaped best@40k undersells more (remain 1468) |
 
 **Bottom line:** Early promo (force `min_price` when tree base &lt; 90 early/mid)
 is a **clean, tested control**, but on this held-out set it is **not** a win over
@@ -84,8 +81,8 @@ among price-only runs; **bc_sac_final** still leads overall (with 40% oversell).
 
 ## Artifacts
 
-- `artifacts/promo_ppo/rl_promo_ppo.zip` ← final @200k (reported; not kept)
-- `artifacts/promo_ppo/rl_promo_ppo_best.zip` ← EvalCallback best (shaped; not preferred; not kept)
+- `artifacts/promo_ppo/rl_promo_ppo.zip` ← copy of `ppo_promo/final_model.zip` @200k
+- `artifacts/promo_ppo/rl_promo_ppo_best.zip` ← EvalCallback best (shaped; not preferred)
 - `runs/promo_ppo/ppo_promo/` — EvalCallback curve and `train_meta.json`
 
 ## Ops / smoke

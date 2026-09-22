@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Both levers, or just the price — RL for reservation pricing and availability control</title>
-  <meta name="description" content="A reinforcement-learning experiment on a fictional 10,000-seat amphitheater: does an agent that sets both the ticket price and the selling limit beat one that sets the price alone? Five charts, synthetic demand, held-out nights, and an oracle ceiling before any fill rate is trusted.">
+  <title>Both levers, or just the price. RL for reservation pricing and availability control</title>
+  <meta name="description" content="Does an agent that sets both the ticket price and the selling limit beat one that sets the price alone? A reinforcement-learning experiment on a fictional 10,000-seat amphitheater, with five charts, synthetic demand, held-out nights, and an oracle ceiling before any fill rate is trusted.">
   <meta property="og:type" content="article">
   <meta property="og:title" content="Both levers, or just the price">
   <meta property="og:description" content="Price and selling limit from one policy, or price alone with the limit from a formula? A revenue-management experiment with reinforcement learning on synthetic demand.">
@@ -66,7 +66,7 @@
     nav a:hover { color: var(--ink); }
     main { min-width: 0; }
     header, section, footer { max-width: var(--figure); }
-    header > *, section > p, section > ol, section > ul, footer > p, figcaption { max-width: var(--measure); }
+    header > *, section > p, section > ol, section > ul, section > .policy-group, footer > p, figcaption { max-width: var(--measure); }
     .kicker {
       font-family: "Public Sans", sans-serif;
       font-size: 0.72rem;
@@ -105,20 +105,28 @@
     p { margin: 0 0 0.9rem; }
     ol.diffs { margin: 0.4rem 0 1rem; padding-left: 1.2rem; }
     ol.diffs li { margin: 0.35rem 0; }
-    .names {
+    .policy-group { margin: 0 0 1.35rem; }
+    .policy-group:last-child { margin-bottom: 0; }
+    .group-label {
       font-family: "Public Sans", sans-serif;
-      font-size: 0.82rem;
+      font-weight: 400;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
       color: var(--muted);
+      margin: 0 0 0.3rem;
     }
-    .policies { list-style: none; padding: 0; margin: 0 0 1.2rem; }
-    .policies li { margin: 0.55rem 0; }
+    .policies { list-style: none; padding: 0; margin: 0; }
+    .policies li { margin: 0.5rem 0; }
+    .policies li:first-child { margin-top: 0; }
     .flow {
       list-style: none;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 0.75rem;
       padding: 0;
-      margin: 0.5rem 0 0;
+      margin: 0.55rem 0 0.1rem;
+      max-width: 22rem;
       font-family: "Public Sans", sans-serif;
       font-size: 0.82rem;
       line-height: 1.3;
@@ -128,6 +136,54 @@
       padding-top: 0.55rem;
       border-top: 1px solid var(--ink);
     }
+    .flow span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 0.18rem;
+    }
+    .sheet-wrap { overflow-x: auto; margin: 1.5rem 0 0.35rem; }
+    table.sheet {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: "Public Sans", sans-serif;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+    table.sheet caption {
+      caption-side: top;
+      text-align: left;
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 500;
+      font-size: 1.2rem;
+      margin: 0 0 0.45rem;
+    }
+    table.sheet th {
+      text-align: right;
+      font-weight: 500;
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--ink);
+      padding: 0.3rem 0 0.35rem 0.85rem;
+      white-space: nowrap;
+    }
+    table.sheet th:first-child, table.sheet td:first-child { text-align: left; padding-left: 0; }
+    table.sheet td {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      padding: 0.42rem 0 0.42rem 0.85rem;
+      border-bottom: 1px solid var(--rule);
+    }
+    table.sheet th.note, table.sheet td.note {
+      text-align: left;
+      font-variant-numeric: normal;
+      white-space: normal;
+    }
+    table.sheet tr.lead td { font-weight: 600; }
+    table.kv td:first-child { font-weight: 600; width: 42%; vertical-align: baseline; }
+    table.kv td.note { vertical-align: baseline; }
+    p.aside { color: var(--muted); font-size: 0.98rem; margin-bottom: 0.4rem; }
     figure { margin: 2rem 0 2.4rem; }
     figure img { width: 100%; height: auto; display: block; }
     figcaption {
@@ -160,7 +216,7 @@
       .layout { grid-template-columns: 1fr; padding-top: 2rem; gap: 1rem; }
       nav { position: static; flex-direction: row; flex-wrap: wrap; gap: 0.5rem 1rem; }
       h1 { font-size: 2.4rem; }
-      .flow { grid-template-columns: 1fr 1fr; }
+      .flow { grid-template-columns: 1fr; max-width: none; }
     }
     @media print {
       nav, .skip { display: none; }
@@ -186,64 +242,80 @@
       <header>
         <p class="kicker">A revenue-management experiment</p>
         <h1>Both levers, or just the price</h1>
-        <p class="standfirst">One policy sets the ticket price and the selling limit together. Another sets only the price. On a fictional amphitheater, with synthetic demand, the joint policies win — and not by filling the quiet nights.</p>
+        <p class="standfirst">One policy sets the ticket price and the selling limit together. Another sets only the price. On a fictional amphitheater, with synthetic demand, the joint policies win on revenue. They do not win by filling the quiet nights.</p>
       </header>
 
       <section id="problem">
         <h2><span>01</span>Problem</h2>
         <p>Ten thousand seats expire on one night, sold over a hundred-day booking horizon. Demand is stochastic and price-sensitive, and cancellations mean the house can be sold past the seats that exist.</p>
-        <p>Two controls each day. <strong>Price</strong>, $80 to $120. The <strong>selling limit</strong>, 10,000 to 15,000: the most bookings on hand the venue will accept, so everything above 10,000 is an overbooking buffer.</p>
-        <p>Selling past ten thousand is deliberate. People cancel, and some who do not cancel fail to arrive, so a house that stops selling at capacity opens with empty seats — and a seat empty on the night is revenue nobody can recover the next morning. Airlines overbook for the same reason. The selling limit is the ceiling on how far past capacity the venue will go, and it is the second thing the agent has to decide. Revenue management calls it a booking limit or an authorization level; the standard treatment is Talluri and van Ryzin (2004).</p>
+        <p>Each day has two controls. <strong>Price</strong> runs from $80 to $120. The <strong>selling limit</strong> runs from 10,000 to 15,000. That is the most bookings on hand the venue will accept, so every booking above 10,000 is an overbooking buffer.</p>
+        <p>Selling past ten thousand is deliberate. People cancel, and some who do not cancel fail to arrive, so a house that stops selling at capacity opens with empty seats. A seat empty on the night is revenue nobody can recover the next morning. Airlines overbook for the same reason. The selling limit is the ceiling on how far past capacity the venue will go, and it is the second thing the agent has to decide. Revenue management calls it a booking limit or an authorization level. The standard treatment is Talluri and van Ryzin (2004).</p>
         <p>Maximize revenue, charged for both ways of getting the night wrong: <strong>denied admission</strong>, more show-ups than seats, and <strong>spoilage</strong>, seats empty when the curtain rises. One policy for both controls, or price only, with the limit from a formula?</p>
-        <p class="names">In the code and the tables: <code>selling_limit</code>, <code>remain_inv</code> (negative means denied admission), <code>oversell</code>.</p>
       </section>
 
       <section id="place">
         <h2><span>02</span>Where this sits</h2>
-        <p>Quantity control protects seats at given fares — Littlewood (1972), then Belobaba’s expected marginal seat revenue heuristics. Dynamic pricing sets the price path from capacity left — Gallego and van Ryzin (1994). McGill and van Ryzin (1999) survey both lines. Gosavi, Bandla, and Das (2002) reported gains over a nested-EMSR heuristic with reinforcement learning, in a simulation with discrete fare classes. This is not that benchmark.</p>
+        <p>Quantity control protects seats at given fares, from Littlewood (1972) through Belobaba's expected marginal seat revenue heuristics. Dynamic pricing sets the price path from capacity left, as in Gallego and van Ryzin (1994). McGill and van Ryzin (1999) survey both lines. Gosavi, Bandla, and Das (2002) reported gains over a nested-EMSR heuristic with reinforcement learning, in a simulation with discrete fare classes. This experiment is not that benchmark.</p>
+        <p>Four differences from that line:</p>
         <ol class="diffs">
-          <li><strong>Both controls, one policy.</strong> Price-only is run on the same nights, so the cost of dropping the limit is measured.</li>
-          <li><strong>No demand forecast in view.</strong> The agent sees only where bookings stand and what day it is, and still learns a booking curve.</li>
-          <li><strong>Spoilage is the wrong headline.</strong> At the floor price, every soft date is still more than 1,500 seats short.</li>
-          <li><strong>Overbooking risk after training.</strong> A cap, not a new reward, cuts peak denied admission from 0.71 of nights to none.</li>
+          <li><strong>Both controls, one policy.</strong> Those two literatures usually keep the levers apart. One sets booking limits at posted fares. The other sets a price path given the seats left. Here one agent sets price and the selling limit together. A price-only twin, run on the same nights, measures what dropping the limit costs.</li>
+          <li><strong>No demand forecast in view.</strong> Littlewood, EMSR, and Gallego and van Ryzin all need one. The agent sees only where bookings stand and what day it is. It still learns two price paths. On weekends the price rises toward the date, then falls. On weekdays it eases down to $80.</li>
+          <li><strong>Spoilage is the wrong headline.</strong> Occupancy would treat empty seats as the failure. On this demand, even $80 with the house wide open still leaves every quiet night more than 1,500 seats short. Remaining inventory is not how the policies are ranked.</li>
+          <li><strong>Overbooking after training, not in the reward.</strong> Classical overbooking is designed into the optimization. Here a trained policy may overbook; a cap applied afterwards, with no retraining, is what takes denied admission to zero.</li>
         </ol>
       </section>
 
       <section id="policies">
         <h2><span>03</span>The policies</h2>
-        <ul class="policies">
-          <li><strong>Myopic.</strong> Not learned. Each day, the price that maximizes this period’s expected revenue under the true demand model — what a forecast-and-optimize rule does with a perfect forecast.</li>
-          <li><strong>Floor price.</strong> Not learned. Always $80, limit wide open.</li>
-          <li><strong>PPO.</strong> Learns on-policy, from fresh rollouts. <strong>Joint PPO</strong> sets both controls. <strong>Price-only PPO</strong> sets the price; an analytic controller sets the limit. <strong>Pace PPO</strong> is price-only PPO trained with a booking-curve pace penalty and extra weight on soft nights.</li>
-          <li><strong>Joint SAC.</strong> An actor-critic that learns off-policy, from a replay buffer, with a bonus for trying actions. It fits two continuous levers.</li>
-          <li><strong>BC to SAC.</strong> Behaviour cloning: watch the myopic rule play three hundred nights and copy it, so training does not start from noise, then let SAC improve on the copy. The imitation takes both of the expert’s numbers, the limit as well as the price. It fills hardest and oversells most.</li>
-          <li><strong>The cap.</strong> Not a policy but a projection applied after training: when a joint policy’s limit would let expected show-ups pass 1.02 times capacity, the limit is lowered. No retraining.</li>
-        </ul>
-        <ol class="flow" aria-label="Behaviour cloning, then SAC">
-          <li>Expert rollouts</li>
-          <li>Clone the actor</li>
-          <li>Seed the buffer</li>
-          <li>Fine-tune</li>
-        </ol>
+
+        <div class="policy-group">
+          <h3 class="group-label">Not learned</h3>
+          <ul class="policies">
+            <li><strong>Myopic.</strong> Each day, the price that maximizes this period's expected revenue under the true demand model. That is what a forecast-and-optimize rule does with a perfect forecast.</li>
+            <li><strong>Floor price.</strong> Always $80, limit wide open.</li>
+          </ul>
+        </div>
+
+        <div class="policy-group">
+          <h3 class="group-label">Learned</h3>
+          <ul class="policies">
+            <li><strong>PPO.</strong> Learns on-policy, from fresh rollouts. <strong>Joint PPO</strong> sets both controls. <strong>Price-only PPO</strong> sets the price; an analytic controller sets the limit. <strong>Pace PPO</strong> is price-only PPO trained with a booking-curve pace penalty and extra weight on soft nights.</li>
+            <li><strong>Joint SAC.</strong> An actor-critic that learns off-policy, from a replay buffer, with a bonus for trying actions. It fits two continuous levers.</li>
+            <li><strong>Joint BC to SAC.</strong> Starts from the myopic rule instead of noise, then lets SAC improve on the copy. The imitation takes both of the expert's numbers, the limit as well as the price. It fills hardest and oversells most.
+              <ol class="flow" aria-label="How Joint BC to SAC is trained">
+                <li>Copy the myopic rule<span>three hundred nights of the forecast-and-optimize rule</span></li>
+                <li>Let SAC improve<span>the extra fill, and the overselling, come from here</span></li>
+              </ol>
+            </li>
+          </ul>
+        </div>
+
+        <div class="policy-group">
+          <h3 class="group-label">Not a policy</h3>
+          <ul class="policies">
+            <li><strong>The cap.</strong> A projection applied after training. When a joint policy's limit would let expected show-ups pass 1.02 times capacity, the limit is lowered. No retraining.</li>
+          </ul>
+        </div>
       </section>
 
       <section id="setting">
         <h2><span>04</span>Setting</h2>
         <p>Demand is synthetic. A tree predicts base demand from the calendar and from how far out the night is; price then bends it linearly around $100. Cancellations are Weibull. No-shows run near 16 percent. No real box office is in this repository.</p>
-        <p>Thirty held-out nights, June and December, seeds 0 to 29 — the same thirty nights for every policy, every table, and every chart on this page. They split into thirteen soft nights and seventeen peak nights. The score adds a peak part and a soft part. Peak: revenue, less $200 for every seat left unsold and $400 for every seat oversold. Soft: revenue, less its gap to a floor-price oracle — and that gap is zero for every policy published here. So peak revenue, and denied admission, decide the order.</p>
+        <p>Thirty held-out nights, June and December, seeds 0 to 29. Every policy, table, and chart on this page uses these same thirty nights. Thirteen are soft nights. Seventeen are peak nights.</p>
+        <p>The score is two parts added. On a peak night, leftover seats are a failure. That part is revenue, minus $200 for every seat left unsold and $400 for every seat oversold. On a soft night, leftover seats are not a failure. Even a price of $80 with the house wide open still leaves more than 1,500 seats empty, as the bars below show. The soft part does not charge those empty seats. It charges a policy only when that policy takes in less than a price of $80 would have. No policy on this page takes in less than that, so the soft part equals soft-night revenue. Peak revenue and denied admission are what move the score. A difference in the score is a ranking only when the paired interval does not include zero. The order of the dots is not enough.</p>
       </section>
 
       <section id="findings">
         <h2><span>05</span>Findings</h2>
 
         <figure>
-          <img src="figures/f1_score.png" alt="Dot plot of soft-aware score for eight policies, from 1.82 million for the floor price up to 2.09 million. In order: BC to SAC 2.09, BC to SAC with the cap 2.08, joint SAC 2.03, joint PPO 2.01, pace PPO 2.01, price-only PPO 2.00, myopic 1.97, floor price 1.82.">
-          <figcaption><strong>Joint policies take the top three places.</strong> Raw BC to SAC scores highest but see the next chart; with the cap it leads the best price-only policy by 3.6 percent, and joint SAC leads it by 1.2. Red is the top score, ink is joint, brown is price-only, gray is not learned. Dots on an axis that starts near 1.8 million, so read the printed values.</figcaption>
+          <img src="figures/f1_score.png" alt="Dot plot of soft-aware score for eight policies, from 1.82 million for the floor price up to 2.09 million. In order: joint BC to SAC 2.09, joint BC to SAC with the cap 2.08, joint SAC 2.03, joint PPO 2.01, pace PPO 2.01, price-only PPO 2.00, myopic 1.97, floor price 1.82.">
+          <figcaption><strong>The two Joint BC to SAC rows sit above the rest.</strong> They tie each other. The cap still beats the best price-only policy by 3.6 percent, and that interval sits above zero. The interval on Joint SAC's 1.2 percent over pace includes zero, so those two are a tie. Red is the top score, ink is joint, brown is price-only, gray is not learned. The axis starts near 1.8 million, so read the printed values.</figcaption>
         </figure>
 
         <figure>
-          <img src="figures/f2_frontier.png" alt="Scatter of soft-aware score against the share of peak nights with denied admission. BC to SAC is highest and at 0.71. The cap moves it to zero denied admission with almost no drop in score. Joint SAC sits at 0.18, joint PPO at 0.35. Every price-only policy and both baselines sit at zero.">
-          <figcaption><strong>The cap gives back the denied admissions and keeps the score</strong> — from 0.71 of peak nights to none, for 0.6 percent of score, no retraining.</figcaption>
+          <img src="figures/f2_frontier.png" alt="Scatter of soft-aware score against the share of peak nights with denied admission. Joint BC to SAC is highest and at 0.71. The cap moves it to zero denied admission with almost no drop in score. Joint SAC sits at 0.18, joint PPO at 0.35. Every price-only policy and both baselines sit at zero.">
+          <figcaption><strong>The cap removes the denied admissions and keeps the score.</strong> Denied admission falls from 0.71 of peak nights to none, for 0.6 percent of score, with no retraining.</figcaption>
         </figure>
 
         <figure>
@@ -252,38 +324,222 @@
         </figure>
 
         <figure>
-          <img src="figures/f4_booking_curve.png" alt="Mean price against days before the performance. The myopic price is flat at 92 dollars. The joint SAC price rises through the middle of the horizon and drops through the last three weeks.">
-          <figcaption><strong>A booking curve against a flat $92.</strong> Joint SAC prices weekends near $109 and weekdays near $84, with no demand model in view, and clears in the last three weeks. More figures: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/explain_rl_best"><code>runs/explain_rl_best/</code></a>.</figcaption>
+          <img src="figures/f4_booking_curve.png" alt="Mean ticket price against days before the performance. Joint SAC split into weekend and weekday nights, myopic a flat 92 dollars. Weekends rise from about 109 dollars to 117 around day 37, then fall to 89. Weekdays ease from about 90 dollars to 80.">
+          <figcaption><strong>Closer-in is more expensive only on weekends, and only until about 40 days out.</strong> This is Joint SAC. Nine weekend nights go from about $109 a hundred days out to $117 around day 37, then down to $89. The seats left at the end would otherwise go unsold. Twenty-one weekday nights ease from about $90 to the $80 floor. Myopic is $92 on every night. More figures: <a href="https://github.com/jjd-lab/revenue-manage-rl/tree/main/runs/explain_rl_best"><code>runs/explain_rl_best/</code></a>.</figcaption>
         </figure>
 
         <figure>
           <img src="figures/f5_lift.png" alt="Grouped bars of mean revenue per night on thirteen soft nights and seventeen peak nights, joint SAC against myopic. Soft nights: 863 thousand against 871 thousand. Peak nights: 1,255 thousand against 1,186 thousand.">
-          <figcaption><strong>The gain is peak harvest, about $69,000 a night. Soft nights give back about $8,000</strong> — still above the floor-price oracle, so the soft score charges nothing for it.</figcaption>
+          <figcaption><strong>The gain is about $69,000 a night on peak nights. Soft nights give back about $8,000.</strong> Soft revenue is still above a price of $80, so the soft part of the score does not charge that gap.</figcaption>
         </figure>
 
-        <p>One more check, because the page’s title depends on it. Is the second control actually doing the work, or does the joint policy simply price better? Take the limit away — pin it wide open, or pin it to the flat rule the myopic policy uses — and leave the price untouched. Every joint policy loses between $90,000 and $344,000 of score, far more than the 1.2 to 3.6 percent that separates joint from price-only. Denied admission on peak nights goes from 0.18 to 0.82 the moment the limit stops moving.</p>
-        <p>The flat-rule arm is the one to sit with. Joint SAC’s limit <em>averages</em> 12,578, within two percent of the flat 12,353 it is pinned to — and that pinning still costs $120,000. The value is not where the limit sits. It is when it moves. (Those pinned policies are priced for a limit they no longer have, so this shows how tightly the two controls are coupled; the honest measure of the second lever against a purpose-built one-lever policy remains the 1.2 to 3.6 percent above.)</p>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <caption>Pin the selling limit. Leave the price alone.</caption>
+            <thead>
+              <tr>
+                <th>Policy</th>
+                <th>Learned</th>
+                <th>Wide open, 15,000</th>
+                <th>Flat, 12,353</th>
+                <th>Peak nights denied</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Joint BC to SAC</td>
+                <td>2.094</td>
+                <td>1.855</td>
+                <td>1.943</td>
+                <td>0.71 → 0.82</td>
+              </tr>
+              <tr>
+                <td>Joint SAC</td>
+                <td>2.033</td>
+                <td>1.689</td>
+                <td>1.914</td>
+                <td>0.18 → 0.82</td>
+              </tr>
+              <tr>
+                <td>Joint PPO</td>
+                <td>2.011</td>
+                <td>1.903</td>
+                <td>1.921</td>
+                <td>0.35 → 0.82</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="aside">Scores are in millions. Learned, wide open, and flat are three scores for the same prices. Only the selling limit changes. The last column is the share of peak nights where someone is turned away, first with the learned limit, then with the limit pinned at 15,000. Joint SAC's limit averages 12,578, within 2% of the flat pin at 12,353. Forcing it to stay at 12,353 still costs $120,000, because the learned limit changes from day to day and the flat pin does not.</p>
 
-        <p>A fair objection to the chart at the top of this section: those policies deny admission on 18 to 71 percent of busy nights. So apply the cap to all three, not just the one it was built for. Every one reaches zero, for 0.6, 1.2 and 2.4 percent of score — the projection transfers to policies it was never designed around. The cost even runs backwards, which is worth a moment: the policy that oversells <em>most</em> is the <em>cheapest</em> to make safe, because the bookings the cap takes from it were already being charged the oversell penalty. Volume of risk does not predict the price of removing it.</p>
-        <p>The order changes under that constraint, though, and it narrows the claim this page makes. BC to SAC keeps a clear lead at 2.08 million. Joint SAC lands at 2.009 million — about a thousand behind pace PPO at 2.010 million, a tie across thirty nights. Joint PPO falls below both price-only policies. So once no ticket-holder may be turned away, two levers beating one is not a property of joint control in general. It belongs to the behaviour-cloned policy in particular.</p>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <caption>Apply the cap after training. No retraining.</caption>
+            <thead>
+              <tr>
+                <th>Policy</th>
+                <th>Uncapped</th>
+                <th>Capped</th>
+                <th>Score given up</th>
+                <th>Peak nights denied</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Joint BC to SAC</td>
+                <td>2.094</td>
+                <td>2.081</td>
+                <td>0.6%</td>
+                <td>0.71 → 0</td>
+              </tr>
+              <tr>
+                <td>Joint SAC</td>
+                <td>2.033</td>
+                <td>2.009</td>
+                <td>1.2%</td>
+                <td>0.18 → 0</td>
+              </tr>
+              <tr>
+                <td>Joint PPO</td>
+                <td>2.011</td>
+                <td>1.962</td>
+                <td>2.4%</td>
+                <td>0.35 → 0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="aside">Joint BC to SAC turns people away on the most peak nights, and applying the cap costs this policy the least. The bookings the cap removes were already penalized as oversell. The interval on that 0.6% includes zero, so the capped score and the uncapped score are a tie.</p>
 
-        <p>One last question, and the one an operator asks before any of the rest matters: what if the forecast is wrong? Everything above quietly assumes the myopic rule and the controllers consult the very model the world runs on — which no real venue is ever handed. Give that forecast a plausible error about price sensitivity and myopic alone gives up 3.5 to 5.8 percent, more than the entire margin this page has spent arguing over. The joint policies do not move. Not a little: identical scores, and mean prices identical to the cent, because they never consult a demand model at all. Booking state and the calendar are the whole of what they see.</p>
-        <p>That is the property worth buying, and it is not “one percent better”. It is “does not need your forecast to be right”. Two honest edges on it: the indifference is by construction rather than by merit — these policies never had a forecast to lose — and a forecast that is merely wrong about the <em>level</em> of demand changes no price at all, for anyone. Demand enters multiplicatively, so the level cancels out of the arithmetic that picks a price; only price sensitivity moves it. Being wrong in the way that matters is narrower than it sounds.</p>
+        <div class="sheet-wrap">
+          <table class="sheet">
+            <caption>If nobody may be turned away</caption>
+            <thead>
+              <tr>
+                <th>Policy</th>
+                <th>Score</th>
+                <th class="note">How it gets to zero</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="lead">
+                <td>Joint BC to SAC + cap</td>
+                <td>2.081</td>
+                <td class="note">The cap. The interval versus pace sits above zero.</td>
+              </tr>
+              <tr>
+                <td>Pace PPO</td>
+                <td>2.010</td>
+                <td class="note">price only</td>
+              </tr>
+              <tr>
+                <td>Joint SAC + cap</td>
+                <td>2.009</td>
+                <td class="note">The cap. These nights were not saved one by one, so there is no interval.</td>
+              </tr>
+              <tr>
+                <td>Price-only PPO</td>
+                <td>2.003</td>
+                <td class="note">price only</td>
+              </tr>
+              <tr>
+                <td>Joint PPO + cap</td>
+                <td>1.962</td>
+                <td class="note">The cap. The score is below both price-only policies.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="aside">Once nobody may be turned away, only capped Joint BC to SAC beats a price-only policy. The other joint policies do not.</p>
+
+        <p>What if the forecast is wrong? The myopic rule and the selling-limit controllers use the same demand model that generates the nights. A real venue does not get that model. If that forecast is wrong about price sensitivity by a plausible amount, myopic alone loses 3.5 to 5.8 percent. Capped Joint BC to SAC over pace is 3.6 percent, and that interval sits above zero. The joint policies do not move. Scores stay the same, and mean prices stay the same to the cent, because those policies never read a demand model. They see bookings and the calendar.</p>
+        <p>These policies do not need the forecast to be right, because they never had one. A forecast that is wrong only about the level of demand changes no price, for any policy here. Demand enters as a multiple, so that level cancels out of the sum that picks a price. Only a wrong price sensitivity changes the price.</p>
 
         <ul class="choices">
-          <li><strong>Best score with no denied admission.</strong> BC to SAC, plus the cap.</li>
-          <li><strong>Highest raw score, if denied admission is acceptable.</strong> BC to SAC.</li>
-          <li><strong>The one whose behaviour is easiest to read.</strong> Joint SAC — the booking curve and the calendar premium above are its.</li>
+          <li><strong>Best score with no denied admission.</strong> BC to SAC, plus the cap. On score it ties the uncapped policy; the cap is what removes the denied admissions.</li>
+          <li><strong>If denied admission is acceptable.</strong> Raw BC to SAC. It ties the capped policy on score, and it turns people away on 12 of 17 peak nights.</li>
+          <li><strong>The one whose behaviour is easiest to read.</strong> Joint SAC. The weekend and weekday price paths above are its.</li>
           <li><strong>One lever, no denied admission.</strong> Pace PPO.</li>
-          <li><strong>If the forecast might be wrong.</strong> Any of the joint policies — they never read one.</li>
+          <li><strong>If the forecast might be wrong.</strong> Any of the joint policies. They never read one.</li>
         </ul>
       </section>
 
       <section id="limits">
         <h2><span>06</span>Limits</h2>
-        <p>One synthetic demand model, one product, one venue, one set of thirty seeds. Training is not bit-for-bit the same on another machine. An earlier draw of thirty nights put joint SAC first among the three joint policies; their order among themselves is within seed noise, their lead over every price-only policy held in both draws. The ranking belongs to this environment.</p>
-        <p>The myopic rule also flatters the comparison, in a way worth stating plainly. It nominally sets both controls, but its limit never binds: the limit sits at 12,353 while the rule never holds more than 11,402 bookings at once — a ceiling it never reaches, like a credit limit well above anything you ever spend. Move that limit anywhere from there up to the 15,000 cap and the revenue is identical to the cent. So myopic is really a price-only policy with a second control that does nothing, and beating it is not by itself an answer to the two-lever question. Pace PPO, price-only by construction, is the honest one-lever benchmark: the joint policies clear it by 1.2 to 3.6 percent. Nothing is wrong with the myopic rule — at $80 rather than its own $92 the same venue presses the same ceiling hard — its price simply keeps it away from the constraint.</p>
-        <p>What travels is the method: check an oracle ceiling before trusting a fill rate, check whether a baseline’s constraints bind before crediting them, and keep overbooking risk in a projection rather than in the reward.</p>
+        <p class="aside">One synthetic demand model, one product, one venue, thirty nights. Training is not bit-for-bit the same on another machine.</p>
+
+        <div class="sheet-wrap">
+          <table class="sheet kv">
+            <caption>What these thirty nights separate</caption>
+            <tbody>
+              <tr>
+                <td>Capped Joint BC to SAC vs pace</td>
+                <td class="note">3.6% on the published training. The interval sits above zero.</td>
+              </tr>
+              <tr>
+                <td>Same pair, retrained</td>
+                <td class="note">That lead does not repeat on every seed.</td>
+              </tr>
+              <tr>
+                <td>Joint SAC vs pace</td>
+                <td class="note">The interval covers zero.</td>
+              </tr>
+              <tr>
+                <td>Joint PPO vs pace</td>
+                <td class="note">The interval covers zero.</td>
+              </tr>
+              <tr>
+                <td>An earlier thirty nights</td>
+                <td class="note">On an earlier set of thirty nights, Joint SAC ranked first among the joint policies.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sheet-wrap">
+          <table class="sheet kv">
+            <caption>Myopic is not the one-lever test</caption>
+            <tbody>
+              <tr>
+                <td>Limit it sets</td>
+                <td class="note">12,353</td>
+              </tr>
+              <tr>
+                <td>Most bookings it ever holds</td>
+                <td class="note">11,402. It never holds that many, so the limit never binds.</td>
+              </tr>
+              <tr>
+                <td>Move that limit up to 15,000</td>
+                <td class="note">Revenue identical to the cent</td>
+              </tr>
+              <tr>
+                <td>One-lever benchmark</td>
+                <td class="note">Pace PPO, price-only by construction</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="aside">At $80, the same venue reaches that booking ceiling. At myopic's own price of $92, the limit never binds.</p>
+
+        <div class="sheet-wrap">
+          <table class="sheet kv">
+            <caption>Checks to repeat</caption>
+            <tbody>
+              <tr>
+                <td>Fill rate</td>
+                <td class="note">Check an oracle ceiling before trusting one.</td>
+              </tr>
+              <tr>
+                <td>A baseline</td>
+                <td class="note">Check whether its constraints bind before crediting them.</td>
+              </tr>
+              <tr>
+                <td>Overbooking</td>
+                <td class="note">Keep the risk in a projection, not in the reward.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section id="references">

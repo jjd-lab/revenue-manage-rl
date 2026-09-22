@@ -20,6 +20,7 @@ timestamp: 2026-09-22
 | `runs/` | Eval tables, CSVs, figures, `NOTES.md` | Mixed, see below |
 | `site/` | The public page and its figures (`figures/` is generated) | Page yes, figures no |
 | `wiki/` | Durable internal knowledge | Yes |
+| `private/` | Pre-framework notebooks and notes | Yes — **untracked**, never ship |
 
 ## Findings vs raw material
 
@@ -32,13 +33,18 @@ README's *Model checkpoints* section; the rule itself is in `CLAUDE.md`.
 Each `runs/<experiment>/` holds **generated** output (`*.csv`, `*.png`,
 `comparison.md`, `soft_aware_*.md`) alongside **hand-written** commentary
 (`NOTES.md`, `README.md`) and the script that regenerates the rest
-(`REPRODUCE.py`, `final_eval.py`, `run_oracle.py`). The `final_eval.py` scripts
+(`run_headline.py`, `final_eval.py`, `run_oracle.py`). The `final_eval.py` scripts
 keep only their candidate lists; the rollout and the four output files come from
 `evaluate/report.py`, so every table has the same columns and repo-relative paths.
 
 Never hand-edit a generated table to correct it — rerun the script. A table that
 disagrees with the checkpoints is a signal, not a typo. All runs use held-out
 seeds 0–29; a table on a different seed set is a bug, not a variant.
+
+Name run directories for what they found (`joint_vs_price_only_soft_aware`,
+`oversell_cap_transfer`), not what they ran (`soft_aware_report_demo` is the
+one deliberate exception — it names itself a demo because it is one). Driver
+scripts are `run_*.py`/`final_eval.py` in lowercase, never SCREAMING_CASE.
 
 ## Config layering
 

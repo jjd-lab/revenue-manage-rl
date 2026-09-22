@@ -385,3 +385,76 @@ aggregate rather than a mean.
 
 Housekeeping is explicitly sequenced *after* the seed protocol so the two
 regenerations do not happen twice.
+
+## [2026-09-22] decision | Paired intervals on the headline, before more seeds
+
+`score_aware` comparisons now carry a paired bootstrap: resample seeds 0–29,
+recompute the stratified score on each draw, and call a pair a tie when the
+2.5/97.5 interval covers zero. The headline file is
+`runs/joint_vs_price_only_soft_aware/paired_intervals.csv`, from the saved
+episodes, so the point-estimate table did not move. On that readout raw and
+capped BC→SAC are a tie with each other and a lead over every other row; the
+1.2% point gap (`rl_best` over pace) covers zero, and so does every pair among
+`rl_best`, joint PPO, pace PPO, price-only PPO, and myopic. §7, the site, and
+the README now say that. More seeds stay queued, and only for a tie still worth
+separating — extending the list would change the soft/peak split. Protocol:
+`docs/EVALUATING_POLICIES.md`. Status: [[next-steps]].
+
+## [2026-09-22] ingest | Gitignore `private/` and `CLAUDE.local.md`
+
+`private/` was documented as gitignored and never shipped, but `.gitignore` did
+not list it. It does now, with `CLAUDE.local.md` for personal agent overrides.
+`CLAUDE.md` stays tracked: it is the shared agent front door, not a local file.
+
+## [2026-09-22] ingest | Site policies section regrouped
+
+`site/index.html` §03 now groups the roster as not-learned / learned / the cap,
+and nests a two-step BC→SAC recipe (copy the myopic rule, then let SAC improve)
+under that policy instead of a four-box strip that sat under the whole list.
+The cap is no longer visually part of the training pipeline. [[dev-commands]]
+still only says how the page is published.
+
+## [2026-09-22] decision | The BC→SAC lead does not repeat across training seeds
+
+Retrained pace PPO and BC→SAC at seeds 43, 44, and 46 into
+`artifacts/training_seeds/`, leaving the shipped seed-42 zips in place, and
+scored them on nights 0–29. One matched interval covers zero, so the published
+§7 lead is training-seed sensitive. Reading: `runs/training_seeds/NOTES.md`.
+Both trainers now share `<model_dir>/<run_name>/`; a config with a `bc:` block
+is the warm start, and anything else is the standard trainer. The oversell cap
+stays an eval wrapper. Status: [[next-steps]].
+
+## [2026-09-22] ingest | Promo and price-only SAC checkpoints regenerated
+
+Retrained the two campaigns whose weights had not been kept: early-promo PPO and
+price-only SAC, both at seed 42. Copied the finals to the curated paths and
+regenerated `runs/promo_ppo/` and `runs/price_only_long/`. Promo still loses to
+pace. The SAC retrain is below `rl_best` and still short of BC→SAC. The shipped
+price-only PPO zip was not retrained. Status: [[next-steps]].
+
+## [2026-09-22] ingest | Pre-commit cleanup: gitignore, a stale row, two renames
+
+Fixed `runs/price_only_long/NOTES.md`'s `rl_best_sac@200k` row, which still
+carried pre-regeneration numbers disagreeing with its own CSV. Ignored
+`runs/**/expert_dataset.npz` (1.2 MB × 3, BC rollout tensors — raw material,
+same class as `artifacts/`) before it entered history. Dropped the duplicate
+`comparison.md` write in `evaluate/soft_aware.py` (`soft_aware_comparison.md`
+is the one name now). Removed `runs/tree_demand_sanity.md` (both places that
+cited it called it superseded). Renamed
+`runs/joint_vs_price_only_soft_aware/REPRODUCE.py` → `run_headline.py` (the
+only SCREAMING_CASE filename in the repo) and `runs/soft_aware_eval/` →
+`runs/soft_aware_report_demo/` (every doc already called it a demo). Cleaned
+~37 MB of byte-identical duplicate checkpoints and two unreferenced smoke dirs
+out of `artifacts/` (local only, no git impact). [[conventions]] now states the
+run-directory and driver-script naming rule. Status: [[next-steps]].
+
+## [2026-09-22] decision | Monotone price constraint queued, not built
+
+F4's price path ends in a late markdown that no real venue can run. Wrote the
+full spec — a `direction: up` constraint (outermost wrapper, project or
+penalty mode, first-step exempt, rejects `early_promo`/`mpc` since both
+override price *inside* `PriceOnlyWrapper` after any outer projection) plus a
+four-arm experiment — into [[next-steps]] Task 4 as executable instructions for
+whoever picks it up next. Expected result stated up front: the constrained
+retrain will likely score below the unconstrained one; the number is the
+deliverable. No code, config, or `runs/` directory exists yet.

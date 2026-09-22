@@ -37,7 +37,9 @@ ls -lO .venv/lib/python3.13/site-packages/*.pth      # look for "hidden"
 chflags nohidden .venv/lib/python3.13/site-packages/*.pth
 ```
 
-`.gitignore` covers `.venv`, `.venv.nosync/`, and any other `.venv*`.
+`.gitignore` covers `.venv`, `.venv.nosync/`, and any other `.venv*`, plus
+`artifacts/`, `private/` (unpublished notebooks), and `CLAUDE.local.md`.
+`CLAUDE.md` is shared and tracked.
 
 ## Editor setup
 
@@ -95,7 +97,20 @@ policy reaches a given score. Three tests train a tiny agent and are marked
 
 ## Regenerating tables and figures
 
-- `runs/*/final_eval.py` and `REPRODUCE.py` read checkpoints from `artifacts/`,
+- `python runs/joint_vs_price_only_soft_aware/intervals.py` writes
+  `paired_intervals.csv` from the saved episode table and
+  `soft_aware_summary.json`. It does not roll policies and does not rewrite the
+  point-estimate CSV. Fresh evals get the same columns from
+  `rprl-eval --soft-aware --interval --baseline-policy <name>`. The rule for
+  reading them is in `docs/EVALUATING_POLICIES.md`.
+- `python runs/training_seeds/train.py` trains any experiment config at extra
+  seeds (`-c` repeats; `--label` once per config). A `bc:` block uses the
+  behaviour-clone warm start; anything else uses the standard trainer. Both
+  write `artifacts/training_seeds/<label>_s<seed>/final_model.zip`. It refuses
+  seed 42, nights 0–29, the 100–129 block, and the published checkpoint
+  directories. `python runs/training_seeds/eval.py` scores the pace and BC→SAC
+  sweep. The reading is `runs/training_seeds/NOTES.md`.
+- `runs/*/final_eval.py` and `run_headline.py` read checkpoints from `artifacts/`,
   which is untracked, so they fail on a fresh clone until you retrain — see
   [[conventions]] and the README's *Model checkpoints* table. All four
   `final_eval.py` scripts share `evaluate/report.py`, which writes checkpoint

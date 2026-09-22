@@ -19,10 +19,13 @@ constrain a trained joint policy after the fact.
 ## The result
 
 On thirty held-out nights, scored so that structurally unfillable soft nights are
-measured against a floor-price oracle rather than against capacity, the three
-SAC-based joint policies take the top three places. The recommended package is
-BC→SAC under the oversell cap: it keeps 99.4% of the raw policy's score and turns
-denied admission on 71% of peak nights into none.
+measured against a floor-price oracle rather than against capacity, paired
+intervals separate one tier from the rest. BC→SAC raw and BC→SAC under the
+oversell cap are a tie with each other, and both beat every other row. The cap
+turns denied admission on 71% of peak nights into none; its score cost covers
+zero, which is why it is the recommended package. Joint SAC `rl_best` does not
+clear pace PPO — that 1.2% point gap is a tie. The full readout is
+[§7](docs/EXPERIMENT_LOG.md).
 
 | Policy | Levers | `score_aware` | Peak nights with denied admission |
 | --- | --- | ---: | ---: |
@@ -32,13 +35,15 @@ denied admission on 71% of peak nights into none.
 | Pace PPO | price only | 2.010M | 0.00 |
 | Myopic (perfect-forecast baseline) | price only | 1.972M | 0.00 |
 
-That ranking is *unconstrained*. Apply the cap to every joint policy and all three
-reach zero denied admission for 0.6–2.4% of score — but only BC→SAC keeps a clear
-lead: capped joint SAC ties pace PPO, and capped joint PPO falls below both
-price-only policies ([§10](docs/EXPERIMENT_LOG.md)). Under a safety constraint,
-"both levers beat one" belongs to the behaviour-cloned policy, not to joint
-control in general. Taking the second lever away is still expensive for all of
-them ([§9](docs/EXPERIMENT_LOG.md)) — it is load-bearing, just not sufficient.
+The table above is point estimates. Apply the cap to every joint policy and all
+three reach zero denied admission for 0.6–2.4% of score. The interval supports a
+lead only for capped BC→SAC. Capped joint SAC's point estimate ties pace PPO, and
+capped joint PPO's falls below both price-only policies; those two capped rows
+were not saved night by night, so they have no interval
+([§10](docs/EXPERIMENT_LOG.md)). Under a safety constraint, "both levers beat
+one" belongs to the behaviour-cloned policy, not to joint control in general.
+Taking the second lever away is still expensive for all of them
+([§9](docs/EXPERIMENT_LOG.md)) — it is load-bearing, just not sufficient.
 
 Full table: [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) §7. The chart-led
 reading is the public page: **<https://jjd-lab.github.io/revenue-manage-rl/>**
@@ -175,7 +180,7 @@ wiki/                            maintainer notes (conventions, dev commands, lo
 flowchart LR
   yaml["configs/*.yaml"] --> env["load_config → make_env"]
   env --> train["rprl-train / rprl-bc-sac"]
-  env --> eval["rprl-eval / REPRODUCE.py"]
+  env --> eval["rprl-eval / run_headline.py"]
   train --> zip["artifacts/*.zip"]
   zip --> eval
   eval --> runs["runs/ tables"]
@@ -200,6 +205,8 @@ checkpoints yourself:
 | BC→SAC | `artifacts/bc_sac/rl_bc_sac_final.zip` | `rprl-bc-sac -c configs/experiment_bc_sac.yaml` |
 | pace PPO | `artifacts/pace_ppo/rl_pace_ppo.zip` | `rprl-train -c configs/experiment_price_only_pace_ppo.yaml` |
 | price-only PPO | `artifacts/price_only_long/rl_ppo_analytic.zip` | `rprl-train -c configs/experiment_price_only_ppo_long.yaml` |
+| price-only SAC | `artifacts/price_only_long/rl_sac_optimize1d.zip` | `rprl-train -c configs/experiment_price_only_sac_long.yaml` |
+| early-promo PPO | `artifacts/promo_ppo/rl_promo_ppo.zip` | `rprl-train -c configs/experiment_price_only_promo_ppo.yaml` |
 
 Two caveats. Training writes `<model_dir>/<run_name>/final_model.zip` and
 `best/best_model.zip` — the names in the table are curated copies, so you copy
@@ -213,7 +220,7 @@ The reproduce scripts read from `artifacts/` and skip rows whose checkpoint is
 missing. Every one evaluates on held-out seeds 0–29.
 
 ```bash
-python runs/joint_vs_price_only_soft_aware/REPRODUCE.py   # the headline table
+python runs/joint_vs_price_only_soft_aware/run_headline.py   # the headline table
 python runs/both_goals/final_eval.py                       # oversell cap + MPC table
 python runs/ablate_selling_limit/run_ablation.py           # is the second lever load-bearing?
 python runs/oversell_cap_transfer/run_cap_transfer.py      # does the oversell cap transfer?
@@ -237,7 +244,6 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/forecast_misspecification/NOTES.md`](runs/forecast_misspecification/NOTES.md) — what each policy is worth when the demand forecast is wrong
 - [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — pricing the one place the controllers read the simulator's own parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the oversell cap, the price MPC, and the soft-night fill ceiling
-- [`runs/tree_demand_sanity.md`](runs/tree_demand_sanity.md) — early 30k-step sanity check, superseded by the campaigns
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log
 
 ## Contributing and citing

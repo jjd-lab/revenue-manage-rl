@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Held-out comparison: early-promo + pace price-only PPO vs pace / price_only / bc_sac / rl_best / baselines.
 
-The promo checkpoint was not kept (see NOTES.md), so its rows are skipped on a
-rerun; the other rows still reproduce.
+Reads `artifacts/promo_ppo/rl_promo_ppo.zip` (a copy of
+`ppo_promo/final_model.zip`). Skips that row when the file is absent.
 """
 
 from __future__ import annotations

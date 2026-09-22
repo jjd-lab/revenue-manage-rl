@@ -53,6 +53,38 @@
         "soft_day_sample_boost": 2.0
       }
     },
+    "control": {
+      "price_only": true,
+      "selling_limit": {
+        "kind": "analytic",
+        "overbook_factor": 1.05,
+        "keep_rate": null,
+        "low_remain_frac": 0.05
+      },
+      "early_promo": {
+        "enabled": true,
+        "base_demand_threshold": 90.0,
+        "promo_price": 80.0,
+        "mode": "set",
+        "apply_when_days_prior_ge": 30,
+        "weekdays_only": false,
+        "offpeak_only": false
+      },
+      "safe_sl": {
+        "enabled": false,
+        "kind": "analytic",
+        "overbook_factor": 1.02,
+        "low_remain_frac": 0.05,
+        "mix_alpha": 0.0
+      },
+      "mpc": {
+        "enabled": false,
+        "horizon": 5,
+        "n_grid": 21,
+        "base_demand_threshold": 90.0,
+        "soft_only": true
+      }
+    },
     "algorithm": {
       "name": "ppo",
       "learning_rate": 0.0003,
@@ -76,7 +108,8 @@
       "total_timesteps": 200000,
       "seed": 42,
       "log_dir": "runs/promo_ppo",
-      "model_dir": "artifacts/promo_ppo"
+      "model_dir": "artifacts/promo_ppo",
+      "run_name": "ppo_promo"
     },
     "eval": {
       "n_episodes": 30,
@@ -87,32 +120,36 @@
         3,
         4
       ],
-      "held_out": true
+      "soft_aware": {
+        "rule": "structural",
+        "peak_months": [
+          7,
+          8,
+          11,
+          12
+        ],
+        "weekend_dow": [
+          5,
+          6
+        ],
+        "soft_focus_months": [
+          6
+        ],
+        "base_demand_threshold": 90.0,
+        "soft_oracle": "min_price",
+        "floor_price_tol": 1.0,
+        "undersell_threshold": 1500.0,
+        "lambda_peak": 200.0,
+        "mu_soft": 200.0,
+        "soft_score_mode": "gap_to_oracle"
+      }
     },
     "tune": {
       "method": "grid",
       "n_trials": 8,
-      "metric": "score",
       "shortfall_weight": 200.0,
       "timesteps_per_trial": 40000,
       "eval_episodes": 15
-    },
-    "control": {
-      "price_only": true,
-      "selling_limit": {
-        "kind": "analytic",
-        "overbook_factor": 1.05,
-        "low_remain_frac": 0.05
-      },
-      "early_promo": {
-        "enabled": true,
-        "base_demand_threshold": 90.0,
-        "promo_price": 80.0,
-        "mode": "set",
-        "apply_when_days_prior_ge": 30,
-        "weekdays_only": false,
-        "offpeak_only": false
-      }
     }
   }
 }

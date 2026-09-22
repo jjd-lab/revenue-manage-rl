@@ -176,6 +176,34 @@ score_aware = score_peak + score_soft
 - Legacy overall `score = rev − λ·shortfall` and `undersell>1500` stay in the
   artifacts for continuity but are marked diagnostic when soft-aware is on.
 
+### Paired intervals
+
+A point estimate on thirty nights is not a ranking. Compare policies on the
+**same** seeds, resample that seed list with replacement, and recompute
+`score_aware` on each resample. The interval is the 2.5 and 97.5 percentiles of
+the paired difference. Bootstrapping the finished score would treat a soft night
+and a peak night as interchangeable, and `score_aware` is a stratified sum.
+
+An interval that covers zero is a **tie**. Do not rank through it.
+
+```bash
+rprl-eval -c configs/default.yaml --soft-aware --interval \
+  --baseline-policy myopic_greedy --episodes 30 \
+  --model artifacts/bc_sac/rl_bc_sac_final.zip --algo sac \
+  --out-dir runs/scratch/soft_aware_eval
+```
+
+The headline intervals are computed from the saved episode table, not from a
+new rollout:
+
+```bash
+python runs/joint_vs_price_only_soft_aware/intervals.py
+```
+
+That writes `paired_intervals.csv` beside the point estimates and does not
+rewrite them. Seeds 0–29 stay the reported set. A longer list changes the
+soft/peak split, so extend it only for a tie you still want to separate.
+
 ### Commands
 
 ```bash
@@ -185,5 +213,5 @@ rprl-eval -c configs/default.yaml --soft-aware --episodes 30 \
   --out-dir runs/scratch/soft_aware_eval
 
 # Multi-policy demo (bc_sac+safe_sl vs pace_ppo vs myopic)
-python runs/soft_aware_eval/run_demo.py
+python runs/soft_aware_report_demo/run_demo.py
 ```

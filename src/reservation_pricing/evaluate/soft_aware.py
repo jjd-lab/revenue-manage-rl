@@ -323,6 +323,9 @@ def run_soft_aware_comparison(
     include_baselines: bool = True,
     baseline_names: Optional[list[str]] = None,
     extra_policies: Optional[list[dict[str, Any]]] = None,
+    interval: bool = False,
+    baseline_policy: Optional[str] = None,
+    n_bootstrap: int = 10_000,
 ) -> dict[str, Any]:
     """Compare policies with soft/peak stratification + soft-aware scores.
 
@@ -420,6 +423,26 @@ def run_soft_aware_comparison(
         all_episodes.extend(rows)
 
     table = soft_aware_table(soft_results)
+    if interval:
+        if not baseline_policy:
+            raise ValueError("interval=True requires baseline_policy")
+        from reservation_pricing.evaluate.intervals import (
+            attach_interval_columns,
+            index_by_policy,
+            intervals_vs_baseline,
+        )
+
+        indexed = index_by_policy(all_episodes)
+        compared = intervals_vs_baseline(
+            indexed,
+            baseline_policy,
+            order=list(table["policy"]),
+            seeds=seeds,
+            cfg=soft_cfg,
+            oracle_revenue_by_seed=oracle_by_seed,
+            n_draws=n_bootstrap,
+        )
+        table = attach_interval_columns(table, compared)
     out: dict[str, Any] = {
         "table": table,
         "soft_aware": soft_results,
@@ -429,6 +452,8 @@ def run_soft_aware_comparison(
         "demand_kind": (cfg.get("demand") or {}).get("kind"),
         "n_episodes": n_episodes,
         "seeds": seeds,
+        "interval_baseline": baseline_policy if interval else None,
+        "n_bootstrap": n_bootstrap if interval else None,
     }
 
     if out_dir:
@@ -487,75 +512,90 @@ def write_soft_aware_report(out: dict[str, Any], out_dir: str | Path) -> Path:
         "",
         "**Secondary / diagnostic:** overall `undersell>1500` (do not lead with this).",
         "",
-        "## Summary table",
-        "",
-        _df_to_markdown(table),
-        "",
-        "## Soft slice (primary)",
-        "",
-        _df_to_markdown(
-            table[
-                [
-                    c
-                    for c in (
-                        "policy",
-                        "soft_rev",
-                        "soft_gap_to_oracle",
-                        "soft_frac_at_floor",
-                        "soft_oversell",
-                        "score_soft",
-                    )
-                    if c in table.columns
-                ]
-            ]
-        ),
-        "",
-        "## Peak slice (primary)",
-        "",
-        _df_to_markdown(
-            table[
-                [
-                    c
-                    for c in (
-                        "policy",
-                        "peak_rev",
-                        "peak_remain",
-                        "peak_load",
-                        "peak_oversell",
-                        "peak_score",
-                        "score_peak",
-                    )
-                    if c in table.columns
-                ]
-            ]
-        ),
-        "",
-        "## Diagnostic (secondary)",
-        "",
-        "Overall `undersell_gt1500_diag` is kept for continuity — do **not** lead with it "
-        "when soft demand cannot fill at floor.",
-        "",
-        _df_to_markdown(
-            table[
-                [
-                    c
-                    for c in (
-                        "policy",
-                        "overall_rev",
-                        "overall_score",
-                        "overall_oversell",
-                        "undersell_gt1500_diag",
-                        "score_aware",
-                    )
-                    if c in table.columns
-                ]
-            ]
-        ),
-        "",
     ]
+    baseline = out.get("interval_baseline")
+    if baseline and "paired_ci_low" in table.columns:
+        md.extend(
+            [
+                "## Paired interval",
+                "",
+                f"`paired_diff`, `paired_ci_low`, and `paired_ci_high` are a paired bootstrap of "
+                f"`score_aware(policy) - score_aware({baseline})`: "
+                f"{out.get('n_bootstrap')} resamples of the seed list, `score_aware` recomputed "
+                "on each resample. An interval that covers zero is a tie.",
+                "",
+            ]
+        )
+    md.extend(
+        [
+            "## Summary table",
+            "",
+            _df_to_markdown(table),
+            "",
+            "## Soft slice (primary)",
+            "",
+            _df_to_markdown(
+                table[
+                    [
+                        c
+                        for c in (
+                            "policy",
+                            "soft_rev",
+                            "soft_gap_to_oracle",
+                            "soft_frac_at_floor",
+                            "soft_oversell",
+                            "score_soft",
+                        )
+                        if c in table.columns
+                    ]
+                ]
+            ),
+            "",
+            "## Peak slice (primary)",
+            "",
+            _df_to_markdown(
+                table[
+                    [
+                        c
+                        for c in (
+                            "policy",
+                            "peak_rev",
+                            "peak_remain",
+                            "peak_load",
+                            "peak_oversell",
+                            "peak_score",
+                            "score_peak",
+                        )
+                        if c in table.columns
+                    ]
+                ]
+            ),
+            "",
+            "## Diagnostic (secondary)",
+            "",
+            "Overall `undersell_gt1500_diag` is kept for continuity — do **not** lead with it "
+            "when soft demand cannot fill at floor.",
+            "",
+            _df_to_markdown(
+                table[
+                    [
+                        c
+                        for c in (
+                            "policy",
+                            "overall_rev",
+                            "overall_score",
+                            "overall_oversell",
+                            "undersell_gt1500_diag",
+                            "score_aware",
+                        )
+                        if c in table.columns
+                    ]
+                ]
+            ),
+            "",
+        ]
+    )
     md_path = out_path / "soft_aware_comparison.md"
-    # Also write comparison.md for the demo path requested
     body = "\n".join(md)
-    (out_path / "comparison.md").write_text(body)
     md_path.write_text(body)
     return md_path

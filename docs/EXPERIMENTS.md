@@ -20,9 +20,9 @@ produces, not what you will find after a fresh clone.
 | `ppo_screen` | `tree_long_screen.yaml` | `runs/tree_long/` | not kept | §2 |
 | `bc_sac` | `experiment_bc_sac.yaml` | `runs/bc_sac/` | `artifacts/bc_sac/rl_bc_sac_final.zip` | §3 |
 | `ppo_analytic` | `experiment_price_only_ppo_long.yaml` | `runs/price_only_long/` | `artifacts/price_only_long/rl_ppo_analytic.zip` | §4 |
-| `sac_optimize1d` | `experiment_price_only_sac_long.yaml` | `runs/price_only_long/` | not kept | §4 |
+| `sac_optimize1d` | `experiment_price_only_sac_long.yaml` | `runs/price_only_long/` | `artifacts/price_only_long/rl_sac_optimize1d.zip` | §4 |
 | `ppo_pace` | `experiment_price_only_pace_ppo.yaml` | `runs/pace_ppo/` | `artifacts/pace_ppo/rl_pace_ppo.zip` | §5a |
-| `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | not kept | §5b |
+| `ppo_promo` | `experiment_price_only_promo_ppo.yaml` | `runs/promo_ppo/` | `artifacts/promo_ppo/rl_promo_ppo.zip` | §5b |
 | `bc_sac_safe_sl` | `experiment_bc_sac_safe_sl.yaml` | `runs/both_goals/` | reuses the `bc_sac` checkpoint | §5c |
 | `pace_mpc` | `experiment_pace_mpc.yaml` | `runs/both_goals/` | reuses the `ppo_pace` checkpoint | §5c |
 
@@ -35,8 +35,8 @@ checkpoint under a different config, which is why they ship no weights of their 
 | What | Entry point | Results in | Log |
 | --- | --- | --- | --- |
 | $80 soft-day oracle ceiling | `runs/oracle_ceiling/run_oracle.py` | `runs/oracle_ceiling/` | §5c |
-| Final soft-aware head-to-head | `runs/joint_vs_price_only_soft_aware/REPRODUCE.py` | same directory | §7 |
-| Soft-aware report demo (two policies) | `runs/soft_aware_eval/run_demo.py` | `runs/soft_aware_eval/` | §6 |
+| Final soft-aware head-to-head | `runs/joint_vs_price_only_soft_aware/run_headline.py` | same directory | §7 |
+| Soft-aware report demo (two policies) | `runs/soft_aware_report_demo/run_demo.py` | `runs/soft_aware_report_demo/` | §6 |
 | Second-lever ablation (pin the selling limit) | `runs/ablate_selling_limit/run_ablation.py` | `runs/ablate_selling_limit/` | §9 |
 | Oversell-cap transfer across joint policies | `runs/oversell_cap_transfer/run_cap_transfer.py` | `runs/oversell_cap_transfer/` | §10 |
 | Cancellation-model dependence (keep-rate leak) | `runs/keep_rate_dependence/run_probe.py` | `runs/keep_rate_dependence/` | §11a |
@@ -46,6 +46,19 @@ checkpoint under a different config, which is why they ship no weights of their 
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.
+
+## Checks that retrain
+
+| What | Train | Evaluate | Results in | Log |
+| --- | --- | --- | --- | --- |
+| Does the BC→SAC lead over pace repeat? Seeds 43, 44, 46; seed 42 stays the shipped zips | `runs/training_seeds/train.py` | `runs/training_seeds/eval.py` | `runs/training_seeds/` | §7 |
+
+`train.py` takes any experiment config. A `bc:` block uses the behaviour-clone
+warm start; anything else uses the standard trainer. Both write
+`artifacts/training_seeds/<label>_s<seed>/final_model.zip`. The oversell cap is
+not a third trainer — `eval.py` wraps the BC zip. The driver refuses seed 42,
+held-out nights 0–29, the hyperparameter block 100–129, and the published
+checkpoint directories.
 
 ## Configs that are not experiments
 

@@ -10,7 +10,9 @@ Steps
 2. Build SAC, behavioral-clone the actor (MSE on normalized actions).
 3. Optionally seed the replay buffer + warm the critic.
 4. Fine-tune with ``model.learn``.
-5. Save under ``artifacts/bc_sac/`` / ``runs/bc_sac/`` (from config).
+5. Save under ``<model_dir>/<run_name>/``, the same place ``train_from_config``
+   writes. The curated ``artifacts/bc_sac/rl_bc_sac_final.zip`` is a copy of that
+   file, not the trainer's own path.
 """
 
 from __future__ import annotations
@@ -39,7 +41,7 @@ from reservation_pricing.algorithms.registry import (
 from reservation_pricing.config import load_config
 from reservation_pricing.envs import make_env
 from reservation_pricing.train.common import eval_freq, limit_torch_threads, make_monitored
-from reservation_pricing.train.runner import resolve_run_name
+from reservation_pricing.train.runner import output_dirs, resolve_run_name
 
 
 def bc_finetune_from_config(
@@ -71,9 +73,9 @@ def bc_finetune_from_config(
 
     run_name = resolve_run_name(run_name, train_cfg, algo_name, seed_i, prefix="bc_")
 
-    # Paths: config log_dir / model_dir are the experiment roots (e.g. runs/bc_sac).
-    run_dir = Path(out_dir) if out_dir else Path(train_cfg.get("log_dir", "runs/bc_sac"))
-    model_dir = Path(train_cfg.get("model_dir", "artifacts/bc_sac"))
+    # Same layout as train_from_config: <model_dir>/<run_name>/, not the family
+    # directory itself. The curated zip in artifacts/bc_sac/ is a copy.
+    model_dir, run_dir = output_dirs(train_cfg, run_name, out_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     model_dir.mkdir(parents=True, exist_ok=True)
 

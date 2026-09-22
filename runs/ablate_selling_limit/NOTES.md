@@ -7,8 +7,9 @@
 
 ## The question
 
-Section 7 says the joint policies beat the price-only ones by 1.2–3.6%. Two
-explanations fit that gap equally well:
+Section 7's point estimates put the joint policies above the price-only ones.
+The intervals keep a lead only for BC→SAC; `rl_best` and joint PPO tie the
+price-only rows. Two explanations fit either gap equally well:
 
 1. the joint policies **use the selling limit well**, or
 2. their **price policy** is simply better (SAC, and the BC warm start), and the
@@ -37,7 +38,7 @@ Full CSV: `ablation_table.csv`.
 
 | Question | Answer |
 | --- | --- |
-| Is the joint gap just a better price policy? | **NO** — removing the limit costs 90k–344k, an order of magnitude more than the 1.2–3.6% joint-vs-price-only gap |
+| Is the joint gap just a better price policy? | **NO** — removing the limit costs 90k–344k. That cost is this table's result; §7's intervals are a separate question |
 | Does a sensible *constant* limit recover it? | **NO** — the flat-rule arm still loses 90k–152k |
 | Is the limit what holds denied admission down? | **YES** — peak oversell goes 0.18 → 0.82 for `rl_best` once the limit stops moving |
 
@@ -58,6 +59,7 @@ purpose-trained for a fixed limit would score.
 
 That second comparison already exists and is the honest cross-policy number: the
 price-only policies, trained for exactly that regime, score 2.003M and 2.010M —
-above every pinned arm (1.69M–1.94M) and below every learned arm. Quote the
-**1.2–3.6% gap from §7** as the second lever's worth; quote this table for the
-claim that the gap is not an artifact of the price policy.
+above every pinned arm (1.69M–1.94M) on the point estimates. §7's intervals put
+them in a tie with `rl_best` and joint PPO, and below both BC→SAC rows. Quote
+this table for the claim that the pin cost is not an artifact of the price
+policy, and quote §7's BC→SAC-versus-pace interval for a resolved lead.

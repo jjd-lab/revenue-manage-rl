@@ -20,6 +20,22 @@ from reservation_pricing.config import load_config
 from reservation_pricing.train.common import eval_freq, limit_torch_threads, make_monitored
 
 
+def output_dirs(
+    train_cfg: dict[str, Any],
+    run_name: str,
+    out_dir: Optional[str] = None,
+) -> tuple[Path, Path]:
+    """``(model_dir, run_dir)`` for one named run.
+
+    Both trainers use this, so a behaviour-clone warm start and a standard
+    run land in the same shape: ``<model_dir>/<run_name>/`` and
+    ``<log_dir or out_dir>/<run_name>/``.
+    """
+    model_root = Path(train_cfg.get("model_dir", "artifacts"))
+    log_root = Path(out_dir) if out_dir else Path(train_cfg.get("log_dir", "runs"))
+    return model_root / run_name, log_root / run_name
+
+
 def resolve_run_name(
     run_name: Optional[str],
     train_cfg: dict[str, Any],
@@ -67,9 +83,7 @@ def train_from_config(
     steps = int(train_cfg.get("total_timesteps", 100_000))
 
     run_name = resolve_run_name(run_name, train_cfg, algo_name, seed_i)
-    root = Path(out_dir) if out_dir else Path(train_cfg.get("log_dir", "runs"))
-    run_dir = root / run_name
-    model_dir = Path(train_cfg.get("model_dir", "artifacts")) / run_name
+    model_dir, run_dir = output_dirs(train_cfg, run_name, out_dir)
     run_dir.mkdir(parents=True, exist_ok=True)
     model_dir.mkdir(parents=True, exist_ok=True)
 

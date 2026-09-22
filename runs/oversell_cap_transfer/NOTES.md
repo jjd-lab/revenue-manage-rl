@@ -54,10 +54,12 @@ venue that cannot turn ticket-holders away would actually make:
 | price-only PPO | 2,003,091 | naturally, one lever |
 | joint PPO + cap | 1,962,157 | cap |
 
-This **narrows §7's claim**. Uncapped, all three joint policies beat every
-price-only policy. Under a zero-denied-admission constraint, only BC→SAC keeps a
-clear lead (+3.6% over pace PPO); joint SAC lands 1,198 behind pace PPO — a tie at
-this seed count — and joint PPO falls below both price-only policies.
+This **narrows §7's claim**. Uncapped, the intervals separate only BC→SAC from
+the price-only rows; `rl_best` and joint PPO tie them (§7). Under a
+zero-denied-admission constraint, capped BC→SAC keeps the lead the interval
+supports (+3.6% over pace PPO). Capped joint SAC lands 1,198 behind pace PPO and
+capped joint PPO falls below both price-only policies on the point estimates;
+those two capped rows were not saved night by night, so they have no interval.
 
 So "both levers beat one" is not a property of joint control in general. Under the
 safety constraint it is a property of **the behaviour-cloned policy specifically**.

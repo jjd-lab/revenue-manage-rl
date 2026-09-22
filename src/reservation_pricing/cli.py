@@ -55,10 +55,23 @@ def eval_main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Soft-day-aware stratified eval (writes soft_aware_comparison.md)",
     )
+    p.add_argument(
+        "--interval",
+        action="store_true",
+        help="Paired bootstrap interval on score_aware vs --baseline-policy (requires --soft-aware)",
+    )
+    p.add_argument(
+        "--baseline-policy",
+        default=None,
+        help="Policy name the paired interval is relative to (required with --interval)",
+    )
     args = p.parse_args(argv)
+    if args.interval and not args.soft_aware:
+        p.error("--interval requires --soft-aware")
+    if args.interval and not args.baseline_policy:
+        p.error("--interval requires --baseline-policy")
 
-    runner = run_soft_aware_comparison if args.soft_aware else run_comparison
-    out = runner(
+    kwargs = dict(
         config_path=args.config,
         model_path=args.model,
         algo=args.algo,
@@ -67,6 +80,11 @@ def eval_main(argv: list[str] | None = None) -> None:
         out_dir=args.out_dir,
         include_baselines=not args.no_baselines,
     )
+    if args.soft_aware and args.interval:
+        kwargs["interval"] = True
+        kwargs["baseline_policy"] = args.baseline_policy
+    runner = run_soft_aware_comparison if args.soft_aware else run_comparison
+    out = runner(**kwargs)
     print(out["table"].to_string(index=False))
     print(f"\nWrote results under {args.out_dir}")
 

@@ -6,8 +6,8 @@ Apples-to-apples business metrics on the same tree_elastic held-out seeds/months
   SAC trained with optimize_1d — eval uses that same controller).
 - joint agents (bc_sac_final, rl_best) use joint (price, SL) action space.
 
-Only the PPO checkpoint is retrainable from a shipped config (see README
-"Model checkpoints"); the SAC rows are skipped when their files are absent.
+Reads the curated copies under `artifacts/price_only_long/`. Skips a row
+when its zip is absent (`artifacts/` is untracked).
 """
 
 from __future__ import annotations

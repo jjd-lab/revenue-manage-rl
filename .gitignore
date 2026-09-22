@@ -12,9 +12,18 @@ __pycache__/
 # Regenerate with rprl-train / rprl-bc-sac; see README "Model checkpoints".
 artifacts/
 
+# BC expert rollout tensors are raw material, same class as artifacts/.
+runs/**/expert_dataset.npz
+
 # Scratch output from the README quick start; curated results live beside their scripts.
 runs/scratch/
 runs/eval/
 runs/baselines/
 runs/tune_*/
 .playwright-mcp/
+
+# Unpublished pre-framework notebooks and notes. Never ship.
+private/
+
+# Personal agent overrides. Project CLAUDE.md is shared and tracked.
+CLAUDE.local.md

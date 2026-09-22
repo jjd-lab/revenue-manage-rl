@@ -87,13 +87,13 @@ Decomposed actions: RL outputs **price only**; SL from analytic or 1D-optimize c
 | Policy | Legacy score | Oversell | Undersell>1500 |
 | --- | ---: | ---: | ---: |
 | price-only PPO @200k | ~827k | **0.00** | 0.467 |
-| price-only SAC @150k | ~818k | **0.00** | 0.433 |
+| price-only SAC @150k | ~802k | **0.00** | 0.433 |
 | BC→SAC | ~871k | 0.40 | 0.433 |
 
 **Takeaways**
 
-- Price-only beats joint PPO and ≈ `rl_best` with **zero oversell**.
-- Does not beat BC→SAC on legacy score.
+- Price-only PPO sits just above `rl_best` with **zero oversell**. The SAC figure is a 2026-09-22 retrain of a checkpoint that had not been kept; it is below `rl_best`.
+- Neither beats BC→SAC on legacy score.
 - Selling limit was not the soft-undersell bottleneck (limits already open).
 
 Configs: `experiment_price_only_*.yaml`. Artifacts: `artifacts/price_only_long/`.
@@ -113,7 +113,7 @@ Small fill/score win; undersell floor unchanged.
 
 ### 5b. Early promo (force $80 when tree base soft)
 
-Worse than pace on score (~820k); undersell tied at 0.433.
+Worse than pace on score (~821k vs ~832k); undersell tied at 0.433. Regenerated 2026-09-22 from a new training; the loss to pace stands.
 
 ### 5c. Oracle ceiling + MPC + safe SL (“both goals”)
 
@@ -176,19 +176,56 @@ uses), soft-aware classification → 13 soft / 17 peak; all policies soft
 | myopic | baseline | 1.972M | 1.186M | 423 | 0.00 | 0.00 |
 | fixed_80 | baseline | 1.816M | 1.042M | 415 | 0.00 | 1.00 |
 
-Raw BC→SAC scores highest by filling hardest, and denies admission on 12 of the
-17 peak nights doing it. Under the safe-SL cap it keeps 99.4% of that score with
-no denied admission, which is why it is the recommended package. The three
-SAC-based joint policies sit above every price-only policy; the best price-only
-policy (pace PPO) trails the capped BC→SAC by 3.6% and `rl_best` by 1.2%.
+Raw BC→SAC denies admission on 12 of the 17 peak nights. The safe-SL cap takes
+that rate to zero. The point estimates give back 0.6% of score for the cap; the
+interval on that difference covers zero, so the score cost is a **tie**. The cap
+is the recommended package because it sits in that top tie and denies admission
+on no peak night.
+
+**Paired intervals, seeds 0–29.** Source of truth:
+`runs/joint_vs_price_only_soft_aware/paired_intervals.csv`
+(`python runs/joint_vs_price_only_soft_aware/intervals.py` — it reads the saved
+episodes and does not rewrite this table). 10,000 resamples of the seed list;
+`score_aware` is recomputed on each resample. An interval that covers zero is a
+**tie**. Do not rank through it.
+
+- **BC→SAC raw and BC→SAC + cap are a tie with each other, and both beat every
+  other row.** Capped minus raw is −13.0k (interval −39.0k to +14.7k). Capped
+  minus pace PPO is +71.5k (+31.2k to +105.8k): the 3.6% point gap, and the
+  interval sits above zero. Raw minus pace is +84.5k (+39.7k to +124.0k). Both
+  also clear `rl_best`, joint PPO, price-only PPO, and myopic.
+- **`rl_best`, joint PPO, pace PPO, price-only PPO, and myopic are mutually
+  tied.** `rl_best` minus pace is +23.4k (−0.6k to +47.5k): the 1.2% point gap
+  is a tie. Joint PPO minus pace is +1.0k (−72.9k to +70.7k). Every other pair
+  inside this group covers zero, including both price-only rows against myopic.
+- **Fixed $80 is below every other row.** Those intervals sit entirely on one
+  side of zero.
+
+The joint-versus-price-only comparison these thirty nights support, on the
+published checkpoints, is the BC→SAC lead over pace. "The three SAC policies
+sit above every price-only policy" does not.
 
 > **Seed sensitivity (2026-09-22).** This table was first published on a
 > different thirty seeds (0–4 plus 1000–1024, an 18 soft / 12 peak split) that no
 > other run used. On that draw joint SAC `rl_best` led (2.057M) ahead of raw
 > BC→SAC (2.044M), the capped BC→SAC (2.040M) and pace PPO (1.991M). Moving to
-> the common seeds 0–29 reordered the three joint policies and left their lead
-> over every price-only policy intact; the order *within* that group is inside
-> seed noise and should be read that way.
+> the common seeds 0–29 reordered the joint policies. The intervals above are
+> the uncertainty on this draw: only the two BC→SAC rows are separated from the
+> price-only policies. A longer seed list would change the soft/peak split, so
+> it waits on a tie that is still worth separating. `rl_best` versus pace is the
+> closest.
+
+**Training seeds (2026-09-22).** Those intervals are one training of each
+policy, both at seed 42. Retraining pace PPO and BC→SAC at seeds 43, 44, and 46
+(`runs/training_seeds/`; seed 42 left as the shipped zips; same nights 0–29)
+shows the capped lead does **not** repeat. Seeds 42, 43, and 44 sit above their
+matched pace run; seed 46 is a tie (+8.0k, −7.9k to +25.2k) and sits below the
+published pace checkpoint (−50.3k, −78.8k to −24.1k). Capped `score_aware`
+across the four seeds runs from 1.960M to 2.103M, a spread of 144k, wider than
+the night-level interval on the published pair (+31.2k to +105.8k). The
+published lead is training-seed sensitive. The same wrapper also fails to take
+every retrain to zero peak denied admission (0.24 and 0.47 on seeds 43 and 44).
+The table above, and `paired_intervals.csv` beside it, stay the seed-42 record.
 
 **Models used**
 
@@ -209,7 +246,7 @@ Reproduce (needs the five checkpoints; see README § Model checkpoints):
 
 ```bash
 source .venv/bin/activate
-python runs/joint_vs_price_only_soft_aware/REPRODUCE.py
+python runs/joint_vs_price_only_soft_aware/run_headline.py
 ```
 
 ---
@@ -255,9 +292,11 @@ structural demand floor found in 5c, seen from the policy side.
 
 ## 9. Ablation: does the second lever earn its place?
 
-Section 7's 1.2–3.6% joint-vs-price-only gap admits two readings — the joint
-policies use the limit well, or their *price* policy is better and the limit is
-along for the ride. This re-scores each joint policy with its price untouched and
+Section 7's point estimates put the joint policies above the price-only ones.
+The intervals keep that lead only for BC→SAC; `rl_best` and joint PPO tie the
+price-only rows. Either way the gap admits two readings — the joint policies
+use the limit well, or their *price* policy is better and the limit is along
+for the ride. This re-scores each joint policy with its price untouched and
 its limit replaced by a constant.
 
 **Protocol:** same 30 held-out seeds, same `score_aware`.
@@ -271,8 +310,9 @@ Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_abl
 
 **Takeaways**
 
-- **The gap is not a price-policy artifact.** Removing the limit costs 90k–344k,
-  an order of magnitude more than the 1.2–3.6% that separates joint from price-only.
+- **The gap is not a price-policy artifact.** Removing the limit costs 90k–344k.
+  Those pin costs are the measurement; §7's intervals are a separate question
+  and are not what this table is for.
 - **A sensible constant does not recover it.** `rl_best`'s limit *averages* 12,578,
   within 2% of the flat 12,353 — and pinning it there still costs 120k. The value
   is not where the limit sits, it is **when it moves** (§8's figure 05, priced).
@@ -281,8 +321,11 @@ Results: `runs/ablate_selling_limit/` (`python runs/ablate_selling_limit/run_abl
 - **Caveat:** pinned arms are off-distribution — each policy priced for the limit it
   learned. This measures how tightly the levers are **coupled**, not what a policy
   trained for a fixed limit would score. That comparison is the price-only row in
-  §7 (2.003M–2.010M, above every pinned arm), which is why §7's gap stays the
-  number to quote for the second lever's worth.
+  §7 (2.003M–2.010M, above every pinned arm on the point estimates). The number
+  to quote for the published checkpoints' lead over a purpose-trained one-lever
+  policy is §7's interval for BC→SAC against pace, not the pin costs and not the
+  1.2% point gap. That interval is one training seed; a retrain can tie pace (§7,
+  training seeds).
 
 ---
 
@@ -309,13 +352,17 @@ Results: `runs/oversell_cap_transfer/`.
   paying the double oversell penalty; joint PPO oversells rarely, so the cap takes
   bookings it was being paid for. Oversell volume does not predict the cost of
   safety — whether the marginal booking earns or costs does.
-- **It narrows §7.** Among policies that deny admission on no peak night:
-  BC→SAC + cap **2.081M**, pace PPO 2.010M, joint SAC + cap 2.009M, price-only PPO
-  2.003M, joint PPO + cap 1.962M. Capped joint SAC lands 1,198 behind pace PPO — a
-  tie at this seed count — and capped joint PPO falls below both price-only
-  policies. So under a safety constraint, "both levers beat one" is a property of
-  **the behaviour-cloned policy**, not of joint control in general. The second
-  lever is still load-bearing (§9), but having it is not by itself enough.
+- **It narrows §7.** Among policies that deny admission on no peak night, the
+  point estimates are: BC→SAC + cap **2.081M**, pace PPO 2.010M, joint SAC + cap
+  2.009M, price-only PPO 2.003M, joint PPO + cap 1.962M. The saved headline
+  episodes cover the first, the second, and the fourth, and §7's interval says
+  capped BC→SAC beats both price-only rows. Capped `rl_best` and capped joint PPO
+  were not saved night by night, so they have no interval: the point estimates
+  put capped `rl_best` 1,198 behind pace and capped joint PPO below both
+  price-only policies. The saved neighbour, uncapped `rl_best` versus pace, is a
+  tie (§7). Under a safety constraint, "both levers beat one" is a property of
+  **the behaviour-cloned policy**, which is the comparison the interval supports.
+  The second lever is still load-bearing (§9), but having it is not by itself enough.
 
 ---
 
@@ -349,14 +396,16 @@ re-scores under a wrong one, without retraining:
 
 **Takeaways**
 
-- **A plausible forecast error costs more than the margin this log argues over.**
-  §7's joint-vs-price-only gap is 1.2–3.6% under a *perfect* forecast; a wrong
-  elasticity costs myopic 3.5–5.8% on its own.
+- **A plausible forecast error is as large as the lead this log can support.**
+  Under a perfect forecast the resolved joint-vs-price-only gap is capped BC→SAC
+  over pace, 3.6%, with the interval above zero (§7). A wrong elasticity costs
+  myopic 3.5–5.8% on its own. The 1.2% point gap (`rl_best` over pace) is a tie.
 - **The joint policies do not move at all** — identical scores and mean prices to
   the cent. Their observation is booking state plus calendar one-hots (§8), so
-  they consult no model. That is the operator-facing property: not "1.2% better"
-  but "does not need your forecast to be right." Indifference by construction, not
-  learned robustness — see the caveats in that directory.
+  they consult no model. That is the operator-facing property: not a one-percent
+  lead (the 1.2% point gap is a tie) but "does not need your forecast to be right."
+  Indifference by construction, not learned robustness — see the caveats in that
+  directory.
 - **A demand-*level* error moves no pricing decision, ever.** Demand is
   `base * (1 + e(p−ref)/ref)`, so base cancels out of the argmax and myopic's price
   is `ref(1−e)/(−2e) = $91.67` however wrong the level is. That is also why §8's
@@ -378,8 +427,9 @@ the test set.
 2. **Tree + elasticity** demand is a better production analogy than linear-only.
 3. **Joint continuous (price, SL)** can work (SAC / BC→SAC) but oversell must be
    managed (safe SL) or you accept risk for legacy score.
-4. **Price-only + analytic SL** is a safe PPO path with zero oversell; it clears
-   myopic on `score_aware` but trails every SAC-based joint policy on peak harvest.
+4. **Price-only + analytic SL** is a safe PPO path with zero oversell. On
+   `score_aware` it ties myopic, pace PPO, `rl_best`, and joint PPO. It trails
+   both BC→SAC rows (§7).
 5. **Soft-day undersell is mostly structural** under current demand — do not use
    overall remain>1500 as the primary KPI; use soft-aware eval.
 6. **The second lever is load-bearing, and it is the *movement* that pays** (§9).
@@ -389,14 +439,19 @@ the test set.
    All three reach zero denied admission for 0.6–2.4%; once constrained that way,
    only BC→SAC still beats the price-only policies.
 8. **Recommended packages**
-   - Best `score_aware` with zero denied admission: **BC→SAC + safe SL**
-   - Highest raw `score_aware`, if 71% peak oversell is acceptable: **BC→SAC**
+   - Zero denied admission, in the only resolved top tier: **BC→SAC + safe SL**.
+     Its score difference from raw BC→SAC covers zero; the cap is what removes
+     the denied admissions.
+   - If 71% peak oversell is acceptable: **raw BC→SAC**, tied on score with the
+     capped policy rather than ahead of it.
    - The pure joint policy, and the one to read for what the levers buy: **joint SAC `rl_best`**
-   - Simple 1D + zero oversell: **pace PPO** — and at this seed count it ties capped joint SAC
-9. **The joint policies need no demand forecast, and that is worth more than the
-   margin** (§11). A plausible elasticity error costs myopic 3.5–5.8% and the RL
-   policies exactly 0.00%. Privileged knowledge of the *cancellation* model, by
-   contrast, is worth ≤1.11% to anyone.
+   - Simple 1D + zero oversell: **pace PPO**. It ties uncapped `rl_best` and joint
+     PPO. It does not tie the published capped BC→SAC checkpoint. A retrain of
+     that pair can tie, and can still deny admission (§7, training seeds).
+9. **The joint policies need no demand forecast** (§11). A plausible elasticity
+   error costs myopic 3.5–5.8%, about the size of the one lead §7 still supports,
+   and the RL policies exactly 0.00%. Privileged knowledge of the *cancellation*
+   model, by contrast, is worth ≤1.11% to anyone.
 10. Further soft-fill gains need **demand model / data changes**, not more vanilla RL.
 
 ---
@@ -421,8 +476,8 @@ the test set.
 | `runs/oversell_cap_transfer/` | Section 10 cap transfer across joint policies |
 | `runs/keep_rate_dependence/` | Section 11a: what the true cancellation model is worth |
 | `runs/forecast_misspecification/` | Section 11b: policies under a wrong demand forecast |
-| `runs/soft_aware_eval/` | Section 6 demo of the stratified report |
-| `runs/tree_demand_sanity.md` | Early 30k-step sanity check, superseded by section 2 |
+| `runs/soft_aware_report_demo/` | Section 6 demo of the stratified report |
+| `runs/training_seeds/` | Whether the §7 BC→SAC lead repeats across training seeds |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |
 | `artifacts/bc_sac/rl_bc_sac_final.zip` | BC→SAC (recommended, under the safe-SL cap) |
 | `artifacts/pace_ppo/rl_pace_ppo.zip` | Best price-only PPO |
