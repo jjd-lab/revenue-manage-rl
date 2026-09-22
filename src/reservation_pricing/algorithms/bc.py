@@ -60,7 +60,30 @@ class ExpertDataset:
         )
 
 
-def resolve_expert_policy(name: str = "myopic_greedy", **kwargs: Any) -> PolicyFn:
+def resolve_expert_policy(
+    name: str = "myopic_greedy",
+    *,
+    model_path: Optional[str] = None,
+    algo: Optional[str] = None,
+    deterministic: bool = True,
+    **kwargs: Any,
+) -> PolicyFn:
+    """A rule-based baseline by name, or a trained checkpoint via ``model_path``.
+
+    The checkpoint branch lets a finished policy be the expert -- for instance
+    cloning a published checkpoint *under a constraint wrapper*, which is how a
+    constrained student gets a demonstration worth imitating.
+    """
+    if model_path:
+        # Imported here: evaluate.compare reaches back into algorithms, so a
+        # module-scope import would cycle.
+        from reservation_pricing.algorithms.registry import load_sb3_model
+        from reservation_pricing.evaluate.compare import sb3_policy
+
+        return sb3_policy(
+            load_sb3_model(str(model_path), algo=str(algo or "sac")),
+            deterministic=bool(deterministic),
+        )
     key = str(name).lower()
     if key not in BASELINE_FACTORY:
         raise ValueError(f"Unknown expert policy {name!r}; known={sorted(BASELINE_FACTORY)}")
@@ -82,8 +105,17 @@ def collect_expert_dataset(
     *,
     n_episodes: int = 300,
     seed: int = 0,
+    executed_action_key: Optional[str] = None,
 ) -> ExpertDataset:
-    """Roll out ``policy`` for ``n_episodes`` and stack transitions."""
+    """Roll out ``policy`` for ``n_episodes`` and stack transitions.
+
+    ``executed_action_key`` names an ``info`` entry holding the action the
+    environment actually honoured. Set it whenever a control wrapper may
+    override the request: the reward and the next observation already describe
+    the *executed* action, so storing the requested one teaches the student to
+    aim at something that never happened. Under a price clamp that is exactly
+    the region the constraint forbids.
+    """
     obs_list: list[np.ndarray] = []
     act_list: list[np.ndarray] = []
     rew_list: list[float] = []
@@ -99,7 +131,10 @@ def collect_expert_dataset(
         ep_start = True
         while not (terminated or truncated):
             action = np.asarray(policy(obs, env, state), dtype=np.float32)
-            next_obs, reward, terminated, truncated, _info = env.step(action)
+            next_obs, reward, terminated, truncated, info = env.step(action)
+            if executed_action_key is not None and executed_action_key in info:
+                action = action.copy()
+                action[0] = np.float32(info[executed_action_key])
             done = float(terminated or truncated)
             obs_list.append(np.asarray(obs, dtype=np.float32))
             act_list.append(action)

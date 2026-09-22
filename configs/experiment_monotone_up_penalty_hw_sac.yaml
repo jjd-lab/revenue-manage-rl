@@ -1,0 +1,39 @@
+# The penalty measured against the episode's high-water mark instead of
+# yesterday's price. Charged against yesterday, a slow staircase down is a
+# series of small fines: weight 10 still marked down on all 30 nights. Against
+# the peak, sitting $30 below it costs that much every remaining step.
+# The weight is selected on seeds 100-129.
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: penalty
+    reference: high_water
+    tolerance: 0
+    max_step: null
+    penalty: 10
+    apply_when_days_prior_le: null
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_penalty_hw
+  log_dir: runs/price_monotone_up

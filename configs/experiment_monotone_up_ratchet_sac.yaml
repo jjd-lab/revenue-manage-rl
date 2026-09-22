@@ -1,0 +1,40 @@
+# Joint SAC under a non-decreasing price, as a ratchet rather than a clamp.
+# The action is a move from yesterday's charged price, not an absolute price:
+# -1 holds, +1 takes the largest legal step. Under mode: clamp every action
+# below the floor charges the floor, so the environment is flat over that whole
+# region and the retrain went flat with it. max_step is the scale in dollars
+# per day; 1.0 keeps the policy's mean action off the tanh tail (the target
+# path rises about $0.10/day, i.e. g=0.1, i.e. a=-0.8).
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: ratchet
+    reference: high_water
+    tolerance: 0
+    max_step: 1.0
+    apply_when_days_prior_le: null
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_ratchet
+  log_dir: runs/price_monotone_up

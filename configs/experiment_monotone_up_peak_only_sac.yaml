@@ -1,0 +1,38 @@
+# The guarantee on weekends and peak months only. Most of the clamp retrain's
+# loss is on soft nights, where the revenue-maximising path genuinely falls and
+# the policy answers by opening at the $80 floor to keep its options. Gating on
+# the calendar alone keeps the rule one an operator can state in advance.
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: ratchet
+    reference: high_water
+    apply_on: peak_only
+    tolerance: 0
+    max_step: 1.0
+    apply_when_days_prior_le: null
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_peak_only
+  log_dir: runs/price_monotone_up

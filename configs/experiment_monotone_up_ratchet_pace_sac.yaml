@@ -1,0 +1,45 @@
+# Ratchet, plus pace shaping. gamma is 1.0 over a 100-step episode and the
+# only reason to raise price toward the date is inventory scarcity, which pays
+# off at the very end -- a thin signal to learn from. Pace shaping densifies
+# exactly that. Training reward is shaped; business metrics and score_aware
+# stay unshaped, as in experiment_price_only_pace_ppo.yaml.
+demand:
+  kind: tree_elastic
+
+control:
+  price_only: false
+  price_monotone:
+    enabled: true
+    direction: up
+    mode: ratchet
+    reference: high_water
+    tolerance: 0
+    max_step: 1.0
+    apply_when_days_prior_le: null
+
+env:
+  reward:
+    pace_reward: true
+    pace_schedule: linear
+    pace_penalty: 5.0
+    pace_target_final: 0.95
+
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/price_monotone
+  run_name: monotone_up_ratchet_pace
+  log_dir: runs/price_monotone_up

@@ -91,8 +91,11 @@ def bc_finetune_from_config(
         def train_env_factory():
             return make_env(cfg, use_held_out=False)
 
+        expert_model_path = bc_cfg.get("expert_model_path")
         policy = resolve_expert_policy(
             expert_name,
+            model_path=expert_model_path,
+            algo=bc_cfg.get("expert_algo"),
             n_grid=int(bc_cfg.get("n_grid", 41)),
             prefer_closed_form=bool(bc_cfg.get("prefer_closed_form", True)),
         )
@@ -101,10 +104,14 @@ def bc_finetune_from_config(
             policy,
             n_episodes=n_expert_eps,
             seed=seed_i,
+            executed_action_key=bc_cfg.get("executed_action_key"),
         )
         dataset.save(dataset_path)
         collect_meta = {
             "expert_policy": expert_name,
+            "expert_model_path": None if expert_model_path is None else str(expert_model_path),
+            "expert_algo": bc_cfg.get("expert_algo"),
+            "executed_action_key": bc_cfg.get("executed_action_key"),
             "n_episodes": n_expert_eps,
             "n_transitions": len(dataset),
             "dataset_path": str(dataset_path),

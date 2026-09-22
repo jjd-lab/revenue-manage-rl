@@ -411,3 +411,67 @@ def test_clamp_executed_action_reproduces_the_charged_price():
     recovered = unwrapped.min_price + (second["price_monotone_executed_action"] + 1.0) * 0.5 * span
     assert recovered == pytest.approx(float(second["price"]), abs=1e-3)
     assert float(second["price"]) >= float(first["price"]) - 1e-9
+
+
+# --- what behaviour cloning has to be told ---
+
+
+def _implied_prices(dataset, lo=80.0, hi=120.0):
+    return lo + (dataset.actions[:, 0] + 1.0) * 0.5 * (hi - lo)
+
+
+def _markdown_count(dataset, prices):
+    """Steps whose stored action implies charging less than the episode's peak."""
+    bad = 0
+    run = -1e9
+    for i, price in enumerate(prices):
+        if dataset.episode_starts[i]:
+            run = -1e9
+        if price < run - 1e-6:
+            bad += 1
+        run = max(run, price)
+    return bad
+
+
+def test_cloning_the_request_under_a_clamp_teaches_the_forbidden_move():
+    """Why collect_expert_dataset needs executed_action_key.
+
+    An unconstrained expert keeps *asking* for markdowns that the clamp
+    overrides. Storing the request records a path the env never charged, and
+    every one of those actions sits in the dead region below the floor.
+    """
+    from reservation_pricing.algorithms.bc import collect_expert_dataset, resolve_expert_policy
+
+    model = ROOT / "artifacts" / "tree_long" / "best" / "rl_best.zip"
+    if not model.exists():
+        pytest.skip("needs artifacts/tree_long/best/rl_best.zip; see README Model checkpoints")
+
+    cfg = load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml")
+    policy = resolve_expert_policy(model_path=str(model), algo="sac")
+
+    requested = collect_expert_dataset(
+        lambda: make_env(cfg, use_held_out=False), policy, n_episodes=2, seed=0
+    )
+    executed = collect_expert_dataset(
+        lambda: make_env(cfg, use_held_out=False),
+        policy,
+        n_episodes=2,
+        seed=0,
+        executed_action_key="price_monotone_executed_action",
+    )
+
+    assert _markdown_count(requested, _implied_prices(requested)) > 100
+    assert _markdown_count(executed, _implied_prices(executed)) == 0
+
+
+def test_resolve_expert_policy_accepts_a_checkpoint():
+    from reservation_pricing.algorithms.bc import resolve_expert_policy
+
+    model = ROOT / "artifacts" / "tree_long" / "best" / "rl_best.zip"
+    if not model.exists():
+        pytest.skip("needs artifacts/tree_long/best/rl_best.zip; see README Model checkpoints")
+    policy = resolve_expert_policy(model_path=str(model), algo="sac")
+    env = make_env(load_config(ROOT / "configs" / "experiment_monotone_up_sac.yaml"))
+    obs, _info = env.reset(seed=0)
+    action = policy(obs, env, {})
+    assert np.asarray(action).shape == env.action_space.shape
