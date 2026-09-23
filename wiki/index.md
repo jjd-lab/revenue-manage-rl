@@ -46,4 +46,5 @@ Generated, not documented here. Where to look:
 | `runs/tree_long/`, `runs/bc_sac/`, `runs/price_only_long/`, `runs/pace_ppo/`, `runs/promo_ppo/` | One directory per training campaign (§2–§5b) |
 | `runs/price_monotone_up/` | What a no-markdown guarantee costs, and why training under it fails (§12) |
 | `runs/objective/` | What the training objective does to the policy: a label-free reward that prices unsold seats and denied admissions (§13) |
+| `runs/dp_baseline/` | Is RL better than a forecast-and-optimize planner: a one-night dynamic program under true and wrong forecasts (§14) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on two policies |

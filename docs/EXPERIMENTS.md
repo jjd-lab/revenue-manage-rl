@@ -59,6 +59,7 @@ reported on seeds 0–29.
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
 | Monotone price, four arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
 | Training objective vs `rl_best`, uncapped and capped | `runs/objective/run_objective.py` | `runs/objective/` | §13 |
+| Dynamic-programming planner vs learned policies, true and wrong forecasts | `runs/dp_baseline/run_dp.py` | `runs/dp_baseline/` | §14 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

@@ -19,7 +19,7 @@ src/reservation_pricing/
   demand/           # DemandModel protocol + linear_legacy + tree_elastic + assets/
   envs/             # ReservationEnv, PriceOnlyWrapper, OversellGuardEnv, make_env(cfg)
   algorithms/       # SB3 registry (PPO/SAC/TD3) + behaviour cloning
-  baselines/        # fixed / myopic (grid) / heuristic
+  baselines/        # fixed / myopic (grid) / heuristic / dynamic program (dp.py)
   controls/         # selling_limit, early_promo, oversell_cap, price_mpc
   metrics.py        # business metrics, soft/peak classification, run_episode
   evaluate/         # compare (tables), soft_aware (stratified report), report (runs/ writers)

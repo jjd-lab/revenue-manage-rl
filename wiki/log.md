@@ -531,3 +531,17 @@ Docs only, arithmetic on existing rollouts: cu200 denies 216.3 more seats per pe
 than `rl_best`, so its lead is gone at about $652 per denied admission. New rule in root
 `docs/EVALUATING_POLICIES.md`: report the break-even price when policies differ in denied
 admission. `rl_best` re-scores exactly, so the caveat is training noise, not code drift. [[next-steps]]
+
+## [2026-09-22] decision | A one-night dynamic program beats every learned policy by 7-9%
+
+New `baselines/dp.py` and `runs/dp_baseline/` (§14): backward induction over expected
+show-ups, pricing and capping bookings against the score's own costs. It leads on seeds
+0–29 with every interval excluding zero, all on peak nights, and survives the wrong
+forecasts. Not in `BASELINE_FACTORY`, so no table moves. Caveats and open work: [[next-steps]].
+
+## [2026-09-22] decision | The planner's lead was partly a leak, and a wrong show-up model can erase it
+
+Corrects the entry above: `baselines/dp.py` read the env's true show-up count; it now
+counts its own, and the lead is 6–8%, intervals still off zero. A wrong show-up model
+can tie it with the best learned policy or drop it below myopic. The learned policies
+see that true count too, unpriced. [[next-steps]]

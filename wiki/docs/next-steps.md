@@ -91,7 +91,9 @@ the forecast doesn't.
 ## The honest caveats, kept everywhere
 
 - The RL policies are unaffected by a bad forecast **by construction, not by
-  merit** — they never had a forecast to lose.
+  merit** — they never had a forecast to lose. They are not blind to show-ups,
+  though: their observation includes `cumulative_mat_boh` and `remain_inv`,
+  built from the true cancellation and no-show process (Task 6).
 - Rank only a pair whose interval sits off zero (§7). The rest of the headline
   table is ties.
 - Everything rests on 30 simulated nights of synthetic demand.
@@ -468,6 +470,43 @@ but 2 peak nights still deny admission.
 **Gotcha.** Only `env:` weights change in the experiment config. `default.yaml`
 and every shipped checkpoint are untouched. Weights go to `artifacts/objective/`
 (untracked).
+
+## Task 6 — Dynamic-programming baseline (first run 2026-09-22)
+
+**Status.** `baselines/dp.py` plans one night by backward induction over
+expected show-ups so far, choosing a price and a cap on today's bookings against
+the score's own terminal costs. It counts expected show-ups itself, as bookings
+taken times its own keep rates. A first version read the env's
+`cumulative_mat_boh`, which is built from the true cancellation and no-show rates
+and the night's realized draw, so no operator sees it. Results in
+`runs/dp_baseline/NOTES.md`: it leads every learned policy by 6–8% on seeds 0–29,
+every paired interval excludes zero, and the gain is on peak nights. A wrong
+demand forecast costs it at most 2.48%. A wrong show-up model (`keep_overrides`)
+can erase the lead: overestimated no-shows roughly tie the best learned policy,
+and overestimated cancellations put it below myopic, with denied admission on
+every peak night. It is exported from `baselines/` but deliberately not in
+`BASELINE_FACTORY`, so no published table moves.
+
+**Disclosure.** The learned policies' observation includes `cumulative_mat_boh`
+and `remain_inv`, so they are shown the true show-up count. Their immunity to a
+wrong show-up model is partly that leak. It is not priced, and removing it
+changes the observation, which means retraining every checkpoint.
+
+**Still open.**
+1. Price the RL observation leak, for example by evaluating the learned policies
+   with an operator-estimated show-up count in place of `cumulative_mat_boh`.
+2. Give the planner a cap in the overbooking scenarios (overestimated no-shows or
+   cancellations) and check whether it recovers the lead.
+3. Raise demand noise. Demand is nearly deterministic, which suits a planner
+   that averages over a forecast; heavier noise is where RL could close the gap.
+4. Raise the planner's denied-admission charge until it overshoots capacity on
+   no peak night (it does on 8 of 17 now), and record what that costs.
+5. Separate the reward's effect from RL's in the 6–8% gap: the planner optimizes
+   the score's costs directly, the learned policies a shaped reward.
+
+**Gotcha.** Registering `dp_policy` in `BASELINE_FACTORY` would add it to
+`evaluate_baselines`' default set (it runs every key) and change published outputs; keep it out unless those
+tables are regenerated deliberately.
 
 ## What not to bother with
 

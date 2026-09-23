@@ -1,0 +1,6 @@
+show_up_model,score_aware,peak_unsold_seats,peak_denied_nights,peak_denied_seats
+true,2219271.73,56.1,8,31.8
+no-shows 12%,2127176.71,452.9,0,0.0
+no-shows 20%,2090587.22,0.0,17,441.6
+cancellations higher (rho -0.1),1958178.07,0.0,17,786.1
+cancellations lower (rho +0.1),2107606.19,542.9,0,0.0

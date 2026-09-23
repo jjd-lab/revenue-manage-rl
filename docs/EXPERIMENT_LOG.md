@@ -520,6 +520,34 @@ same hyperparameters. Results: `runs/objective/`.
 - Each policy wins on its own objective. One training seed, and no same-day
   retrain of the default reward to rule out training noise.
 
+## 14. The textbook planner: is RL better than a forecast-and-optimize DP?
+
+Every traditional comparison so far was myopic. `baselines/dp.py` is the planner
+a revenue-management team would build instead. It does backward induction over
+one night on the demand forecast, with state = expected show-ups so far and
+action = price plus a cap on today's bookings, charging the score's own costs.
+It reads `decision_model` and `estimate_keep_rate` (§11a), and it knows the
+bookings it took and holds. It counts expected show-ups itself and never reads
+the env's `cumulative_mat_boh`, which is built from the true rates and the
+night's realized no-show draw. Results: `runs/dp_baseline/`.
+
+- **With the true model it scores 2,219,272, 6–8% above every learned policy.**
+  It leads capped BC→SAC by +137,872 [116,864, 162,003] and `cu200` by
+  +131,521, and every interval excludes zero. The gain is peak nights, where it
+  misses capacity by about 90 seats against the learned policies' hundreds. On
+  soft nights it prices at myopic's $92.
+- **A wrong demand forecast barely hurts it.** It loses at most 2.48%, and its
+  worst case is still about 77k above the best learned policy.
+- **A wrong show-up model can erase the lead.** No-shows set at 12% (true 16%)
+  or cancellations underestimated: it holds back, still about 20–39k ahead.
+  No-shows at 20%: it roughly ties the best learned policy and turns people away
+  on every peak night. Cancellations overestimated (ρ −0.1): 1,958,178, below
+  myopic, with about 786 denied admissions per peak night.
+- **The learned policies' immunity is partly a leak.** Their observation
+  includes `cumulative_mat_boh` and `remain_inv`, so they are shown the true
+  show-up count that the planner is now denied. That isn't priced; fixing it
+  means retraining.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -538,6 +566,7 @@ same hyperparameters. Results: `runs/objective/`.
 9. Further fill on the soft nights needs a different demand model. It does not come from another training run of these policies.
 10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
 11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero. The lead holds only while a denied admission costs less than about $652 (§13).
+12. With a correct model, a forecast-and-optimize dynamic program beats every learned policy by 6–8%, and a wrong demand forecast costs it at most 2.5%. A wrong cancellation or no-show model can erase that lead and make it overbook every peak night. The learned policies are immune partly because their observation leaks the true show-up count (§14).
 
 ---
 
@@ -563,6 +592,7 @@ same hyperparameters. Results: `runs/objective/`.
 | `runs/forecast_misspecification/` | Section 11b: policies under a wrong demand forecast |
 | `runs/soft_aware_report_demo/` | Section 6 demo of the stratified report |
 | `runs/objective/` | Section 13: the training objective and overbooking |
+| `runs/dp_baseline/` | Section 14: the dynamic-programming planner |
 | `runs/training_seeds/` | Whether the §7 BC→SAC lead repeats across training seeds |
 | `runs/price_monotone_up/` | Section 12: cost of a non-decreasing price |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |
