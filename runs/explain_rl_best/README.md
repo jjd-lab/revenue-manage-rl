@@ -48,7 +48,7 @@ Tree `predict_base` is used **only for post-hoc analysis** in figures 03/04/07 (
 **What it shows:** SAC’s average price path split by weekend vs weekday service dates.
 
 **How to read it:**
-- Weekend prices sit ~$25–35 above weekday for most of the curve (peak near ~$117 around 40 days prior).
+- Weekend prices sit ~$25–35 above weekday for most of the curve (peak near ~$117 around 37 days prior).
 - Weekdays stay low (~$80–90, mean ~$84).
 - Both drop near departure; weekend drop is steeper from a higher base.
 

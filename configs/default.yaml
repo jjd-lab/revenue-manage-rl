@@ -117,13 +117,8 @@ train:
   model_dir: artifacts
 
 eval:
+  # Seeds default to 0..n_episodes-1, the held-out nights every published table uses.
   n_episodes: 30
-  seeds:
-  - 0
-  - 1
-  - 2
-  - 3
-  - 4
   # Soft-day-aware eval (rprl-eval --soft-aware): do not over-penalize structural
   # undersell on soft episodes. See docs/EVALUATING_POLICIES.md.
   soft_aware:

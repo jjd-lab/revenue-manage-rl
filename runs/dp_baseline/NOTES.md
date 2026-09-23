@@ -82,7 +82,7 @@ seat (`runs/objective/`).
 | elasticity −1.5 (thinks demand more price-sensitive) | 2,211,998 | −0.33% | 1,857,432 | −5.82% |
 | weekend/peak level 25% low | 2,164,334 | −2.48% | 1,972,305 | 0.00% |
 
-Full CSV: `dp_forecast.csv`. **A wrong demand forecast barely hurts it.** Its
+Full CSV: `dp_forecast.csv`. **These three wrong demand forecasts barely hurt it.** Its
 worst case, 2,164,334, is still about 77k above the best learned policy.
 
 ## Results: wrong show-up model
@@ -120,7 +120,8 @@ of the kind an operator estimating from history could make.
 ## Verdict
 
 **With a correct model, the textbook planner beats every learned policy by
-6–8%. A wrong demand forecast barely dents that. A wrong show-up model can erase
+5.9–8.4%. The three wrong demand forecasts tried barely dent that; a forecast
+that is too high, a wrong booking curve and larger errors were not tried. A wrong show-up model can erase
 it.** A 4-point no-show miss in the overbooking direction roughly ties it, and a cancellation miss that makes it
 overbook puts it below myopic, with denied admission on every peak night.
 

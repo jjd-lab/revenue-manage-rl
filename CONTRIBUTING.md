@@ -13,7 +13,7 @@ pre-commit install          # optional: ruff on every commit
 ```bash
 ruff check . && ruff format --check .
 pytest -m "not slow" -q     # seconds
-pytest -q                   # also trains three tiny agents; a minute or so
+pytest -q                   # also runs the four slow tests that train tiny agents; a minute or so
 ```
 
 CI runs the same on Python 3.10 and 3.13.

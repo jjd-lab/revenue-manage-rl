@@ -1,0 +1,9 @@
+policy,baseline,point_diff,ci_low,ci_high,covers_zero
+DP planner + cap,R1 score SAC + cap,122053.55,103228.65,139244.8,False
+DP planner + cap,R2 clone + SAC + cap,82255.31,61654.33,104548.63,False
+DP planner,R1 score SAC,107782.85,87197.85,132057.74,False
+R1 score SAC,joint SAC cu200,24986.16,-18635.83,64474.6,True
+R2 clone + SAC,R2 planner clone,131133.29,95527.29,168407.48,False
+DP planner,R2 clone + SAC,160994.2,127043.08,193808.51,False
+DP planner,"R2 clone + SAC, final",91063.28,72993.17,108593.66,False
+DP planner,joint BC->SAC,133131.28,105493.52,164135.21,False

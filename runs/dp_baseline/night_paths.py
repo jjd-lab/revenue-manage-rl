@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Day-by-day price and selling limit on two peak nights: planner vs capped BC→SAC.
+"""Day-by-day price and selling limit on two peak nights: planner vs BC→SAC, neither capped.
 
 Writes ``night_paths.csv`` for ``scripts/build_site_figures.py`` (F6). Seed 4 is
 a December weekend night, seed 0 a December weekday; both are peak nights in the
@@ -24,7 +24,6 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent
 SEEDS = (4, 0)
 BC_SAC = ROOT / "artifacts" / "bc_sac" / "rl_bc_sac_final.zip"
-CAP_CONFIG = ROOT / "configs" / "experiment_bc_sac_safe_sl.yaml"
 
 
 def _path(cfg, policy, seed: int, label: str) -> list[dict]:
@@ -56,13 +55,12 @@ def main() -> None:
     if not BC_SAC.is_file():
         raise SystemExit(f"missing checkpoint: {BC_SAC}")
     plain = load_config()
-    capped = load_config(str(CAP_CONFIG))
     soft_cfg = SoftAwareConfig.from_dict(plain["eval"]["soft_aware"])
     learned = sb3_policy(load_sb3_model(str(BC_SAC), algo="sac"), deterministic=True)
     rows = []
     for seed in SEEDS:
         rows += _path(plain, dp_policy(soft_cfg), seed, "Planner")
-        rows += _path(capped, learned, seed, "Joint BC to SAC + cap")
+        rows += _path(plain, learned, seed, "Joint BC to SAC")
     frame = pd.DataFrame(rows)
     frame.to_csv(OUT / "night_paths.csv", index=False)
     last = frame.groupby(["seed", "policy"]).tail(1)

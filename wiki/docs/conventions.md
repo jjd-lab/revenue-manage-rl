@@ -3,7 +3,7 @@ type: convention
 title: Repo conventions
 description: What each top-level directory owns, which files are generated, and which values are pinned by the shipped checkpoints.
 tags: [convention, layout, configs]
-timestamp: 2026-09-22
+timestamp: 2026-09-23
 ---
 
 # Repo conventions
@@ -55,14 +55,32 @@ in `envs/factory.py` and to the bare-block exclusion tuple in
 miss either and the block is silently ignored with no error.
 `demand.night_variation` and `env.operator_view` are not control blocks: they
 are read from the `demand:` and `env:` blocks in `make_env`, so they need
-neither registration.
+neither registration. A new plain `env:` key does need adding to `_ENV_KEYS` in
+`envs/factory.py`, or `make_env` drops it. Inside `demand.night_variation`,
+`level_sd` / `elasticity_sd` draw a fresh error per night, while `level_shift` /
+`elasticity_shift` (§18; defaults 1.0 / 0.0) move every night the same way — a
+year that runs off forecast. The shifts consume no random draws, so an unshifted
+config reproduces the default nights exactly; the forecast never sees either.
 
 `configs/default.yaml` carries the full schema: `demand`, `env`, `control`,
 `algorithm`, `train`, `eval`, `tune`, with every control switched off.
 Evaluation-only switches that default to off in code
 (`demand.night_variation`, `env.operator_view`, `env.cancel_rho_night_std`)
 live only in the experiment configs that use them, so the frozen file stays
-untouched. A
+untouched. The same holds for the §17 training switches: `env.undersell_on_soft:
+false` skips the unsold-seat charge on nights the *forecast* calls soft (the DP
+planner's terminal charge), and `env.night_features: true` appends the forecast's
+mid-horizon base demand and soft flag, growing the observation from 27 to 29
+slots — a checkpoint trained with it must be evaluated with it. Under `train:`,
+`eval_held_out: false` picks the kept checkpoint on training months so June and
+December never influence it; `eval_episodes` and `eval_freq` size that
+selection (`eval_settings` in `train/common.py`). All default to the old
+behaviour.
+
+`default.yaml` sets no `eval.seeds`, so `rprl-eval` and `rprl-baselines` score
+seeds `0..n_episodes-1` — 0–29, the published held-out nights. A config that
+lists fewer seeds than `n_episodes` is padded with seeds from 1000 up, which are
+not the published nights. A
 byte-identical copy ships inside the package (`src/reservation_pricing/configs/`)
 so a non-editable install still resolves it; a test keeps the two in step. Every
 other config overrides a subset of it:
@@ -87,7 +105,7 @@ Fragments (`algo_*`, `demand_*`, `default.yaml`) deliberately set no ID.
 
 ## Values pinned by the shipped checkpoints
 
-The five checkpoints in `artifacts/` were trained against these `env` values, and
+The five §7 headline checkpoints in `artifacts/`, and every later retrain, were trained against these `env` values, and
 every table in `runs/` assumes them:
 
 ```yaml
@@ -99,7 +117,7 @@ min_selling_limit: 10000.0
 max_selling_limit: 15000.0
 ```
 
-Changing any of them **invalidates all five checkpoints and every result table**,
+Changing any of them **invalidates every checkpoint and every result table**,
 because observations are normalized against these ranges. Treat them as frozen
 unless you intend to retrain and regenerate. Reward-shaping weights
 (`undersell_penalty`, `oversell_penalty`, `utilization_bonus`) are likewise baked
@@ -107,6 +125,17 @@ into the trained policies. An experiment config may override them under `env:`
 to train a *new* arm on a different objective (`experiment_objective_*`); that
 leaves `default.yaml` and the shipped checkpoints untouched, and its weights go
 to their own `artifacts/` subdirectory.
+
+## Presenting comparisons
+
+- **Planner vs RL is uncapped on both sides.** The oversell cap is a separate
+  control layer, not part of the question "does RL beat a planner", so the site,
+  README and F6 compare the DP planner with uncapped learned policies. Capped
+  rows belong to the cap's own findings (§10, §15, §16), labelled as capped.
+- **Describe the reward as it is built:** $650 per unsold seat, plus an $80
+  bonus per filled seat that is lost on any night someone is turned away. Do not
+  fold the two into one per-seat figure; the bonus is conditional, so the sum
+  misstates both.
 
 ## Naming
 

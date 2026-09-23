@@ -68,7 +68,7 @@ cheaper if the policy discounts to clear. Condition on time bins.
 ## 5. Stress and robustness
 
 - Held-out months / seeds (already default)
-- Extra demand noise or elasticity misspecification (not done here)
+- Extra demand noise or elasticity misspecification (done: EXPERIMENT_LOG §11b, §14, §16)
 - Offline: score on logged behavior if you have production traces later (not done here)
 
 ## 6. Explain a few episodes end-to-end
@@ -98,7 +98,7 @@ then fine-tune. See `src/reservation_pricing/algorithms/bc.py`,
 `train/bc_finetune.py`, and `runs/bc_sac/NOTES.md`.
 
 A shaped training return is not a business metric; every table in `runs/` scores
-unshaped revenue and inventory (see `docs/EXPERIMENT_LOG.md` §1).
+unshaped revenue and inventory (see `docs/DESIGN.md`, reward vs metrics).
 
 ## Price-only policies
 

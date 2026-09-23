@@ -85,6 +85,10 @@ def resolve_expert_policy(
             deterministic=bool(deterministic),
         )
     key = str(name).lower()
+    if key == "dp_planner":
+        from reservation_pricing.baselines.dp import dp_policy
+
+        return dp_policy()
     if key not in BASELINE_FACTORY:
         raise ValueError(f"Unknown expert policy {name!r}; known={sorted(BASELINE_FACTORY)}")
     factory = BASELINE_FACTORY[key]

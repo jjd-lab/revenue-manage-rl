@@ -1,0 +1,5 @@
+policy,held_out_score,training_month_score
+DP planner,2219271.73,1916252.2
+joint SAC cu200,2086502.73,1870397.69
+"R1 score SAC, final",2112692.33,1863783.66
+"R2 clone + SAC, final",2128208.45,1891456.74

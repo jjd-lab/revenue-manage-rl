@@ -1,0 +1,40 @@
+# EXPERIMENT_LOG §18, step 2: the step-1 policy trained across years that miss the
+# forecast. Each training night draws its own demand level (lognormal, sd 0.15,
+# about 95% within ±30%) and price sensitivity (−1.2 ± 0.3), so the policy has to
+# read the year from booking pace. The forecast, and the night-type feature it
+# feeds, stay the usual model. Tested by run_drift.py on years shifted the same
+# way on every night.
+demand:
+  kind: tree_elastic
+  night_variation:
+    level_sd: 0.15
+    elasticity_sd: 0.15
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  undersell_on_soft: false
+  night_features: true
+  operator_view: true
+  held_out_months: []
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_held_out: false
+  eval_episodes: 30
+  eval_freq: 20000
+  model_dir: artifacts/year_drift
+  run_name: year_drift_sac
+  log_dir: runs/year_drift

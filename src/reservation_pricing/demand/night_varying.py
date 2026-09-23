@@ -8,7 +8,8 @@ forecast, so no planner ever sees the night's draw.
 
 ``level_sd`` is the standard deviation of log(level): 0.125 puts about 95% of
 nights within ±25%. ``elasticity_sd`` 0.15 puts them within −0.9 to −1.5 around
-−1.2.
+−1.2. ``level_shift`` and ``elasticity_shift`` move every night the same way: a
+year that runs above or below the forecast, not a night-by-night error.
 """
 
 from __future__ import annotations
@@ -21,7 +22,15 @@ import numpy as np
 class NightVaryingDemand:
     kind = "night_varying"
 
-    def __init__(self, inner: Any, *, level_sd: float = 0.0, elasticity_sd: float = 0.0) -> None:
+    def __init__(
+        self,
+        inner: Any,
+        *,
+        level_sd: float = 0.0,
+        elasticity_sd: float = 0.0,
+        level_shift: float = 1.0,
+        elasticity_shift: float = 0.0,
+    ) -> None:
         if getattr(inner, "price_mode", "multiplicative") != "multiplicative" or not hasattr(
             inner, "elasticity"
         ):
@@ -29,13 +38,17 @@ class NightVaryingDemand:
         self.inner = inner
         self.level_sd = float(level_sd)
         self.elasticity_sd = float(elasticity_sd)
+        self.level_shift = float(level_shift)
+        self.elasticity_shift = float(elasticity_shift)
         self.demand_noise_std = float(inner.demand_noise_std)
-        self.level = 1.0
-        self.elasticity = float(inner.elasticity)
+        self.level = self.level_shift
+        self.elasticity = float(inner.elasticity) + self.elasticity_shift
 
     def redraw(self, rng: np.random.Generator) -> None:
-        self.level = float(np.exp(rng.normal(0.0, self.level_sd))) if self.level_sd > 0 else 1.0
-        self.elasticity = float(self.inner.elasticity)
+        self.level = self.level_shift
+        if self.level_sd > 0:
+            self.level *= float(np.exp(rng.normal(0.0, self.level_sd)))
+        self.elasticity = float(self.inner.elasticity) + self.elasticity_shift
         if self.elasticity_sd > 0:
             self.elasticity += float(rng.normal(0.0, self.elasticity_sd))
 

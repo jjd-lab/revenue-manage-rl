@@ -40,7 +40,7 @@ from reservation_pricing.algorithms.registry import (
 )
 from reservation_pricing.config import load_config
 from reservation_pricing.envs import make_env
-from reservation_pricing.train.common import eval_freq, limit_torch_threads, make_monitored
+from reservation_pricing.train.common import eval_settings, limit_torch_threads, make_monitored
 from reservation_pricing.train.runner import output_dirs, resolve_run_name
 
 
@@ -151,14 +151,17 @@ def bc_finetune_from_config(
         model.learning_starts = int(bc_cfg["learning_starts"])
 
     # --- 5. Fine-tune ---
-    eval_env = DummyVecEnv([make_monitored(cfg, seed_i + 10_000, 0, use_held_out=True)])
+    ev = eval_settings(train_cfg, steps)
+    eval_env = DummyVecEnv(
+        [make_monitored(cfg, seed_i + 10_000, 0, use_held_out=ev["use_held_out"])]
+    )
     (model_dir / "best").mkdir(parents=True, exist_ok=True)
     eval_cb = EvalCallback(
         eval_env,
         best_model_save_path=str(model_dir / "best"),
         log_path=str(run_dir / "eval"),
-        eval_freq=eval_freq(steps),
-        n_eval_episodes=5,
+        eval_freq=ev["eval_freq"],
+        n_eval_episodes=ev["n_eval_episodes"],
         deterministic=True,
         render=False,
     )

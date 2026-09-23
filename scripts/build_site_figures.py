@@ -7,7 +7,8 @@ No checkpoints and no training. Rebuild with::
 
 Sources
 -------
-F1, F2  runs/joint_vs_price_only_soft_aware/soft_aware_table.csv
+F1      runs/joint_vs_price_only_soft_aware/soft_aware_table.csv, plus the
+        planner row of runs/dp_baseline/dp_table.csv
 F3      runs/oracle_ceiling/oracle_soft_episodes.csv
 F4      runs/explain_rl_best/rollouts.csv
 F5      runs/explain_rl_best/episode_summary.csv
@@ -52,6 +53,7 @@ POLICIES = {
     "price_only_ppo": ("Price-only PPO", "price"),
     "myopic_greedy": ("Myopic", "base"),
     "fixed_price_80": ("Floor price", "base"),
+    "DP planner": ("Textbook planner", "base"),
 }
 FAMILY_COLOR = {"joint": JOINT, "price": PRICE, "base": BASE}
 
@@ -141,41 +143,6 @@ def score_dots(table: pd.DataFrame, winner: str, out: Path) -> None:
     _assert_inside(ax, rows["score_m"], range(len(rows)))
     fig.tight_layout()
     fig.savefig(out / "f1_score.png", dpi=DPI)
-    plt.close(fig)
-
-
-def risk_frontier(table: pd.DataFrame, winner: str, out: Path) -> None:
-    """F2: score against the share of peak nights with denied admission."""
-    pts = []
-    for policy, (label, _family) in POLICIES.items():
-        row = table.loc[table["policy"] == policy].iloc[0]
-        pts.append((policy, label, float(row["peak_oversell"]), float(row["score_aware"]) / 1e6))
-    xs = [p[2] for p in pts]
-    ys = [p[3] for p in pts]
-    xpad = max(max(xs) - min(xs), 0.1) * 0.12
-    ypad = max(max(ys) - min(ys), 0.05) * 0.15
-
-    fig, ax = plt.subplots(figsize=(7.2, 4.6))
-    # Label placement: points that share an x column alternate above / below by rank.
-    columns: dict[float, list[tuple[str, str, float, float]]] = {}
-    for p in pts:
-        columns.setdefault(round(p[2], 2), []).append(p)
-    for col in columns.values():
-        col.sort(key=lambda p: -p[3])
-        for i, (policy, label, x, y) in enumerate(col):
-            dy = 6 if i % 2 == 0 else -11
-            ax.scatter([x], [y], s=46, color=_color(policy, winner), zorder=3)
-            ax.annotate(
-                label, (x, y), textcoords="offset points", xytext=(8, dy), fontsize=10, color=INK
-            )
-    ax.set_xlabel("Share of peak nights with denied admission")
-    ax.set_ylabel("Soft-aware score, millions of dollars")
-    ax.set_xlim(min(xs) - xpad, max(xs) + xpad * 3)
-    ax.set_ylim(min(ys) - ypad, max(ys) + ypad)
-    _despine(ax)
-    _assert_inside(ax, xs, ys)
-    fig.tight_layout()
-    fig.savefig(out / "f2_frontier.png", dpi=DPI)
     plt.close(fig)
 
 
@@ -312,7 +279,7 @@ def soft_peak_lift(episodes: pd.DataFrame, out: Path) -> dict[str, float]:
 
 
 def night_controls(paths: pd.DataFrame, out: Path) -> dict[str, float]:
-    """F6: one weekend and one weekday peak night, planner vs capped BC→SAC.
+    """F6: one weekend and one weekday peak night, planner vs BC→SAC, neither capped.
 
     Rows are the two levers and the outcome they steer: price, selling limit,
     and expected show-ups against the 10,000 seats.
@@ -323,7 +290,7 @@ def night_controls(paths: pd.DataFrame, out: Path) -> dict[str, float]:
         ("selling_limit", "Selling limit"),
         ("show_ups", "Expected show-ups"),
     ]
-    styles = {"Planner": (ACCENT, 2.2), "Joint BC to SAC + cap": (INK, 1.6)}
+    styles = {"Planner": (ACCENT, 2.2), "Joint BC to SAC": (INK, 1.6)}
     fig, axes = plt.subplots(3, 2, figsize=(7.2, 7.6), sharex=True, sharey="row")
     facts: dict[str, float] = {}
     for col, (seed, title) in enumerate(nights):
@@ -364,7 +331,7 @@ def caption_facts(table: pd.DataFrame, ceiling: pd.DataFrame, paths: dict, lift:
             f"  ({v:,.0f} vs {best_price_only:,.0f})"
         )
     print(
-        "F2  cap: peak denied-admission share "
+        "    cap: peak denied-admission share "
         f"{float(raw['peak_oversell']):.2f} -> {float(capped['peak_oversell']):.2f}, "
         f"score {float(raw['score_aware']):,.0f} -> {float(capped['score_aware']):,.0f} "
         f"({100 * (1 - float(capped['score_aware']) / float(raw['score_aware'])):.2f}% given up)"
@@ -386,7 +353,7 @@ def caption_facts(table: pd.DataFrame, ceiling: pd.DataFrame, paths: dict, lift:
     )
     print(
         "    soft gap to oracle, all policies:",
-        sorted(float(v) for v in table["soft_gap_to_oracle"]),
+        sorted(float(v) for v in table["soft_gap_to_oracle"].dropna()),
     )
 
 
@@ -396,6 +363,10 @@ def main(out: Path = OUT) -> list[Path]:
     out.mkdir(parents=True, exist_ok=True)
     headline = ROOT / "runs" / "joint_vs_price_only_soft_aware"
     table = pd.read_csv(headline / "soft_aware_table.csv")
+    dp = pd.read_csv(ROOT / "runs" / "dp_baseline" / "dp_table.csv")
+    table = pd.concat(
+        [table, dp[dp["policy"] == "DP planner"][["policy", "score_aware"]]], ignore_index=True
+    )
     missing = set(POLICIES) - set(table["policy"])
     if missing:
         raise SystemExit(f"soft-aware table missing {sorted(missing)}")
@@ -405,7 +376,6 @@ def main(out: Path = OUT) -> list[Path]:
     winner = str(table.loc[table["score_aware"].idxmax(), "policy"])
 
     score_dots(table, winner, out)
-    risk_frontier(table, winner, out)
     oracle = pd.read_csv(ROOT / "runs" / "oracle_ceiling" / "oracle_soft_episodes.csv")
     ceiling = oracle_ceiling(oracle, threshold, out)
     paths = booking_paths(pd.read_csv(ROOT / "runs" / "explain_rl_best" / "rollouts.csv"), out)

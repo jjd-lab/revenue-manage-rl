@@ -1,0 +1,21 @@
+policy,timesteps,train_month_reward
+all months,20000,794841.0
+all months,40000,680551.0
+all months,60000,823089.0
+all months,80000,962237.0
+all months,100000,906316.0
+all months,120000,1052354.0
+all months,140000,982299.0
+all months,160000,902248.0
+all months,180000,1164281.0
+all months,200000,1091454.0
+drift-trained,20000,731209.0
+drift-trained,40000,884619.0
+drift-trained,60000,853037.0
+drift-trained,80000,941762.0
+drift-trained,100000,971818.0
+drift-trained,120000,963725.0
+drift-trained,140000,983083.0
+drift-trained,160000,911900.0
+drift-trained,180000,1042552.0
+drift-trained,200000,995122.0

@@ -11,7 +11,8 @@ estimate, ``bookings taken x estimate_keep_rate``, everywhere decision code
 looks: observation slots 6 and 7, and the two attributes. ``keep_overrides``
 sets the cancellation or no-show parameters the estimate uses, so the operator
 can be wrong. The env still generates the night from the truth, and ``info``
-is untouched, so scoring is unchanged. Evaluation only; nothing trains on it.
+is untouched, so scoring is unchanged. Retrains that must not see the true
+count (EXPERIMENT_LOG §16, §17) switch it on with ``env.operator_view``.
 """
 
 from __future__ import annotations

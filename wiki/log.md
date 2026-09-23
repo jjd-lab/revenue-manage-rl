@@ -566,3 +566,17 @@ retraining did not clearly help RL. Both switches default off. [[next-steps]], [
 F2 and the cap "score given up" table are gone from the page. New F6 plots two peak nights
 from `runs/dp_baseline/night_paths.csv`. `dp_policy` now holds yesterday's price on a day it
 accepts no bookings; scores are unchanged. [[dev-commands]]
+
+## [2026-09-23] decision | RL trails the planner mostly on months it never trained on
+
+New `runs/rl_vs_planner_diagnosis/` (§17), with default-off `env.undersell_on_soft`,
+`env.night_features`, `train.eval_held_out`: the score-aligned reward alone ties; the gap roughly
+halves on training months, so the next run drops the month one-hot. Also `eval.seeds` defaults
+to 0–29 and the site has five figures (F2 retired). [[next-steps]], [[conventions]], [[dev-commands]]
+
+## [2026-09-23] decision | Seasonal coverage closes 40% of the gap; a closed-loop planner survives a wrong year
+
+New `runs/year_drift/` (§18): SAC on all twelve months beats R1 and cuts the planner's lead from
+4.8% to 2.9%; in years 20% off forecast the stale planner still beats a drift-trained SAC, since it
+re-plans from its own bookings. New knobs `level_shift`/`elasticity_shift`, `dp_policy(pickup_days=...)`.
+Planner-vs-RL comparisons are now uncapped on both sides. Next: booking-curve timing error. [[next-steps]], [[conventions]], [[dev-commands]]

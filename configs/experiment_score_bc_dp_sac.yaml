@@ -1,0 +1,47 @@
+# R2 (EXPERIMENT_LOG §17): clone the DP planner, then fine-tune with SAC on R1's
+# reward and observation (configs/experiment_score_sac.yaml). If fine-tuning
+# cannot improve on its own starting point, there is no room above the planner
+# for RL to find. Same leak-free view and training-month checkpoint selection.
+# Usage: rprl-bc-sac -c configs/experiment_score_bc_dp_sac.yaml
+demand:
+  kind: tree_elastic
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  undersell_on_soft: false
+  night_features: true
+  operator_view: true
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 1000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+  train_freq: 1
+  gradient_steps: 1
+bc:
+  expert_policy: dp_planner
+  n_episodes: 300
+  epochs: 50
+  batch_size: 256
+  lr: 0.001
+  log_std_target: -1.0
+  seed_replay_buffer: true
+  critic_warm_steps: 1000
+  learning_starts: 500
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_held_out: false
+  eval_episodes: 30
+  eval_freq: 20000
+  model_dir: artifacts/rl_vs_planner
+  run_name: score_bc_dp_sac
+  log_dir: runs/rl_vs_planner_diagnosis

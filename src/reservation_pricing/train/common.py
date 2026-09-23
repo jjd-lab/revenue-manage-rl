@@ -35,3 +35,19 @@ def make_monitored(cfg: dict, seed: int, rank: int = 0, use_held_out: bool = Fal
 def eval_freq(total_timesteps: int, n_envs: int = 1) -> int:
     """Five held-out evaluations per run, never more often than every 2000 calls."""
     return max(int(total_timesteps) // (5 * max(int(n_envs), 1)), 2000)
+
+
+def eval_settings(train_cfg: dict, total_timesteps: int, n_envs: int = 1) -> dict:
+    """Checkpoint-selection eval: held-out months, 5 nights, 5 times per run by default.
+
+    ``train.eval_held_out: false`` selects on training months instead, so the
+    test months never influence which checkpoint is kept.
+    """
+    freq = train_cfg.get("eval_freq")
+    return {
+        "use_held_out": bool(train_cfg.get("eval_held_out", True)),
+        "n_eval_episodes": int(train_cfg.get("eval_episodes", 5)),
+        "eval_freq": int(freq) // max(int(n_envs), 1)
+        if freq
+        else eval_freq(total_timesteps, n_envs),
+    }

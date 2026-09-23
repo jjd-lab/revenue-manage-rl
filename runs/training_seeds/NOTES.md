@@ -3,7 +3,7 @@
 **Demand:** `tree_elastic` (default)
 **Held-out:** 30 episodes, seeds 0–29, the same nights as §7
 **Score:** `score_aware`, recomputed inside each paired resample
-**Trainings:** seed 42 is the shipped zips and was not retrained. Seeds 43, 44, and 46 are new. Pace is `configs/experiment_price_only_pace_ppo.yaml` (standard trainer). BC→SAC is `configs/experiment_bc_sac.yaml` (behaviour-clone warm start). The cap is eval-only (`configs/experiment_bc_sac_safe_sl.yaml`) on that same BC zip.
+**Trainings:** seed 42 is the shipped zips and was not retrained. Seeds 43, 44, and 46 are new. Pace is `configs/experiment_price_only_pace_ppo.yaml` (standard trainer). BC→SAC is `configs/experiment_bc_sac.yaml` (behaviour-clone warm start). The cap is eval-only (`configs/experiment_bc_sac_safe_sl.yaml`) on that same BC zip. Each run's `train_meta.json` records its real seed at the top level; the embedded `config.train.seed: 42` is the unmodified YAML, which `train.py` overrides with its seed argument.
 **Regenerate:** `python runs/training_seeds/train.py` then `python runs/training_seeds/eval.py`. The driver skips a seed whose `final_model.zip` is already there. It refuses seed 42, nights 0–29, the 100–129 block, and `artifacts/bc_sac/` / `artifacts/pace_ppo/`.
 
 ## The question

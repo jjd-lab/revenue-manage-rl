@@ -3,7 +3,7 @@ type: decision
 title: Session findings and next steps
 description: Plain-language record of the 2026-09-22 release-and-audit session, and the queued work with executable instructions for a coding agent.
 tags: [decision, roadmap, handover]
-timestamp: 2026-09-22
+timestamp: 2026-09-23
 ---
 
 # Session findings and next steps
@@ -44,7 +44,7 @@ spend more than $3,000 — printed on the card, no effect on your life. So our
 Now documented. → `docs/EVALUATING_POLICIES.md`
 
 **2. But the learned second dial is very real.**
-Tape a trained policy's dial in one position and it loses 5–17% — several times
+Tape a trained policy's dial in one position and it loses 4.5–17% — several times
 the 1.2–3.6% margin the whole project argues over. The striking part: the dial's
 *average* position is almost exactly the fixed value we compare it against, and
 pinning it there *still* costs 6%. **It's a thermostat.** Holding your house at a
@@ -85,8 +85,13 @@ next person doesn't lose an afternoon to it. → `docs/DESIGN.md` § Forecast vs
 The project's headline used to be "two dials beat one, by 1.2–3.6%." Paired
 intervals on the same thirty nights keep the 3.6% (capped BC→SAC over pace) and
 call the 1.2% a tie. A plausible forecast error is as large as the lead that
-remains. The stronger claim is **robustness**: these policies keep working when
-the forecast doesn't.
+remains. Robustness to a wrong forecast looked like the stronger claim, but
+§14–§16 overturned it: a planner behind the cap leads under every forecast and
+show-up error tried. §17 traced about half or more of that gap to the test months: the learned
+policies never train on June or December, and on months they did train on they
+come within a few percent of the planner. §18 confirmed it — training on all twelve months
+closes about 40% of the gap — and found the planner still leads when a whole year
+misses its forecast, because it re-plans from its own bookings.
 
 ## The honest caveats, kept everywhere
 
@@ -266,9 +271,9 @@ values are worth trying.
 
 **Closed without running (2026-09-22): a KL/trust-region tether on the clone
 fine-tune.** The fine-tunes do not fail. They raise the training reward from
-54.6 to 96.2 while `score_aware` falls. The reward charges about $730 per unsold
-seat on every night and forfeits the whole utilization bonus on any oversold
-night. `score_aware` charges nothing for unsold soft seats, $200 per unsold peak
+54.6 to 96.2 while `score_aware` falls. The reward charges $650 per unsold
+seat on every night, pays an $80 bonus per filled seat, and forfeits that whole
+bonus on any oversold night. `score_aware` charges nothing for unsold soft seats, $200 per unsold peak
 seat, and $400 per oversold seat. Between the clone and the fine-tune the two
 move in opposite directions, so a tether's best case is the clone itself.
 Breakdown: `runs/price_monotone_up/NOTES.md`. Moving the result needs a
@@ -484,7 +489,7 @@ the score's own terminal costs. It counts expected show-ups itself, as bookings
 taken times its own keep rates. A first version read the env's
 `cumulative_mat_boh`, which is built from the true cancellation and no-show rates
 and the night's realized draw, so no operator sees it. Results in
-`runs/dp_baseline/NOTES.md`: it leads every learned policy by 6–8% on seeds 0–29,
+`runs/dp_baseline/NOTES.md`: it leads every learned policy by 5.9–8.4% on seeds 0–29,
 every paired interval excludes zero, and the gain is on peak nights. A wrong
 demand forecast costs it at most 2.48%. A wrong show-up model (`keep_overrides`)
 can erase the lead: overestimated no-shows roughly tie the best learned policy,
@@ -497,7 +502,7 @@ and `remain_inv`, so they are shown the true show-up count; the oversell cap and
 myopic's late tighten read the same values.
 
 **Done (`runs/show_up_leak/NOTES.md`).** `envs/operator_view.py`
-(`OperatorViewEnv`, evaluation only, not wired into `make_env`) swaps that count
+(`OperatorViewEnv`, switched on by `env.operator_view` in `make_env`) swaps that count
 for the operator's estimate, bookings taken × assumed keep rate.
 - *Pricing the RL leak:* with the true rates it is worth under 0.1% to every
   learned policy, and the planner still leads capped BC→SAC with an interval
@@ -515,8 +520,8 @@ and heavier demand noise are done in Task 7.
 **Still open.**
 1. Raise the planner's denied-admission charge until it overshoots capacity on
    no peak night (it does on 8 of 17 now), and record what that costs.
-2. Separate the reward's effect from RL's in the 6–8% gap: the planner optimizes
-   the score's costs directly, the learned policies a shaped reward.
+2. ~~Separate the reward's effect from RL's in the 5.9–8.4% gap.~~ Done in Task 8
+   (§17): training on the score's own charge is a tie with `cu200`.
 
 **Gotcha.** Registering `dp_policy` in `BASELINE_FACTORY` would add it to
 `evaluate_baselines`' default set (it runs every key) and change published outputs; keep it out unless those
@@ -539,8 +544,8 @@ has an interval covering zero. Tripling the noise moved every score by under
 moved by 4 points. The realized rate on held-out nights is about 10–12%.
 
 **Still open.**
-1. Errors shared across a season (a whole season running quiet) instead of
-   drawn independently per night.
+1. ~~Errors shared across a season instead of drawn per night.~~ Done in Task 8
+   (§18): a whole year 20% off forecast, via `level_shift`.
 2. Larger errors than the ±25% demand, ±4-point no-show and ±0.1 ρ spreads.
 3. More training seeds for the retrained RL policy; there is one per setting.
 
@@ -548,11 +553,76 @@ moved by 4 points. The realized rate on held-out nights is about 10–12%.
 experiment configs switch on `demand.night_variation` and `env.operator_view`;
 `default.yaml` and every shipped checkpoint are untouched.
 
+## Task 8 — Why RL trails the planner (§17 and §18, 2026-09-23)
+
+**Status.** Results in `runs/rl_vs_planner_diagnosis/NOTES.md` (§17). Two joint
+SAC retrains on the planner's own terminal charge (`env.undersell_on_soft:
+false`, no bonus), with the forecast night type in view (`env.night_features`),
+the operator view on, and checkpoints picked on training months
+(`train.eval_held_out: false`): R1 `experiment_score_sac.yaml` from scratch, R2
+`experiment_score_bc_dp_sac.yaml` cloning the planner (BC expert `dp_planner`)
+first. Reading:
+- The month shift carries about half or more of the gap (one training seed). On training months the learned
+  policies are within 1.3–2.7% of the planner; on held-out June and December,
+  whose month one-hot slots training never switches on, 4.1–6.0%.
+- The score-aligned reward moves soft-night prices toward the planner's and cuts
+  peak denied admission, but its gain over `cu200` is a tie.
+- The planner clone does not reproduce the planner: it overbooks most held-out
+  peak nights, so R2 cannot say whether RL could improve on it. R2 behind the cap
+  is the best learned policy so far and still trails the capped planner with the
+  interval off zero.
+- Checkpoint selection on 30 nights is too noisy to rank checkpoints this close.
+
+**Done: the month-shift run (§18, `runs/year_drift/NOTES.md`).** R1 retrained
+on all twelve months (`experiment_score_allmonths_sac.yaml`,
+`env.held_out_months: []`; the test nights are unseen draws, not an unseen
+month). It beats R1 with the interval off zero and closes about 40% of the
+planner gap (lead 4.8% → 2.9%). That answers the "need two years of data"
+question: what mattered was seasonal coverage (no June or December in
+training), not the number of nights, which the simulator supplies without limit.
+
+**Done: a year that misses the forecast (§18).** A drift-trained SAC
+(`experiment_year_drift_sac.yaml`, each training night draws its own level and
+price sensitivity) against the planner on a stale forecast, in years where every
+night runs 20% below, on, or 20% above it (`demand.night_variation.level_shift`).
+The planner still wins all three, each gap real, smallest in the cold year. It
+is closed-loop: it re-plans daily from its own bookings, so reading the booking
+pace — the edge RL was meant to have — is already in it. A pickup adjustment
+(`dp_policy(pickup_days=...)`, rescaling the forecast from observed booking
+requests and re-planning) adds a little more in shifted years and ties when the
+forecast is right; a fair planner baseline should carry it.
+
+**Next run (recommended).** Booking-curve timing error: a forecast wrong about
+*when* demand arrives (curve earlier or later), which a level-driven pickup
+reads as a level change and a planner trusting its curve misprices. That is
+RL's remaining case. Compare drift-trained SAC against the planner with pickup
+on, uncapped on both sides ([[conventions]] § Presenting comparisons).
+
+**Still open.**
+1. A clone that actually reproduces the planner (e.g. DAgger with the planner as
+   online expert) before asking whether SAC can beat it.
+2. More training seeds: every §17 and §18 run is one seed, and §7's seed spread is as
+   large as the gaps here.
+3. R1 changed the reward and the observation together; their effects are not
+   separated.
+4. Pickup reads booking requests, including those the selling limit refused. A
+   venue that cannot see turned-away requests would read low whenever the
+   limit binds.
+
+**Gotcha.** Dropping the month one-hot or using `night_features` changes the
+observation size, so those checkpoints cannot be scored with a 27-slot config.
+Checkpoints go to `artifacts/rl_vs_planner/` and `artifacts/year_drift/`
+(untracked); `default.yaml` and every shipped checkpoint are untouched.
+`level_shift` / `elasticity_shift` draw no random numbers, so leaving them at
+1.0 / 0.0 reproduces every earlier night.
+
 ## What not to bother with
 
 - Rewriting `estimate_keep_rate` (measured at ≤1.11%; see ground rule 6).
 - Tuning the myopic baseline's `1.05`/`0.85` (its limit never binds; and they are
   the behaviour-cloning target, so changing them breaks `rprl-bc-sac`
   reproduction of the shipped checkpoint).
-- Degrading demand *level* to test pricing robustness — it provably cannot move a
-  price. Perturb `elasticity`. See `docs/DESIGN.md` § Forecast vs truth.
+- Degrading the *forecast's* demand level to test myopic's pricing — it provably
+  cannot move a one-day price. Perturb `elasticity`. See `docs/DESIGN.md` § Forecast
+  vs truth. (Shifting the *true* level, as §18 does, is different: the planner's
+  prices move because its bookings run ahead of or behind plan.)

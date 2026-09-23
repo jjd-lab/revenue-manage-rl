@@ -4,9 +4,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
 
-Config-driven revenue management for a fictional 10,000-seat amphitheater. Each day of a 100-day booking window the agent sets a price, from $80 to $120, and a selling limit, from 10,000 to 15,000. Demand is synthetic. A tree sets the base from the calendar and from how far out the night is. Price scales that base around $100. Cancellations follow a Weibull curve. No-shows run near 16 percent. No real box office is in this repository.
+Config-driven revenue management for a fictional 10,000-seat amphitheater. Each day of a 100-day booking window the agent sets a price, from $80 to $120, and a selling limit, from 10,000 to 15,000. Demand is synthetic. A tree sets the base from the calendar and from how far out the night is. Price scales that base around $100. Cancellations follow a Weibull curve. The no-show rate starts from a base of 16 percent and falls on weekends and in peak months, so on the evaluated nights it runs 10 to 12 percent. No real box office is in this repository.
 
-A joint policy sets the price and the selling limit. A price-only policy sets the price, and a formula sets the limit. The cap is applied after training. It lowers a joint policy's selling limit when expected show-ups would pass 1.02 times the 10,000 seats. It does not retrain the policy. Pluggable demand models, classical baselines, and Stable-Baselines3 PPO and SAC are included. TD3 is registered and smoke-tested, and it appears in no published result.
+A joint policy sets the price and the selling limit. A price-only policy sets the price, and a formula sets the limit. The cap is applied after training. Once fewer than 20 percent of the seats remain, it moves a joint policy's selling limit three quarters of the way down to the level where expected show-ups would reach 1.02 times the 10,000 seats. It does not retrain the policy. Pluggable demand models, classical baselines, and Stable-Baselines3 PPO and SAC are included. TD3 is registered and smoke-tested, and it appears in no published result.
 
 ## The result
 
@@ -34,28 +34,30 @@ Myopic plans one day at a time. `baselines/dp.py` plans the whole booking window
 
 | What the planner knows | Planner | Best learned | Planner ahead |
 | --- | ---: | ---: | ---: |
-| The right forecast | 2.219M | 2.081M | +0.138M, interval above zero |
-| A wrong demand forecast (worst of three) | 2.164M | 2.081M | +0.083M |
-| Only the usual numbers, and every night is different | 2.121M | 2.022M | +0.099M, interval above zero |
+| The right forecast | 2.219M | 2.155M | +0.064M, interval above zero |
+| A wrong demand forecast (worst of three tried) | 2.164M | 2.087M | +0.078M |
+| Each night's demand and show-ups differ from the forecast (up to ±25%) | 2.121M | 2.022M | +0.099M, interval above zero |
 
-The planner aims each busy night at a full house and misses by about 90 seats. The learned policies price lower, sell faster, stop selling a week or two early and end short ([`runs/dp_baseline/`](runs/dp_baseline/NOTES.md), [`runs/uncertain_nights/`](runs/uncertain_nights/NOTES.md)).
+No cap on either side, and every learned policy sees only the venue's own show-up estimate. Best learned is Joint SAC retrained on all twelve months (§18) in the first row; Joint SAC on the $200/$400 reward (§13), which reads no forecast, in the second; Joint SAC retrained on such nights in the last, while the planner keeps the usual forecast and rates. With the right forecast the planner leads every published learned policy by 5.9 to 8.4 percent.
 
-**Where the learned policies hold up better.** The planner leans on its cancellation and no-show rates. With every policy shown the same wrong rates:
+The planner prices each busy night to arrive at a full house on the last day. The learned policies price lower, fill one to two weeks early, overbook a little and then nearly stop selling ([`runs/dp_baseline/`](runs/dp_baseline/NOTES.md), [`runs/uncertain_nights/`](runs/uncertain_nights/NOTES.md)).
+
+**Where the learned policies hold up better.** The planner leans on its cancellation and no-show rates. With every policy shown the same wrong rates, neither side capped:
 
 | The rates the policies are given | Planner | Best learned |
 | --- | ---: | ---: |
 | Fewer no-shows than real | 2.127M | 2.088M |
 | Fewer cancellations than real | 2.108M | 2.094M |
-| More no-shows than real | 2.091M | **2.105M** |
+| More no-shows than real | 2.091M | 2.078M |
 | More cancellations than real | 1.958M | **2.074M** |
 
-When the planner overestimates cancellations or no-shows it overbooks every busy night and loses up to 12 percent; the learned policies lose about 3 at worst. The learned policies also need no demand forecast at all, got within about 6 percent of a planner handed the true model, and part of that gap is their training reward rather than the learning ([§14–§16](docs/EXPERIMENT_LOG.md), [`runs/show_up_leak/`](runs/show_up_leak/NOTES.md)). No paired intervals for the wrong-rate rows.
+When the planner overestimates cancellations or no-shows it overbooks every busy night and loses 5.8 and 11.8 percent; the learned policies lose about 3 at worst and win the cancellation case. A cap on the planner removes that weak spot (§15). The learned policies also need no demand forecast at all. On the months they trained on they come within 1.3 to 2.7 percent of the planner; on the held-out June and December nights, 4.1 to 6.0 percent. Training on the score's own costs with the night type in view narrows the gap only a little; training on all twelve months closes about 40% of it; and when a whole year runs 20% above or below the forecast, the planner on the stale forecast still leads, because it re-plans from its own bookings every day ([§14–§18](docs/EXPERIMENT_LOG.md), [`runs/show_up_leak/`](runs/show_up_leak/NOTES.md), [`runs/rl_vs_planner_diagnosis/`](runs/rl_vs_planner_diagnosis/NOTES.md), [`runs/year_drift/`](runs/year_drift/NOTES.md)). No paired intervals for the wrong-rate rows.
 
 ### Variations
 
 **Later buyers never pay less.** The weekend markdown from $117 to $89 was losing money. Blocking any price below yesterday's, with no retraining, raises `score_aware` from 2,033,264 to 2,077,976, with the paired interval above zero. Training a policy under that rule does worse by about 110,000, and a fine instead of a block still leaves 1,377 markdowns. Train without the rule and apply it at decision time ([§12](docs/EXPERIMENT_LOG.md), [`runs/price_monotone_up/`](runs/price_monotone_up/NOTES.md)).
 
-**The reward decides the overbooking.** The training reward charges about $730 per unsold seat and takes away the whole fill bonus on any night with a denied admission. Retraining Joint SAC on revenue minus $200 per unsold seat and $400 per denied admission raises `score_aware` to 2,087,750, with the interval above zero, all of it on peak nights through overbooking: denied admission on 11 of 17, up from 3. The lead is gone if a denied admission really costs more than about $652 ([§13](docs/EXPERIMENT_LOG.md), [`runs/objective/`](runs/objective/NOTES.md)). The costs in the reward are a business choice: set them to what an empty seat and a turned-away ticket holder really cost the venue, and the policy follows them.
+**The reward decides the overbooking.** The training reward charges $650 per unsold seat, pays an $80 fill bonus for each seat filled, and takes away the whole bonus on any night with a denied admission. Retraining Joint SAC on revenue minus $200 per unsold seat and $400 per denied admission raises `score_aware` to 2,087,750, with the interval above zero, all of it on peak nights through overbooking: denied admission on 11 of 17, up from 3. The lead is gone if a denied admission really costs more than about $652 ([§13](docs/EXPERIMENT_LOG.md), [`runs/objective/`](runs/objective/NOTES.md)). The costs in the reward are a business choice: set them to what an empty seat and a turned-away ticket holder really cost the venue, and the policy follows them.
 
 The full account, including what the policies are allowed to know and what that is worth, is in [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md). The same results with charts are at **<https://jjd-lab.github.io/revenue-manage-rl/>** (source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
 
@@ -102,7 +104,7 @@ All but `rprl-fit-demand` take `-c <config.yaml>`. `--timesteps`, `--episodes`,
 ## Quick start
 
 ```bash
-# Tests (add -m "not slow" to skip the three that train a tiny agent)
+# Tests (add -m "not slow" to skip the four that train a tiny agent)
 pytest -q
 
 # Baselines on the default tree_elastic demand
@@ -133,8 +135,9 @@ rprl-eval -c configs/default.yaml --model artifacts/bc_sac/rl_bc_sac_final.zip -
 
 See `runs/bc_sac/NOTES.md` for the held-out verdict vs `artifacts/tree_long/best/rl_best.zip`,
 and `runs/bc_sac/comparison.md` for the table it came from. Two rows of that table
-(`bc_only`, `bc_sac_bestckpt`) were intermediate checkpoints that were never kept,
-so those two rows cannot be reproduced.
+(`bc_only`, `bc_sac_bestckpt`) come from `bc_only.zip` and `rl_bc_sac_best.zip`, which
+`rprl-bc-sac` writes beside the final model. The weights behind the published rows were not
+kept, so a retrain reproduces them only approximately.
 
 ## Config-driven design
 
@@ -144,12 +147,12 @@ One YAML can set demand, env, control, algorithm, eval, and tune:
 | --- | --- |
 | `demand.kind` | `tree_elastic` (default) or `linear_legacy` |
 | `env.*` | capacity, horizon, cancel/noshow, reward shaping (`env.reward`) |
-| `control.*` | `price_only`, `selling_limit`, `early_promo`, `safe_sl`, `mpc`. All off by default. |
+| `control.*` | `price_only`, `selling_limit`, `early_promo`, `safe_sl`, `mpc`, `price_monotone`. All off by default. |
 | `algorithm.name` | `ppo` \| `sac` \| `td3` |
 | `train.*` | timesteps, seed, run name, output paths |
 | `eval.*` / `tune.*` | episodes, seeds, soft-aware thresholds, selection weight |
 
-`configs/default.yaml` carries the full schema with every control switched off;
+`configs/default.yaml` carries the core schema with every control switched off (optional blocks such as `bc:`, `demand.night_variation` and `env.operator_view` appear only in the experiment configs that use them);
 every other config overrides a subset of it. Examples: `algo_*.yaml`,
 `experiment_*.yaml`, `demand_linear_legacy.yaml`.
 
@@ -165,10 +168,10 @@ Myopic baseline optimizes price on a 1D grid via `predict_mean` (no closed form 
 ## Layout
 
 ```
-configs/                         experiment YAMLs (default.yaml is the full schema)
+configs/                         experiment YAMLs (default.yaml is the core schema)
 docs/                            design, eval protocol, experiment log, experiment index
 src/reservation_pricing/         package (env, demand, algos, controls, evaluate)
-tests/                           smoke + edge coverage; three slow training tests
+tests/                           smoke + edge coverage; four slow training tests
 scripts/                         explain_rl_best.py, build_site_figures.py, run_smoke.sh
 artifacts/                       SB3 checkpoints (untracked; retrain locally)
 runs/                            eval tables, notes, explainability figures
@@ -230,6 +233,8 @@ python runs/objective/run_objective.py                     # a different trainin
 python runs/dp_baseline/run_dp.py                          # the textbook planner, true and wrong forecasts
 python runs/show_up_leak/run_leak.py                       # every policy on a venue's own show-up estimate
 python runs/uncertain_nights/run_uncertain.py              # nights that miss the usual model (needs two retrains)
+python runs/rl_vs_planner_diagnosis/run_diagnosis.py       # why RL trails the planner (needs two retrains)
+python runs/year_drift/run_drift.py                        # all-month training, and years that miss the forecast (needs two retrains)
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -250,6 +255,8 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/dp_baseline/NOTES.md`](runs/dp_baseline/NOTES.md) — the textbook planner against the learned policies
 - [`runs/show_up_leak/NOTES.md`](runs/show_up_leak/NOTES.md) — wrong cancellation and no-show rates, for every policy
 - [`runs/uncertain_nights/NOTES.md`](runs/uncertain_nights/NOTES.md) — RL retrained on nights that miss the usual model
+- [`runs/rl_vs_planner_diagnosis/NOTES.md`](runs/rl_vs_planner_diagnosis/NOTES.md) — why RL trails the planner, and how much of it is months never seen in training
+- [`runs/year_drift/NOTES.md`](runs/year_drift/NOTES.md) — training on every month, and whole years that run above or below the forecast
 - [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — what the controllers gain by reading the simulator's cancel and no-show parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the cap, the price MPC, and the soft-night fill ceiling
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

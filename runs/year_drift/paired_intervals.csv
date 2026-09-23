@@ -1,0 +1,16 @@
+level_shift,policy,baseline,point_diff,ci_low,ci_high,covers_zero
+0.8,all months,R1 (no June or December),-86680.47,-132387.61,-40198.46,False
+0.8,planner,all months,127782.13,75190.15,182174.18,False
+0.8,planner,drift-trained,26490.4,2543.31,50020.56,False
+0.8,planner + pickup,drift-trained,65349.11,44248.84,88690.06,False
+0.8,planner + pickup,planner,38858.71,21728.18,57652.89,False
+1.0,all months,R1 (no June or December),42803.6,2769.94,85622.39,False
+1.0,planner,all months,63775.8,37727.45,89214.7,False
+1.0,planner,drift-trained,77510.99,52918.27,102295.65,False
+1.0,planner + pickup,drift-trained,78434.58,54127.46,102992.72,False
+1.0,planner + pickup,planner,923.59,-30.63,1999.88,True
+1.2,all months,R1 (no June or December),95913.58,50283.31,144662.64,False
+1.2,planner,all months,71552.5,44788.86,99995.2,False
+1.2,planner,drift-trained,94061.67,64293.26,126964.23,False
+1.2,planner + pickup,drift-trained,111169.03,85223.69,140280.95,False
+1.2,planner + pickup,planner,17107.36,10580.74,23368.94,False

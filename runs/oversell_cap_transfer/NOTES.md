@@ -64,5 +64,5 @@ those two capped rows were not saved night by night, so they have no interval.
 So "both levers beat one" is not a property of joint control in general. Under the
 safety constraint it is a property of **the behaviour-cloned policy specifically**.
 The second lever is still load-bearing (`runs/ablate_selling_limit/` — taking it
-away costs 5–17%), but having it is not by itself enough to beat a well-shaped
+away costs 4.5–17%), but having it is not by itself enough to beat a well-shaped
 one-lever policy.

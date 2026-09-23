@@ -147,11 +147,17 @@ def dp_policy(
     m_step: float = 20.0,
     n_quad: int = 5,
     keep_overrides: Optional[dict[str, float]] = None,
+    pickup_days: tuple[int, ...] = (),
 ) -> PolicyFn:
     """Price and selling limit from a per-night dynamic program on the forecast.
 
     Solved once per night type and forecast, and cached;
     ``state["dp_value"]`` is the planner's expected score contribution for the night.
+
+    ``pickup_days`` are days out on which the planner compares the booking
+    requests seen so far with what its forecast expected at the prices it
+    charged, scales the whole forecast by that ratio, and re-plans: the pickup
+    adjustment a revenue-management team makes when a season runs hot or cold.
     """
     soft_cfg = soft_cfg or SoftAwareConfig()
     keep_overrides = dict(keep_overrides or {})
@@ -160,7 +166,7 @@ def dp_policy(
         raise ValueError(f"unknown keep parameters: {sorted(unknown)}")
     cache: dict[Any, tuple] = {}
 
-    def _plan(env: ReservationEnv) -> tuple:
+    def _plan(env: ReservationEnv, scale: float = 1.0) -> tuple:
         model = decision_model(env)
         is_soft = _forecast_is_soft(env, soft_cfg)
         # make_env builds a fresh model per night, so key on what the forecast
@@ -178,10 +184,12 @@ def dp_policy(
             round(float(model.predict_mean(mid, env.min_price)), 9),
             round(float(model.predict_mean(mid, env.max_price)), 9),
             float(getattr(model, "demand_noise_std", 0.0)),
+            scale,
         )
         if key not in cache:
             prices = np.linspace(env.min_price, env.max_price, n_prices)
             mean, keep = _night_inputs(env, prices, keep_overrides)
+            mean = mean * scale
             m_grid = np.arange(0.0, env.max_selling_limit + m_step, m_step)
             noise = float(getattr(model, "demand_noise_std", 0.0))
             value, p_idx, c_idx = solve_dp(
@@ -202,8 +210,17 @@ def dp_policy(
         u = getattr(env, "unwrapped", env)
         if "dp_plan" not in state:
             state["dp_plan"] = _plan(u)
-        prices, mean, keep, m_grid, value, p_idx, c_idx = state["dp_plan"]
         t = int(u.booking_horizon) - int(u.days_prior)
+        if t > 0 and pickup_days:
+            forecast = _plan(u)[1]
+            state["dp_seen"] = state.get("dp_seen", 0.0) + float(u.gross_pickup)
+            state["dp_expected"] = state.get("dp_expected", 0.0) + float(
+                forecast[t - 1, state["dp_j"]]
+            )
+            if int(u.days_prior) in pickup_days and state["dp_expected"] > 0:
+                ratio = np.clip(state["dp_seen"] / state["dp_expected"], 0.5, 2.0)
+                state["dp_plan"] = _plan(u, round(float(ratio), 2))
+        prices, mean, keep, m_grid, value, p_idx, c_idx = state["dp_plan"]
         if t == 0:
             state["dp_m"] = 0.0
             state["dp_value"] = float(value[0, 0])
@@ -227,6 +244,7 @@ def dp_policy(
                 # first. Hold yesterday's instead, so the quoted price means something.
                 price = state.get("dp_price", price)
         state["dp_price"] = price
+        state["dp_j"] = int(np.argmin(np.abs(prices - price)))
         return _to_env_action(env, price, limit)
 
     return _policy

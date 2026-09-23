@@ -40,6 +40,8 @@ _ENV_KEYS = {
     "soft_day_base_threshold",
     "soft_day_base_factor",
     "soft_day_sample_boost",
+    "undersell_on_soft",
+    "night_features",
     "normalize_obs",
     "held_out_months",
     "use_held_out",

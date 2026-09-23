@@ -12,6 +12,7 @@ Weibull cancellations, DOW/month effects) with:
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any, Optional, Sequence, SupportsFloat, Tuple
 
 import gymnasium as gym
@@ -21,6 +22,9 @@ from gymnasium import spaces
 
 from reservation_pricing.demand.protocol import features_from_state
 from reservation_pricing.demand.registry import get_demand_model
+
+# Normalization ceiling for the forecast base-demand slot (tree base spans ~87-195).
+NIGHT_BASE_MAX = 300.0
 
 
 class ReservationEnv(gym.Env):
@@ -70,6 +74,12 @@ class ReservationEnv(gym.Env):
         soft_day_base_threshold: Optional[float] = None,
         soft_day_base_factor: float = 1.25,
         soft_day_sample_boost: float = 2.0,
+        # The DP planner's terminal charge: skip the unsold-seat penalty on nights
+        # the forecast classifies soft. Matches the score's charge unless a wrong
+        # forecast is configured; the score classifies from the true model.
+        undersell_on_soft: bool = True,
+        # Append the forecast's mid-horizon base demand and soft flag to the obs.
+        night_features: bool = False,
         normalize_obs: bool = True,
         held_out_months: Optional[Sequence[int]] = None,
         use_held_out: bool = False,
@@ -113,6 +123,8 @@ class ReservationEnv(gym.Env):
         )
         self.soft_day_base_factor = float(soft_day_base_factor)
         self.soft_day_sample_boost = float(soft_day_sample_boost)
+        self.undersell_on_soft = bool(undersell_on_soft)
+        self.night_features = bool(night_features)
         self.normalize_obs = bool(normalize_obs)
         self.held_out_months = list(held_out_months) if held_out_months else []
         self.use_held_out = bool(use_held_out)
@@ -182,11 +194,17 @@ class ReservationEnv(gym.Env):
                 np.ones(19, dtype=np.float32),
             ]
         )
+        if self.night_features:
+            self._obs_low = np.concatenate([self._obs_low, np.zeros(2, dtype=np.float32)])
+            self._obs_high = np.concatenate(
+                [self._obs_high, np.array([NIGHT_BASE_MAX, 1.0], dtype=np.float32)]
+            )
+        obs_dim = int(self._obs_low.size)
 
         if self.normalize_obs:
             self.observation_space = spaces.Box(
-                low=-1.5 * np.ones(27, dtype=np.float32),
-                high=1.5 * np.ones(27, dtype=np.float32),
+                low=-1.5 * np.ones(obs_dim, dtype=np.float32),
+                high=1.5 * np.ones(obs_dim, dtype=np.float32),
                 dtype=np.float32,
             )
         else:
@@ -215,6 +233,24 @@ class ReservationEnv(gym.Env):
         self._soft_day_mult = 1.0
         self._last_pace_target = 0.0
         self._last_pace_gap = 0.0
+        self._forecast_base = 0.0
+        self._forecast_soft = False
+
+    def _forecast_night(self) -> tuple[float, bool]:
+        """Mid-horizon base demand and soft flag from the forecast, never the truth."""
+        # Imported here: metrics imports this module.
+        from reservation_pricing.metrics import _mid_horizon_base, classify_soft
+
+        base = _mid_horizon_base(
+            SimpleNamespace(
+                demand_model=self.forecast_model,
+                booking_horizon=self.booking_horizon,
+                dow=self.dow,
+                month=self.month,
+            )
+        )
+        soft = classify_soft(month=self.month, dow=self.dow, base_demand=base)
+        return float(base or 0.0), bool(soft)
 
     def demand_features(self) -> dict[str, Any]:
         return features_from_state(
@@ -289,6 +325,11 @@ class ReservationEnv(gym.Env):
         return vec
 
     def _raw_obs(self) -> np.ndarray:
+        night = (
+            [np.array([self._forecast_base, float(self._forecast_soft)], dtype=np.float32)]
+            if self.night_features
+            else []
+        )
         return np.concatenate(
             [
                 np.array(
@@ -306,6 +347,7 @@ class ReservationEnv(gym.Env):
                 ),
                 self.one_hot_dow(self.dow),
                 self.one_hot_month(self.month),
+                *night,
             ]
         ).astype(np.float32)
 
@@ -470,6 +512,8 @@ class ReservationEnv(gym.Env):
         self._last_pace_target = 0.0
         self._last_pace_gap = 0.0
         self._is_soft_day, self._soft_day_mult = self._compute_soft_day_mult()
+        if self.night_features or not self.undersell_on_soft:
+            self._forecast_base, self._forecast_soft = self._forecast_night()
 
         return self._get_obs(), self._info()
 
@@ -523,6 +567,8 @@ class ReservationEnv(gym.Env):
 
         if terminated:
             shortfall = max(0.0, self.remain_inv)
+            if not self.undersell_on_soft and self._forecast_soft:
+                shortfall = 0.0
             overshoot = max(0.0, -self.remain_inv)
             shaped -= self.undersell_penalty * (shortfall / self.capacity)
             shaped -= self.oversell_penalty * (overshoot / self.capacity)

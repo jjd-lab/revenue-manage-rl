@@ -30,6 +30,10 @@ produces, not what you will find after a fresh clone.
 | `cu200` | `experiment_objective_cu200_sac.yaml` | `runs/objective/` | `artifacts/objective/cu200/final_model.zip` | §13 |
 | `uncertain_cu200` | `experiment_uncertain_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_cu200/final_model.zip` | §16 |
 | `uncertain_noisy_cu200` | `experiment_uncertain_noisy_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_noisy_cu200/final_model.zip` | §16 |
+| `score_sac` | `experiment_score_sac.yaml` | `runs/rl_vs_planner_diagnosis/` | `artifacts/rl_vs_planner/score_sac/best/best_model.zip` | §17 |
+| `score_allmonths_sac` | `experiment_score_allmonths_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/score_allmonths_sac/final_model.zip` | §18 |
+| `year_drift_sac` | `experiment_year_drift_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/year_drift_sac/final_model.zip` | §18 |
+| `score_bc_dp_sac` | `experiment_score_bc_dp_sac.yaml` (`rprl-bc-sac`) | `runs/rl_vs_planner_diagnosis/` | `artifacts/rl_vs_planner/score_bc_dp_sac/best/best_model.zip` | §17 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
 trained joint action down, and the price MPC post-processes a trained price. Both
@@ -52,18 +56,20 @@ reported on seeds 0–29.
 | --- | --- | --- | --- |
 | $80 soft-day oracle ceiling | `runs/oracle_ceiling/run_oracle.py` | `runs/oracle_ceiling/` | §5c |
 | Final soft-aware head-to-head | `runs/joint_vs_price_only_soft_aware/run_headline.py` | same directory | §7 |
-| Soft-aware report demo (two policies) | `runs/soft_aware_report_demo/run_demo.py` | `runs/soft_aware_report_demo/` | §6 |
+| Soft-aware report demo (four policies) | `runs/soft_aware_report_demo/run_demo.py` | `runs/soft_aware_report_demo/` | §6 |
 | Second-lever ablation (pin the selling limit) | `runs/ablate_selling_limit/run_ablation.py` | `runs/ablate_selling_limit/` | §9 |
 | Oversell-cap transfer across joint policies | `runs/oversell_cap_transfer/run_cap_transfer.py` | `runs/oversell_cap_transfer/` | §10 |
 | Cancellation-model dependence (keep-rate leak) | `runs/keep_rate_dependence/run_probe.py` | `runs/keep_rate_dependence/` | §11a |
 | Policies under a wrong demand forecast | `runs/forecast_misspecification/run_misspecification.py` | `runs/forecast_misspecification/` | §11b |
 | Cap `mix_alpha` re-selected on validation seeds | `runs/both_goals/validate_mix_alpha.py` | `runs/both_goals/` | §11 |
 | Explainability figures | `scripts/explain_rl_best.py` | `runs/explain_rl_best/` | §8 |
-| Monotone price, four arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
+| Monotone price, twelve arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
 | Training objective vs `rl_best`, uncapped and capped | `runs/objective/run_objective.py` | `runs/objective/` | §13 |
 | Dynamic-programming planner vs learned policies, true and wrong forecasts | `runs/dp_baseline/run_dp.py` | `runs/dp_baseline/` | §14 |
 | Every policy on an operator's show-up estimate instead of the env's count | `runs/show_up_leak/run_leak.py` | `runs/show_up_leak/` | §15 |
 | Planner vs RL retrained on nights that miss the usual model | `runs/uncertain_nights/run_uncertain.py` | `runs/uncertain_nights/` | §16 |
+| Seasonal coverage, and a year that misses the forecast | `runs/year_drift/run_drift.py` | `runs/year_drift/` | §18 |
+| Why RL trails the planner: score-aligned reward, night type, planner clone | `runs/rl_vs_planner_diagnosis/run_diagnosis.py` | `runs/rl_vs_planner_diagnosis/` | §17 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

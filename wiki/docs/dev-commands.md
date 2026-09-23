@@ -3,7 +3,7 @@ type: ops
 title: Dev commands
 description: The operational constraints behind the README's commands - venv location, what each extra enables, what the tests cover, how tables and figures are regenerated.
 tags: [ops, cli, setup]
-timestamp: 2026-09-22
+timestamp: 2026-09-23
 ---
 
 # Dev commands
@@ -89,10 +89,12 @@ loads and keeps observations inside the space (`test_configs.py`), the console
 entry points (`test_cli.py`), the table writers behind `runs/` (`test_reports.py`),
 the controller kinds the shipped experiments do not use plus the decision-day
 convention (`test_controls_extra.py`), the synthetic corpus and the CSV refit
-path (`test_demand_synthesize.py`), and the figure script (`test_scripts.py`).
+path (`test_demand_synthesize.py`), the figure script (`test_scripts.py`), and
+the §17 env switches `undersell_on_soft` / `night_features` (`test_score_reward.py`),
+and the §18 year shift plus the planner's pickup adjustment (`test_year_drift.py`).
 
 It is **not** a correctness suite for learned policies: nothing asserts that a
-policy reaches a given score. Three tests train a tiny agent and are marked
+policy reaches a given score. Four tests train a tiny agent and are marked
 `slow`; `pytest -m "not slow" -q` runs the rest in a few seconds.
 
 ## Regenerating tables and figures
@@ -118,13 +120,18 @@ policy reaches a given score. Three tests train a tiny agent and are marked
 - `python scripts/explain_rl_best.py` — figures 01–07 and the two CSVs in
   `runs/explain_rl_best/`; needs the joint SAC checkpoint. The price column is
   the charged `info["price"]`, so a project-mode wrapper shows the clamped path.
-- `python runs/price_monotone_up/run_monotone.py` — four-arm monotone comparison.
+- `python runs/price_monotone_up/run_monotone.py` — the twelve-arm monotone comparison.
   Checkpoints live under `artifacts/price_monotone/` (untracked). Reading is
   `runs/price_monotone_up/NOTES.md`.
-- `python scripts/build_site_figures.py` — the six PNGs under `site/figures/`,
-  drawn from committed CSVs only; `site/index.html` no longer embeds F2. F6 reads
+- `python runs/year_drift/run_drift.py` — the §18 tables; needs the two
+  checkpoints under `artifacts/year_drift/` (train them from
+  `experiment_score_allmonths_sac.yaml` and `experiment_year_drift_sac.yaml`)
+  plus R1's from §17. Reading is `runs/year_drift/NOTES.md`.
+- `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`
+  (F1, F3–F6; F2 was retired), drawn from committed CSVs only. F1 adds the
+  planner row from `runs/dp_baseline/dp_table.csv`. F6 reads
   `runs/dp_baseline/night_paths.csv`, which `runs/dp_baseline/night_paths.py`
-  writes and which needs the capped BC→SAC checkpoint from `artifacts/`. `site/index.html` is published with GitHub
+  writes and which needs the BC→SAC checkpoint from `artifacts/` (planner vs BC→SAC, neither capped). `site/index.html` is published with GitHub
   Pages by `.github/workflows/pages.yml`. Branch-deploy only serves `/` or
   `/docs`, so the workflow uploads `site/` as the Pages artifact instead.
 

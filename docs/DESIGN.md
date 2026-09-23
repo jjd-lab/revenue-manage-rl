@@ -54,7 +54,7 @@ The same object goes by several names across code, tables, and prose:
 | remaining inventory (`remain_inv`) | remain | `capacity − materialized`; negative means denied admission |
 | oversell | denied admission | `remain_inv < 0` at the performance date |
 | undersell / spoilage | `remain > 1500` | Seats left unsold; structural on soft nights |
-| soft night | soft day, low-demand day | Held-out night the floor-price oracle cannot fill (`metrics.classify_soft`) |
+| soft night | soft day, low-demand day | Night classified soft by a calendar rule: mid-horizon base demand below 90, or a June weekday (`metrics.classify_soft`). On the held-out nights these are the nights the floor-price oracle cannot fill |
 | joint policy | two-lever, joint 2D | Agent sets price and selling limit |
 | `rl_best` | joint SAC, `long_sac`, `rl_best_sac@200k`, `joint_sac_rl_best` | The shipped joint SAC checkpoint |
 | BC→SAC + safe SL | `rl_sac` (row name in the headline CSV), `bc_sac+safe_sl` | The BC→SAC checkpoint under the oversell cap |

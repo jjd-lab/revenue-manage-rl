@@ -1,0 +1,36 @@
+# EXPERIMENT_LOG §18, step 1: R1 (experiment_score_sac.yaml) trained on all twelve
+# months. Every other switch is R1's. §17 trained on ten months and tested on June
+# and December; here those months are in training, and the thirty test nights are
+# unseen draws, not an unseen month. run_drift.py puts the held-out months back
+# only to pick the same test nights.
+demand:
+  kind: tree_elastic
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  undersell_on_soft: false
+  night_features: true
+  operator_view: true
+  held_out_months: []
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_held_out: false
+  eval_episodes: 30
+  eval_freq: 20000
+  model_dir: artifacts/year_drift
+  run_name: score_allmonths_sac
+  log_dir: runs/year_drift

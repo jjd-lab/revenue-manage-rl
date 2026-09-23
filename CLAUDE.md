@@ -24,7 +24,8 @@ trained weights, is **untracked raw material**, and must be retrained locally
   "venue", "production-like", "your own CSV" — and keep it that way.
 - **`env.capacity`, the price band, and the selling-limit bounds in
   `configs/default.yaml` are frozen.** Observations are normalized against them, so
-  changing any one invalidates all five checkpoints and every table in `runs/`.
+  changing any one invalidates every checkpoint (the five §7 headline ones and
+  the later retrains) and every table in `runs/`.
   Same for the reward-shaping weights. Retrain deliberately or not at all.
 - The myopic baseline's overbook/keep constants (`baselines/policies.py`) are a
   weaker case, not a frozen scale: its selling limit never binds, so they move no

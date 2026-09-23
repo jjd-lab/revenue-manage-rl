@@ -1,0 +1,37 @@
+# R1 (EXPERIMENT_LOG §17): joint SAC trained on the score itself, seeing what an
+# operator sees. Reward: revenue - $200 per unsold seat on peak nights only -
+# $400 per denied admission, no bonus -- the terminal charge the DP planner
+# optimizes. The observation adds the forecast's base demand and soft flag, and
+# env.operator_view replaces the true show-up count with bookings x usual keep
+# rate, so nothing from the night's realized draw reaches the policy. The kept
+# checkpoint is picked on 30 training-month nights, never on June or December.
+demand:
+  kind: tree_elastic
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  undersell_on_soft: false
+  night_features: true
+  operator_view: true
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_held_out: false
+  eval_episodes: 30
+  eval_freq: 20000
+  model_dir: artifacts/rl_vs_planner
+  run_name: score_sac
+  log_dir: runs/rl_vs_planner_diagnosis

@@ -50,6 +50,10 @@ training, demand realism, and scoreboard were not. Built a config-driven package
 | PPO screen @50k | ~755k | After fixing HP-merge bug |
 | myopic / fixed_80 | ~578k / ~590k | |
 
+The myopic / fixed_80 row was not regenerated. On the same thirty nights
+`runs/bc_sac/comparison.md` scores them 730k / 673k, with `rl_best` unchanged at
+823k; use those.
+
 **Takeaways**
 
 - HP-merge bug had made early grids meaningless; fixing it unlocked real gains.
@@ -276,7 +280,7 @@ state plus calendar one-hots. Tree `predict_base` appears only in post-hoc analy
 
 - **Booking-curve pricing.** Myopic is flat (~$92); SAC prices higher mid-curve and
   cuts sharply in the last ~15 days — protect early, clear late.
-- **Calendar premium.** Weekend sits ~$25–35 above weekday (peak ~$117 around 40
+- **Calendar premium.** Weekend sits ~$25–35 above weekday (peak ~$117 around 37
   days prior), recovered from day-of-week / month one-hots alone.
 - **The joint action is used.** Selling limit tracks remaining inventory rather
   than sitting at a bound — this is the "joint" in joint SAC.
@@ -531,12 +535,13 @@ bookings it took and holds. It counts expected show-ups itself and never reads
 the env's `cumulative_mat_boh`, which is built from the true rates and the
 night's realized no-show draw. Results: `runs/dp_baseline/`.
 
-- **With the true model it scores 2,219,272, 6–8% above every learned policy.**
+- **With the true model it scores 2,219,272, 5.9–8.4% above every learned policy.**
   It leads capped BC→SAC by +137,872 [116,864, 162,003] and `cu200` by
   +131,521, and every interval excludes zero. The gain is peak nights, where it
   misses capacity by about 90 seats against the learned policies' hundreds. On
   soft nights it prices at myopic's $92.
-- **A wrong demand forecast barely hurts it.** It loses at most 2.48%, and its
+- **The wrong demand forecasts tried barely hurt it.** Price sensitivity −0.9 or
+  −1.5 instead of −1.2, or weekend/peak demand 25% low: it loses at most 2.48%, and its
   worst case is still about 77k above the best learned policy.
 - **A wrong show-up model can erase the lead.** No-show base set 4 points low
   (12% against a true 16%) or cancellations underestimated: it holds back, still about 20–39k ahead.
@@ -592,6 +597,53 @@ triples daily demand noise. Results: `runs/uncertain_nights/`.
 - **Tripling daily demand noise moved every score by under 1%.**
 - Every policy turns people away on 3–8 of 17 peak nights.
 
+## 17. Why RL trails the planner: two retrains that remove its handicaps
+
+§14–§16 left the planner 5.9–8.4% ahead. Its advantages:
+
+- it is handed the simulator's model and optimizes the score's own terminal charge;
+- the learned policies train on a different reward;
+- they see no night type;
+- they never train on June or December, the only months they are tested on.
+
+Two joint SAC retrains (seed 7, 200k steps, the same budget as `cu200`) remove the first handicaps:
+
+- **Reward:** revenue − $200 per unsold seat on peak nights only − $400 per denied admission (`env.undersell_on_soft: false`).
+- **Observation:** adds the forecast's base demand and soft flag (`env.night_features`).
+- **Show-up count:** the operator's estimate (`env.operator_view`), so nothing from the night's realized draw leaks in.
+- **Checkpoint selection:** on training months only (`train.eval_held_out: false`).
+
+R1 (`configs/experiment_score_sac.yaml`) learns from scratch. R2 (`configs/experiment_score_bc_dp_sac.yaml`) first clones the planner. Results: `runs/rl_vs_planner_diagnosis/`.
+
+- **The gap roughly doubles on held-out months.** On sixty training-month nights the learned policies come within 1.3–2.7% of the planner; on the June and December test nights they trail by 4.1–6.0%. The month one-hot slots that switch on only at test time look like the largest single cause. One training seed, no paired interval.
+- **Aligning the objective helps, but it is not the gap.** R1 scores 2,111,489, +24,986 over `cu200` with an interval covering zero. It prices soft nights at $88 instead of $83 and denies 143 peak seats instead of 220. The planner still leads it by +107,783 [87,198, 132,058].
+- **Cloning the planner does not reproduce it.** The clone fits its training actions closely (MSE 0.0016) but overbooks 14 of 17 held-out peak nights and scores 1,927,144. Fine-tuning adds +131,133 [95,527, 168,407]. With the cap, R2 is the best learned policy on these nights at 2,134,485, still +82,255 [61,654, 104,549] behind the planner with the cap. Whether RL could improve on a faithful copy of the planner stays open.
+- **Checkpoint selection on 30 nights is noise.** R2's kept checkpoint scored 70k below its final model.
+
+## 18. Seasonal coverage, and a year that misses the forecast
+
+§17 left the learned policies trailing most on the two months they never trained on. Two joint SAC retrains on R1's reward and observation, both trained on all twelve months (`env.held_out_months: []`), seed 7, 200k steps:
+
+- **all months** (`configs/experiment_score_allmonths_sac.yaml`): usual demand.
+- **drift-trained** (`configs/experiment_year_drift_sac.yaml`): each training night draws its own demand level and price sensitivity.
+
+They are tested on the same thirty June and December nights, in three years:
+
+- the forecast right;
+- every night's demand 20% below forecast;
+- every night's demand 20% above forecast (`demand.night_variation.level_shift`).
+
+Nothing is capped. The planner plans on the usual, now stale, forecast. It is also run with a pickup adjustment that rescales its forecast from booking requests on days 70, 50, 30 and 15 out (`dp_policy(pickup_days=...)`). Results: `runs/year_drift/`.
+
+- **Coverage closes about 40% of the gap.** All months beats R1 by +42,804 [2,770, 85,622]. The planner's lead falls from 4.8% to 2.9%.
+- **The planner still wins every year tested.** Over drift-trained it leads by:
+  - +26,490 [2,543, 50,021], 1.6%, in the cold year;
+  - +77,511 in the right year;
+  - +94,062 in the hot year.
+  With the pickup adjustment the lead grows by a further 0 to 39k.
+- **The planner absorbs a level shift because it is closed-loop.** Re-planning daily from its own bookings, it raises peak prices from $104 to $110 in the hot year and still fills to within 55 seats. Reading the booking pace is already in the dynamic program.
+- **Training across drifting years helps RL only in the cold year:** +101k over all months at 0.8, −14k and −23k at 1.0 and 1.2.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -602,17 +654,20 @@ triples daily demand noise. Results: `runs/uncertain_nights/`.
 6. Pinning a joint policy's selling limit and leaving the price alone costs $90,000 to $344,000 and sends the share of peak nights with denied admission to 0.82 (§9).
 7. The cap takes all three joint policies to zero denied admission on the published checkpoints, for 0.6 to 2.4 percent of score. After that, only Joint BC to SAC still beats the price-only policies (§10). The 3.6 percent lead over pace PPO does not repeat on every training seed. Seeds 43 and 44 beat their matched pace run. Seed 46 ties, and it scores below the published pace checkpoint. On seeds 43 and 44 the cap leaves denied admission on 0.24 and 0.47 of peak nights (§7).
 8. Which policy to use, matching the public page:
-   - Best score with denied admission at zero: Joint BC to SAC with the cap.
+   - Best score, if you can build a demand forecast and estimate cancellation and no-show rates: the dynamic-programming planner behind the cap. It leads every learned policy under the right forecast, a wrong demand forecast, and wrong show-up rates (§14–§16).
+   - Best learned policy with denied admission near zero: Joint BC to SAC with the cap.
    - If denied admission on 12 of 17 peak nights is acceptable: raw Joint BC to SAC. It ties the capped policy on score.
    - If you want the weekend and weekday price paths: Joint SAC.
    - If the policy should set only the price: pace PPO.
-   - If the demand forecast might be wrong: a joint policy. Those policies see bookings and the calendar. They do not read a demand model (§11). A wrong elasticity costs myopic 3.5 to 5.8 percent. It costs the joint policies nothing. A wrong cancellation model is worth at most 1.11 percent.
+   - If no demand forecast can be built at all: a joint policy. Those policies see bookings and the calendar and read no demand model (§11). A wrong elasticity costs myopic 3.5 to 5.8 percent and the planner at most 1.35 percent. It costs the joint policies nothing.
 9. Further fill on the soft nights needs a different demand model. It does not come from another training run of these policies.
 10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
 11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero. The lead holds only while a denied admission costs less than about $652 (§13).
-12. With a correct model, a forecast-and-optimize dynamic program beats every learned policy by 6–8%, and a wrong demand forecast costs it at most 2.5%. A wrong cancellation or no-show model can erase that lead and make it overbook every peak night. The learned policies are immune partly because their observation leaks the true show-up count (§14).
+12. With a correct model, a forecast-and-optimize dynamic program beats every learned policy by 5.9–8.4%, and the three wrong demand forecasts tried (price sensitivity off by a quarter either way, weekend/peak demand 25% low) cost it at most 2.5%. Demand forecast too high, a wrong booking curve, a season-wide shift and larger errors were not tried. A wrong cancellation or no-show model can erase that lead and make it overbook every peak night. The learned policies are immune partly because their observation leaks the true show-up count (§14).
 13. That leak is worth under 0.1% with the true rates. Given the same wrong rates as the planner, the learned policies and the cap are exposed too, and the cap's zero-denied-admission guarantee fails. A forecast-and-optimize planner behind the cap scores at or above every learned policy in every show-up scenario tried (§15).
 14. When every night misses the usual demand and show-up values, and the planner knows only the usual ones, the planner with the cap still beats an RL policy retrained on such nights by about 5%. The interval excludes zero. On this simulator, needing no forecast does not make up for planning (§16).
+15. The learned policies come within 1.3–2.7% of the planner on the months they trained on and trail by 4.1–6.0% on the held-out June and December nights. Training on the score's own costs, with the night type in view, narrows the gap only a little. The planner is close to optimal for this simulator; about half or more of what RL loses appears only on months it never trained on (one training seed, §17).
+16. Training on all twelve months closes about 40% of the gap (+42,804, a real gap). When a whole year runs 20% above or below the forecast, the planner on the stale forecast still beats a policy trained across such years, by 1.6% to 3.8%. It re-plans from its own bookings every day, so a level shift is absorbed. RL's remaining case is forecast errors a closed loop cannot see, such as when demand arrives (§18).
 
 ---
 
