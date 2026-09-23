@@ -117,6 +117,7 @@
       margin: 0 0 0.3rem;
     }
     section > h3.group-label { margin-top: 2rem; }
+    ul.policies + p.group-label { margin-top: 1.4rem; }
     .policies { list-style: none; padding: 0; margin: 0; }
     .policies li { margin: 0.5rem 0; }
     .policies li:first-child { margin-top: 0; }
@@ -292,7 +293,7 @@
       <aside class="tldr" id="tldr" aria-labelledby="tldr-title">
         <h2 id="tldr-title">In brief</h2>
         <ol>
-          <li><strong>A planner with a forecast beats every learned policy.</strong> Planning the whole booking window from the demand model scores 2.22 million, 3 to 8 percent above every learned policy. Of the three wrong demand forecasts tried, the worst cost it 2.5 percent. Its weak spot is expecting more cancellations than really happen: it overbooks every busy night, and a learned policy wins by $116,000 (section 05).</li>
+          <li><strong>A planner with a forecast beats every learned policy.</strong> Planning the whole booking window from the demand model scores 2.22 million, 3 to 5 percent above the best learned policy. Of the three wrong demand forecasts tried, the worst cost it 2.5 percent. Its weak spot is expecting more cancellations than really happen: it overbooks every busy night, and a learned policy wins by $116,000 (section 05).</li>
           <li><strong>Why learning trails here.</strong> The planner is handed the simulator's own model. On the months the learned policies trained on they come within 1.3 to 2.7 percent of it; on the June and December test nights, which they never saw in training, 4.1 to 6.0 percent. Training on all twelve months closes about 40 percent of that gap. Even when a whole year runs 20 percent above or below the forecast, the planner still wins: it re-plans from its own bookings every day (section 05).</li>
           <li><strong>Both levers help only with a warm start.</strong> Joint BC to SAC, which first copies a simple pricing rule, turns no one away with the cap and still beats the best price-only policy by 3.6 percent, and that gap is real. Plain joint SAC and PPO tie the price-only policies (section 04).</li>
           <li><strong>Rules applied after training beat retraining.</strong> Blocking price drops at decision time adds $45,000 and removes every markdown; training under the rule loses $110,000. The costs written into the reward decide how hard a policy overbooks, so they are a business choice (section 06).</li>
@@ -526,7 +527,7 @@
       </section>
 
       <section id="planner">
-        <h2><span>05 Planner</span>A planner with a forecast wins by 3 to 8 percent</h2>
+        <h2><span>05 Planner</span>A planner with a forecast beats the best learned policy by 3 to 5 percent</h2>
         <p class="lede">Planning the whole booking window beats every learned policy under the right forecast, under the wrong demand forecasts tried, and under most wrong show-up rates. Its one weak spot: expecting more cancellations than really happen. Neither side carries the cap in this section.</p>
         <p>Myopic plans one day at a time. A revenue-management team would plan the whole booking window from a forecast and re-plan as bookings come in: the textbook planner from section 03.</p>
 
@@ -546,19 +547,19 @@
                 <td>The right forecast</td>
                 <td>2.219</td>
                 <td>2.155</td>
-                <td>+0.064</td>
+                <td>+0.064 (2.9%)</td>
               </tr>
               <tr>
                 <td>A wrong demand forecast (worst of three tried)</td>
                 <td>2.164</td>
                 <td>2.087</td>
-                <td>+0.078</td>
+                <td>+0.078 (3.6%)</td>
               </tr>
               <tr>
                 <td>Each night&rsquo;s demand and show-ups differ from the forecast (up to &plusmn;25%)</td>
                 <td>2.121</td>
                 <td>2.022</td>
-                <td>+0.099</td>
+                <td>+0.099 (4.7%)</td>
               </tr>
             </tbody>
           </table>
@@ -619,14 +620,18 @@
         </ul>
 
         <h3 class="group-label" id="why">Why the learned policies trail</h3>
-        <p>Five retrains that see only what a venue sees, trained on the score&rsquo;s own costs, narrow down the reasons. One training seed each.</p>
+        <p>Five retrains that see only what a venue sees, trained on the score&rsquo;s own costs, one training seed each.</p>
+        <p class="group-label">What explains the gap</p>
         <ul class="policies">
-          <li><strong>Months never seen in training: the largest cause.</strong> The learned policies trained on ten months and were tested on June and December. Retrained on all twelve, the same setup trails the planner by 2.9 percent instead of 4.8, closing about 40 percent of the gap.</li>
-          <li><strong>The reward: a small cause.</strong> Training on the score's own costs instead of the original reward gained $25,000, a tie.</li>
-          <li><strong>Little room above the planner.</strong> It optimizes the score on the simulator's own model; seeing each night's actual no-shows would add only 1.1 percent.</li>
-          <li><strong>A year that misses the forecast does not change it.</strong> The planner re-plans from its own bookings every day, so a policy trained to read the year from booking pace still trailed it by 1.6 to 3.8 percent in years 20 percent below or above the forecast.</li>
-          <li><strong>Learning on top of the planner does not help either.</strong> Letting a learned policy correct the planner's price and limit each day made it 0.7 to 1.5 percent worse, even when demand arrived 10 days earlier or later than forecast.</li>
-          <li><strong>More data: coverage, not volume.</strong> The learned policies already see about two thousand simulated nights per run. What helps is experience of every season: for a real venue, at least a full year of history.</li>
+          <li><strong>Months never seen in training: about 40 percent of it.</strong> The learned policies trained on ten months and were tested on June and December. Retrained on all twelve, the gap falls from 4.8 to 2.9 percent. For a real venue that means history covering every season, not more nights of the same ones.</li>
+          <li><strong>Approximation: the rest.</strong> The planner computes each day's decision exactly from its model; the learned policy recalls an approximation from about two thousand practice nights. It sells too cheap and fills one to two weeks early, as in the chart above.</li>
+          <li><strong>Why it cannot overtake.</strong> The planner optimizes the score on the simulator's own model. Even seeing each night's actual no-shows would add only 1.1 percent, so there is little room above it.</li>
+        </ul>
+        <p class="group-label">What did not close it</p>
+        <ul class="policies">
+          <li><strong>A reward that matches the score:</strong> +$25,000, a tie.</li>
+          <li><strong>Training across years that miss the forecast:</strong> still 1.6 to 3.8 percent behind in years 20 percent below or above it, because the planner re-plans from its own bookings.</li>
+          <li><strong>Correcting the planner instead of replacing it:</strong> 0.7 to 1.5 percent worse, even when demand arrived 10 days early or late.</li>
         </ul>
         <p>Details: sections 14 to 19 of the <a href="https://github.com/jjd-lab/revenue-manage-rl/blob/main/docs/EXPERIMENT_LOG.md">experiment log</a>.</p>
       </section>
