@@ -17,7 +17,7 @@ src/reservation_pricing/
   config/           # YAML load / merge / validate
   configs/          # packaged copy of default.yaml (kept identical by a test)
   demand/           # DemandModel protocol + linear_legacy + tree_elastic + assets/
-  envs/             # ReservationEnv, PriceOnlyWrapper, OversellGuardEnv, make_env(cfg)
+  envs/             # ReservationEnv, PriceOnlyWrapper, OversellGuardEnv, OperatorViewEnv, make_env(cfg)
   algorithms/       # SB3 registry (PPO/SAC/TD3) + behaviour cloning
   baselines/        # fixed / myopic (grid) / heuristic / dynamic program (dp.py)
   controls/         # selling_limit, early_promo, oversell_cap, price_mpc
@@ -132,6 +132,20 @@ The analytic selling limit and the oversell cap have a second, narrower channel:
 `estimate_keep_rate` reads the env's own cancel / no-show parameters. That is
 privileged too, and `runs/keep_rate_dependence/` prices it — see that directory
 before assuming it matters.
+
+A third channel is the observation itself: slots 6 and 7 (`cumulative_mat_boh`,
+`remain_inv`) are built from the true cancellation and no-show process and the
+night's realized no-show draw, and the oversell cap and myopic's late tighten
+read the same two attributes. `env.operator_view: true` wraps the env in
+`OperatorViewEnv`, which replaces both with bookings × usual keep rate wherever
+decision code looks (`runs/show_up_leak/`).
+
+Two switches make the world differ from the usual model on each night, both off
+by default: `demand.night_variation` (`level_sd`, `elasticity_sd`) wraps the true
+model in `NightVaryingDemand` and keeps the unvaried model as the forecast, and
+`env.cancel_rho_night_std` shifts the cancellation curve once per night. With
+`env.noshow_noise_std`, which already drew a per-night no-show rate, they make up
+the uncertain nights of `runs/uncertain_nights/`.
 
 ### Cancel / no-show
 

@@ -214,6 +214,7 @@ def dp_policy(
         i = int(np.clip(np.rint(m / (m_grid[1] - m_grid[0])), 0, m_grid.size - 1))
         j = int(p_idx[t, i])
         frac = CAP_FRACTIONS[int(c_idx[t, i])]
+        price = float(prices[j])
         if frac >= 1.0:
             limit = float(u.max_selling_limit)
         else:
@@ -221,7 +222,12 @@ def dp_policy(
             limit = float(np.clip(wanted, u.min_selling_limit, u.max_selling_limit))
             if limit > wanted:
                 state["dp_unhonoured"] = state.get("dp_unhonoured", 0) + 1
-        return _to_env_action(env, float(prices[j]), limit)
+            elif frac == 0.0:
+                # Selling nothing, every price ties and the solver returns the
+                # first. Hold yesterday's instead, so the quoted price means something.
+                price = state.get("dp_price", price)
+        state["dp_price"] = price
+        return _to_env_action(env, price, limit)
 
     return _policy
 

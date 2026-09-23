@@ -45,6 +45,8 @@ class ReservationEnv(gym.Env):
         demand_noise_std: float = 8.0,
         noshow_noise_std: float = 0.01,
         cancel_rho_noise_std: float = 0.02,
+        # Once-per-night shift of the cancellation curve; 0 draws nothing.
+        cancel_rho_night_std: float = 0.0,
         # Cancel / no-show structure (config-driven)
         cancel_lambda: float = 2000.0,
         cancel_rho_weekday: float = 0.4,
@@ -87,6 +89,8 @@ class ReservationEnv(gym.Env):
         self.demand_noise_std = float(demand_noise_std)
         self.noshow_noise_std = float(noshow_noise_std)
         self.cancel_rho_noise_std = float(cancel_rho_noise_std)
+        self.cancel_rho_night_std = float(cancel_rho_night_std)
+        self.cancel_rho_night_shift = 0.0
         self.cancel_lambda = float(cancel_lambda)
         self.cancel_rho_weekday = float(cancel_rho_weekday)
         self.cancel_rho_weekend = float(cancel_rho_weekend)
@@ -260,6 +264,7 @@ class ReservationEnv(gym.Env):
         conditional: bool = False,
     ) -> float:
         base_rho = self.cancel_rho_weekend if self.dow in (5, 6) else self.cancel_rho_weekday
+        base_rho += self.cancel_rho_night_shift
         cancel_rho = base_rho + float(self.np_random.normal(0.0, self.cancel_rho_noise_std))
         cancel_rho = float(np.clip(cancel_rho, 0.15, 1.0))
         if not conditional:
@@ -391,6 +396,7 @@ class ReservationEnv(gym.Env):
         total = 0.0
         n = len(self.booking_trace)
         cancel_rho = self.cancel_rho_weekend if self.dow in (5, 6) else self.cancel_rho_weekday
+        cancel_rho += self.cancel_rho_night_shift
         for idx, (_dp, bk) in enumerate(self.booking_trace):
             day_past = n - idx
             cancel_prob = 1.0 - self.weibull_surv(float(day_past), self.cancel_lambda, cancel_rho)
@@ -446,6 +452,15 @@ class ReservationEnv(gym.Env):
         self.gross_pickup = 0.0
         self.accepted_booking = 0.0
         self.no_show_rate = self.no_show_fn()
+        # Night-to-night variation is drawn only when switched on, so the default
+        # random stream, and every published number, is unchanged.
+        self.cancel_rho_night_shift = 0.0
+        if self.cancel_rho_night_std > 0:
+            self.cancel_rho_night_shift = float(
+                self.np_random.normal(0.0, self.cancel_rho_night_std)
+            )
+        if hasattr(self.demand_model, "redraw"):
+            self.demand_model.redraw(self.np_random)
         self.cumulative_mat_boh = 0.0
         self.remain_inv = float(self.capacity)
         self.cumulative_income = 0.0

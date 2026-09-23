@@ -10,15 +10,9 @@ A joint policy sets the price and the selling limit. A price-only policy sets th
 
 ## The result
 
-Thirty held-out nights, seeds 0 to 29, in June and December. Thirteen are soft. Seventeen are peak. On a soft night, even $80 with the selling limit wide open leaves more than 1,500 seats empty, so those nights are scored against a price of $80 rather than against empty seats. On a peak night the score is revenue, minus $200 for each unsold seat and $400 for each oversold seat. An oversold seat is a denied admission: a show-up with no seat.
+Thirty held-out nights, seeds 0 to 29, in June and December. Thirteen are soft. Seventeen are peak. On a soft night, even $80 with the selling limit wide open leaves more than 1,500 seats empty, so those nights are scored against a price of $80 rather than against empty seats. On a peak night the score is revenue, minus $200 for each unsold seat and $400 for each oversold seat. An oversold seat is a denied admission: a show-up with no seat. A gap ranks two policies only when its paired interval excludes zero.
 
-On the published training, seed 42, raw Joint BC to SAC and the same policy under the cap tie each other. Both beat every other row. The cap takes denied admission from 0.71 of peak nights to zero. The paired interval on the score cost of that cap covers zero, so the two scores are a tie.
-
-Capped Joint BC to SAC scores 3.6 percent higher than pace PPO, and the paired interval on that gap sits above zero. Joint SAC against pace PPO, and Joint PPO against pace PPO, have paired intervals that cover zero. A gap ranks two policies only when its paired interval excludes zero.
-
-That 3.6 percent lead does not repeat on every training seed. Seeds 43 and 44 beat a pace run from the same seed. Seed 46 ties its matched pace run and scores below the published pace checkpoint. On seeds 43 and 44 the cap leaves denied admission on 0.24 and 0.47 of peak nights.
-
-Myopic sets a selling limit of 12,353 and never holds more than 11,402 bookings, so changing that limit does not change revenue. Pace PPO is the price-only comparison, because it sets only the price.
+### Both levers, or just the price
 
 | Policy | Controls | `score_aware` | Peak nights with denied admission |
 | --- | --- | ---: | ---: |
@@ -28,29 +22,42 @@ Myopic sets a selling limit of 12,353 and never holds more than 11,402 bookings,
 | Pace PPO | price only | 2.010M | 0.00 |
 | Myopic | price, limit does not bind | 1.972M | 0.00 |
 
-The table is point estimates on seeds 0 to 29. Apply the cap to Joint SAC and Joint PPO as well and all three joint policies reach zero denied admission, giving up 0.6 to 2.4 percent of score. The paired interval supports a lead over pace PPO only for capped Joint BC to SAC. Capped Joint SAC's point estimate ties pace PPO. Capped Joint PPO's point estimate falls below both price-only policies. Those two capped rows were not saved night by night, so they have no paired interval ([§10](docs/EXPERIMENT_LOG.md)).
-
-Pinning a joint policy's selling limit, and leaving the price alone, costs $90,000 to $344,000 and sends the share of peak nights with denied admission to 0.82 ([§9](docs/EXPERIMENT_LOG.md)). The limit changes the result. It does not, by itself, make every joint policy beat pace PPO.
-
-Full table: [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) §7. The same numbers, with the charts, are at **<https://jjd-lab.github.io/revenue-manage-rl/>** (source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
+Among the learned policies, both levers win. Capped Joint BC to SAC scores 3.6 percent higher than pace PPO, and the paired interval sits above zero. The cap takes its denied admission from 0.71 of peak nights to zero, for a score cost that ties. Joint SAC and Joint PPO tie pace PPO. The lead does not repeat on every training seed: seeds 43 and 44 beat a matched pace run, seed 46 ties. Pinning a joint policy's selling limit and leaving the price alone costs $90,000 to $344,000, so the second lever is doing real work ([§7](docs/EXPERIMENT_LOG.md), [§9](docs/EXPERIMENT_LOG.md)). Myopic's limit of 12,353 never binds, which is why pace PPO is the price-only comparison.
 
 ![Joint SAC price over the booking window, weekend nights against weekday nights, with myopic flat at $92](runs/explain_rl_best/01_price_inventory_paths.png)
 
 *Joint SAC. Nine weekend nights go from about $109 a hundred days out to $117 around day 37, then down to $89. Twenty-one weekday nights ease from about $90 to $80. Myopic is $92 on every night. Figures: [`runs/explain_rl_best/`](runs/explain_rl_best/README.md).*
 
-### Later buyers never pay less
+### Against a textbook planner
 
-That weekend line rises to $117 and then falls to $89. A buyer on the last day pays less than one who booked three weeks earlier. A venue cannot do that to the people who booked early, so `control.price_monotone` forbids it: the price may rise and may never fall.
+Myopic plans one day at a time. `baselines/dp.py` plans the whole booking window from the demand forecast and the usual cancellation and no-show rates, and re-plans from the bookings it has taken, the dynamic-programming approach of Gallego and van Ryzin. It needs no training.
 
-Blocking the drops earns more than allowing them. Take the trained policy unchanged and refuse any price below yesterday's, and `score_aware` goes from 2,033,264 to 2,077,976, with the paired interval above zero. The weekend path climbs from $108.50 to $118.20 and holds. No retraining. The block overrides the policy on 2,610 of its 3,000 daily decisions, so the late markdown was not a small mistake.
+| What the planner knows | Planner | Best learned | Planner ahead |
+| --- | ---: | ---: | ---: |
+| The right forecast | 2.219M | 2.081M | +0.138M, interval above zero |
+| A wrong demand forecast (worst of three) | 2.164M | 2.081M | +0.083M |
+| Only the usual numbers, and every night is different | 2.121M | 2.022M | +0.099M, interval above zero |
 
-Training under the rule is the part that does not work. Every retrained arm lands about 110,000 below the blocked policy, and the retrained price path stops moving: $116.31 on every weekend day, the $80 floor on weekdays. Opening cheap is what keeps the most options under a rule that only lets the price rise. Cloning the blocked policy reaches 2,038,966 with no markdowns, a tie with the unconstrained reference — but only without fine-tuning, which undid it at every setting tried. The fine-tune is not failing. It raises the training reward by up to 76%. The reward charges about $730 for any unsold seat and takes away the whole fill bonus on a night with even one denied admission. The score charges nothing for an unsold seat on a soft night. So the fine-tune drops soft nights to the floor and stops overbooking peak nights by selling less, and both moves cost score. A penalty is not a substitute: the best of four weights still cut the price 1,377 times.
+The planner aims each busy night at a full house and misses by about 90 seats. The learned policies price lower, sell faster, stop selling a week or two early and end short ([`runs/dp_baseline/`](runs/dp_baseline/NOTES.md), [`runs/uncertain_nights/`](runs/uncertain_nights/NOTES.md)).
 
-The recommendation is to train without the rule and apply it at decision time ([§12](docs/EXPERIMENT_LOG.md), [`runs/price_monotone_up/`](runs/price_monotone_up/NOTES.md)).
+**Where the learned policies hold up better.** The planner leans on its cancellation and no-show rates. With every policy shown the same wrong rates:
 
-### The reward decides the overbooking
+| The rates the policies are given | Planner | Best learned |
+| --- | ---: | ---: |
+| Fewer no-shows than real | 2.127M | 2.088M |
+| Fewer cancellations than real | 2.108M | 2.094M |
+| More no-shows than real | 2.091M | **2.105M** |
+| More cancellations than real | 1.958M | **2.074M** |
 
-Every policy above learned from one reward: about $730 per unsold seat, and the whole fill bonus lost on any night with a denied admission. Retraining Joint SAC on a simpler rule — revenue, minus $200 per unsold seat and $400 per denied admission, the same every night — raises `score_aware` from 2,033,264 to 2,087,750, with the paired interval above zero. All of the gain is peak nights, through overbooking: denied admission on 11 of 17 peak nights, up from 3. Behind the cap it scores 2,095,566, but 2 peak nights still deny admission, where the cap had reached zero on every other joint policy. The weights act as prices, and the ranking depends on them. The score also charges $400 per denied admission. The new policy denies 216.3 more seats per peak night, so its lead is gone at about $652 per denied admission. One training seed ([§13](docs/EXPERIMENT_LOG.md), [`runs/objective/`](runs/objective/NOTES.md)).
+When the planner overestimates cancellations or no-shows it overbooks every busy night and loses up to 12 percent; the learned policies lose about 3 at worst. The learned policies also need no demand forecast at all, got within about 6 percent of a planner handed the true model, and part of that gap is their training reward rather than the learning ([§14–§16](docs/EXPERIMENT_LOG.md), [`runs/show_up_leak/`](runs/show_up_leak/NOTES.md)). No paired intervals for the wrong-rate rows.
+
+### Variations
+
+**Later buyers never pay less.** The weekend markdown from $117 to $89 was losing money. Blocking any price below yesterday's, with no retraining, raises `score_aware` from 2,033,264 to 2,077,976, with the paired interval above zero. Training a policy under that rule does worse by about 110,000, and a fine instead of a block still leaves 1,377 markdowns. Train without the rule and apply it at decision time ([§12](docs/EXPERIMENT_LOG.md), [`runs/price_monotone_up/`](runs/price_monotone_up/NOTES.md)).
+
+**The reward decides the overbooking.** The training reward charges about $730 per unsold seat and takes away the whole fill bonus on any night with a denied admission. Retraining Joint SAC on revenue minus $200 per unsold seat and $400 per denied admission raises `score_aware` to 2,087,750, with the interval above zero, all of it on peak nights through overbooking: denied admission on 11 of 17, up from 3. The lead is gone if a denied admission really costs more than about $652 ([§13](docs/EXPERIMENT_LOG.md), [`runs/objective/`](runs/objective/NOTES.md)).
+
+The full account, including what the policies are allowed to know and what that is worth, is in [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md). The same results with charts are at **<https://jjd-lab.github.io/revenue-manage-rl/>** (source in [`site/`](site/index.html), deployed by `.github/workflows/pages.yml`).
 
 ## Scenario
 
@@ -220,6 +227,9 @@ python runs/oversell_cap_transfer/run_cap_transfer.py      # the cap on each joi
 python runs/forecast_misspecification/run_misspecification.py   # policies under a wrong forecast
 python runs/keep_rate_dependence/run_probe.py              # what privileged knowledge is worth
 python runs/objective/run_objective.py                     # a different training reward
+python runs/dp_baseline/run_dp.py                          # the textbook planner, true and wrong forecasts
+python runs/show_up_leak/run_leak.py                       # every policy on a venue's own show-up estimate
+python runs/uncertain_nights/run_uncertain.py              # nights that miss the usual model (needs two retrains)
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -237,6 +247,9 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/oversell_cap_transfer/NOTES.md`](runs/oversell_cap_transfer/NOTES.md) — the cap on each joint policy, and the score given up
 - [`runs/forecast_misspecification/NOTES.md`](runs/forecast_misspecification/NOTES.md) — what each policy is worth when the demand forecast is wrong
 - [`runs/objective/NOTES.md`](runs/objective/NOTES.md) — what the training reward does to overbooking
+- [`runs/dp_baseline/NOTES.md`](runs/dp_baseline/NOTES.md) — the textbook planner against the learned policies
+- [`runs/show_up_leak/NOTES.md`](runs/show_up_leak/NOTES.md) — wrong cancellation and no-show rates, for every policy
+- [`runs/uncertain_nights/NOTES.md`](runs/uncertain_nights/NOTES.md) — RL retrained on nights that miss the usual model
 - [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — what the controllers gain by reading the simulator's cancel and no-show parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the cap, the price MPC, and the soft-night fill ceiling
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

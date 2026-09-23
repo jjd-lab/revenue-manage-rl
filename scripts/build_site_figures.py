@@ -11,6 +11,7 @@ F1, F2  runs/joint_vs_price_only_soft_aware/soft_aware_table.csv
 F3      runs/oracle_ceiling/oracle_soft_episodes.csv
 F4      runs/explain_rl_best/rollouts.csv
 F5      runs/explain_rl_best/episode_summary.csv
+F6      runs/dp_baseline/night_paths.csv
 
 The script also prints the numbers the page's captions quote, so a caption can
 be checked against the figure it sits under.
@@ -310,6 +311,43 @@ def soft_peak_lift(episodes: pd.DataFrame, out: Path) -> dict[str, float]:
     }
 
 
+def night_controls(paths: pd.DataFrame, out: Path) -> dict[str, float]:
+    """F6: one weekend and one weekday peak night, planner vs capped BC→SAC.
+
+    Rows are the two levers and the outcome they steer: price, selling limit,
+    and expected show-ups against the 10,000 seats.
+    """
+    nights = [(4, "Weekend peak night (seed 4)"), (0, "Weekday peak night (seed 0)")]
+    rows = [
+        ("price", "Price, dollars"),
+        ("selling_limit", "Selling limit"),
+        ("show_ups", "Expected show-ups"),
+    ]
+    styles = {"Planner": (ACCENT, 2.2), "Joint BC to SAC + cap": (INK, 1.6)}
+    fig, axes = plt.subplots(3, 2, figsize=(7.2, 7.6), sharex=True, sharey="row")
+    facts: dict[str, float] = {}
+    for col, (seed, title) in enumerate(nights):
+        axes[0, col].set_title(title, fontsize=10.5, loc="left", color=INK)
+        for row, (column, label) in enumerate(rows):
+            ax = axes[row, col]
+            for policy, (color, width) in styles.items():
+                sub = paths[(paths["seed"] == seed) & (paths["policy"] == policy)]
+                ax.plot(sub["days_prior"], sub[column], color=color, linewidth=width, label=policy)
+                facts[f"s{seed}_{policy}_{column}_last"] = float(sub[column].iloc[-1])
+            if column == "show_ups":
+                ax.axhline(10_000, color=BASE, linewidth=0.9, linestyle="--")
+            if col == 0:
+                ax.set_ylabel(label)
+            _despine(ax)
+        axes[2, col].set_xlabel("Days before the performance")
+        axes[2, col].set_xlim(100, 0)
+    axes[0, 0].legend(frameon=False, loc="lower left", fontsize=9)
+    fig.tight_layout()
+    fig.savefig(out / "f6_night_controls.png", dpi=DPI)
+    plt.close(fig)
+    return facts
+
+
 def caption_facts(table: pd.DataFrame, ceiling: pd.DataFrame, paths: dict, lift: dict) -> None:
     """Print what the page's captions quote."""
     by = table.set_index("policy")
@@ -375,6 +413,9 @@ def main(out: Path = OUT) -> list[Path]:
         pd.read_csv(ROOT / "runs" / "explain_rl_best" / "episode_summary.csv"), out
     )
     caption_facts(table, ceiling, paths, lift)
+    nights = night_controls(pd.read_csv(ROOT / "runs" / "dp_baseline" / "night_paths.csv"), out)
+    for key, value in nights.items():
+        print(f"  F6 {key}: {value:,.1f}")
     written = sorted(out.glob("f*.png"))
     print(f"Wrote {len(written)} figures to {out}")
     return written

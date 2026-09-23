@@ -1,0 +1,15 @@
+setting,policy,score_aware,peak_nights,peak_denied_nights,peak_denied_seats,peak_unsold_seats
+uncertain,RL retrained here,2022086.87,17,6,116.8,465.2
+uncertain,joint SAC cu200,1999148.4,17,8,250.7,476.9
+uncertain,joint SAC rl_best,1977461.92,17,3,31.0,618.6
+uncertain,joint BC->SAC + cap,2027320.8,17,4,33.1,534.7
+uncertain,myopic,1880066.7,17,4,42.3,771.1
+uncertain,DP planner,2121113.56,17,5,129.0,411.0
+uncertain,DP planner + cap,2130168.04,17,4,69.4,427.5
+"uncertain, noisy",RL retrained here,2018903.29,17,8,304.8,456.4
+"uncertain, noisy",joint SAC cu200,1996635.67,17,8,243.7,487.6
+"uncertain, noisy",joint SAC rl_best,1970164.3,17,3,34.4,636.4
+"uncertain, noisy",joint BC->SAC + cap,2021303.91,17,3,39.8,544.1
+"uncertain, noisy",myopic,1873231.84,17,3,43.4,787.9
+"uncertain, noisy",DP planner,2115735.58,17,5,130.4,411.2
+"uncertain, noisy",DP planner + cap,2119458.51,17,4,69.7,446.6

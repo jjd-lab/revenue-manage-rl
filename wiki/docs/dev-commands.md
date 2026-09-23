@@ -121,8 +121,10 @@ policy reaches a given score. Three tests train a tiny agent and are marked
 - `python runs/price_monotone_up/run_monotone.py` — four-arm monotone comparison.
   Checkpoints live under `artifacts/price_monotone/` (untracked). Reading is
   `runs/price_monotone_up/NOTES.md`.
-- `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`,
-  drawn from committed CSVs only. `site/index.html` is published with GitHub
+- `python scripts/build_site_figures.py` — the six PNGs under `site/figures/`,
+  drawn from committed CSVs only; `site/index.html` no longer embeds F2. F6 reads
+  `runs/dp_baseline/night_paths.csv`, which `runs/dp_baseline/night_paths.py`
+  writes and which needs the capped BC→SAC checkpoint from `artifacts/`. `site/index.html` is published with GitHub
   Pages by `.github/workflows/pages.yml`. Branch-deploy only serves `/` or
   `/docs`, so the workflow uploads `site/` as the Pages artifact instead.
 

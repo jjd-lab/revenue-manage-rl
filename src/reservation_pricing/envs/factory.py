@@ -19,6 +19,7 @@ _ENV_KEYS = {
     "demand_noise_std",
     "noshow_noise_std",
     "cancel_rho_noise_std",
+    "cancel_rho_night_std",
     "cancel_lambda",
     "cancel_rho_weekday",
     "cancel_rho_weekend",
@@ -90,6 +91,8 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     env_cfg.update(overrides)
 
     demand_model = env_cfg.pop("demand_model", None)
+    night_cfg: Optional[dict] = None
+    operator_view = bool(env_cfg.pop("operator_view", False))
     forecast_model = env_cfg.pop("forecast_model", None)
     # Prefer top-level demand block; allow env.demand override
     demand_cfg: Optional[dict] = None
@@ -101,6 +104,7 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
             demand_cfg = dict(env_cfg.pop("demand"))
         if demand_cfg is not None:
             forecast_cfg = demand_cfg.pop("forecast", None)
+            night_cfg = demand_cfg.pop("night_variation", None)
         # Propagate env noise into demand if not set
         if demand_cfg is not None and "demand_noise_std" not in demand_cfg:
             if "demand_noise_std" in env_cfg:
@@ -123,10 +127,25 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
             overrides = {k: v for k, v in forecast_cfg.items() if k != "enabled"}
             forecast_model = get_demand_model({**(demand_cfg or {}), **overrides})
 
+    # demand.night_variation: the world draws its own demand each night; decision
+    # code keeps the unvaried model as its forecast unless one is configured.
+    if isinstance(night_cfg, dict) and night_cfg.get("enabled", True):
+        from reservation_pricing.demand.night_varying import NightVaryingDemand
+
+        knobs = {k: v for k, v in night_cfg.items() if k != "enabled"}
+        forecast_model = forecast_model or demand_model
+        demand_model = NightVaryingDemand(demand_model, **knobs)
+
     kwargs = {k: v for k, v in env_cfg.items() if k in _ENV_KEYS}
     env: gym.Env = ReservationEnv(
         demand_model=demand_model, forecast_model=forecast_model, **kwargs
     )
+    # env.operator_view: decision code sees bookings x usual keep rate instead of
+    # the true show-up count. Innermost, so every wrapper and policy reads it.
+    if operator_view:
+        from reservation_pricing.envs.operator_view import OperatorViewEnv
+
+        env = OperatorViewEnv(env)
 
     control = dict(cfg.get("control") or {}) if isinstance(cfg.get("control"), dict) else {}
     control.update(control_overrides)

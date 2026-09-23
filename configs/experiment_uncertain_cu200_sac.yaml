@@ -1,0 +1,36 @@
+# Every night differs a little from the usual model, and the policy sees only
+# what a venue sees. Drawn once per night, about 95% within: demand level ±25%,
+# price sensitivity -0.9 to -1.5, no-show rate ±4 points, cancellation rho ±0.1.
+# Decision code keeps the usual demand model and keep rates as its forecast.
+# env.operator_view replaces the true show-up count in the observation with
+# bookings x usual keep rate. Reward as experiment_objective_cu200_sac.yaml.
+demand:
+  kind: tree_elastic
+  night_variation:
+    level_sd: 0.125
+    elasticity_sd: 0.15
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  noshow_noise_std: 0.02
+  cancel_rho_night_std: 0.05
+  operator_view: true
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  model_dir: artifacts/uncertain_nights
+  run_name: uncertain_cu200
+  log_dir: runs/uncertain_nights

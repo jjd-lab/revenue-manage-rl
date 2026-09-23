@@ -545,3 +545,24 @@ Corrects the entry above: `baselines/dp.py` read the env's true show-up count; i
 counts its own, and the lead is 6–8%, intervals still off zero. A wrong show-up model
 can tie it with the best learned policy or drop it below myopic. The learned policies
 see that true count too, unpriced. [[next-steps]]
+
+## [2026-09-22] decision | The show-up leak is worth under 0.1%, and wrong rates expose every policy
+
+New evaluation-only `envs/operator_view.py` and `runs/show_up_leak/` (§15) swap the true
+show-up count for the operator's estimate. With true rates the learned policies lose under
+0.1% and the planner still leads; with wrong rates they move about ±3% and the cap's
+zero-denied guarantee fails. The planner behind the cap is never behind. [[next-steps]]
+
+## [2026-09-23] decision | On uncertain nights the capped planner still leads RL by about 5%
+
+New `runs/uncertain_nights/` (§16): each night draws its own demand and show-up rates
+(`demand.night_variation`), every policy sees the operator view (`env.operator_view`),
+and RL is retrained there. The planner with the cap wins with the interval off zero;
+retraining did not clearly help RL. Both switches default off. [[next-steps]], [[conventions]]
+
+## [2026-09-23] ingest | The public page gets a textbook-planner section and a sixth figure
+
+`site/index.html` is now ten sections, with a new "Against a textbook planner" section;
+F2 and the cap "score given up" table are gone from the page. New F6 plots two peak nights
+from `runs/dp_baseline/night_paths.csv`. `dp_policy` now holds yesterday's price on a day it
+accepts no bookings; scores are unchanged. [[dev-commands]]

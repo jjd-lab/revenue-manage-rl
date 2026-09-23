@@ -1,0 +1,7 @@
+setting,policy,baseline,point_diff,ci_low,ci_high,covers_zero
+uncertain,DP planner + cap,RL retrained here,108081.16780448845,64394.46417139708,154985.0016666482,False
+uncertain,DP planner,RL retrained here,99026.69119767146,57311.63891470168,142221.6070859482,False
+uncertain,RL retrained here,joint SAC cu200,22938.468037046026,-45881.36840295201,91278.80299586202,True
+"uncertain, noisy",DP planner + cap,RL retrained here,100555.21867336426,34648.416124848445,164831.35305903936,False
+"uncertain, noisy",DP planner,RL retrained here,96832.28461720655,38663.64685852307,152196.88599151326,False
+"uncertain, noisy",RL retrained here,joint SAC cu200,22267.618158935104,-71088.86820191728,117350.58231287469,True

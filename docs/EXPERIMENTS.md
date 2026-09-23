@@ -28,6 +28,8 @@ produces, not what you will find after a fresh clone.
 | `monotone_up_clamp` | `experiment_monotone_up_clamp_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_clamp/best/best_model.zip` | §12 |
 | `monotone_up_penalty_10` | `experiment_monotone_up_penalty_last_sac.yaml` | `runs/price_monotone_up/` | `artifacts/price_monotone/monotone_up_penalty_10/best/best_model.zip` | §12 |
 | `cu200` | `experiment_objective_cu200_sac.yaml` | `runs/objective/` | `artifacts/objective/cu200/final_model.zip` | §13 |
+| `uncertain_cu200` | `experiment_uncertain_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_cu200/final_model.zip` | §16 |
+| `uncertain_noisy_cu200` | `experiment_uncertain_noisy_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_noisy_cu200/final_model.zip` | §16 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
 trained joint action down, and the price MPC post-processes a trained price. Both
@@ -60,6 +62,8 @@ reported on seeds 0–29.
 | Monotone price, four arms | `runs/price_monotone_up/run_monotone.py` | `runs/price_monotone_up/` | §12 |
 | Training objective vs `rl_best`, uncapped and capped | `runs/objective/run_objective.py` | `runs/objective/` | §13 |
 | Dynamic-programming planner vs learned policies, true and wrong forecasts | `runs/dp_baseline/run_dp.py` | `runs/dp_baseline/` | §14 |
+| Every policy on an operator's show-up estimate instead of the env's count | `runs/show_up_leak/run_leak.py` | `runs/show_up_leak/` | §15 |
+| Planner vs RL retrained on nights that miss the usual model | `runs/uncertain_nights/run_uncertain.py` | `runs/uncertain_nights/` | §16 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

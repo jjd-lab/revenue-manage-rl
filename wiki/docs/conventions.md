@@ -53,9 +53,16 @@ The control layer has five blocks: `selling_limit`, `early_promo`, `safe_sl`,
 in `envs/factory.py` and to the bare-block exclusion tuple in
 `controls/oversell_cap.py`, which is hardcoded rather than derived from it —
 miss either and the block is silently ignored with no error.
+`demand.night_variation` and `env.operator_view` are not control blocks: they
+are read from the `demand:` and `env:` blocks in `make_env`, so they need
+neither registration.
 
 `configs/default.yaml` carries the full schema: `demand`, `env`, `control`,
-`algorithm`, `train`, `eval`, `tune`, with every control switched off. A
+`algorithm`, `train`, `eval`, `tune`, with every control switched off.
+Evaluation-only switches that default to off in code
+(`demand.night_variation`, `env.operator_view`, `env.cancel_rho_night_std`)
+live only in the experiment configs that use them, so the frozen file stays
+untouched. A
 byte-identical copy ships inside the package (`src/reservation_pricing/configs/`)
 so a non-editable install still resolves it; a test keeps the two in step. Every
 other config overrides a subset of it:

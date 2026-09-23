@@ -47,4 +47,6 @@ Generated, not documented here. Where to look:
 | `runs/price_monotone_up/` | What a no-markdown guarantee costs, and why training under it fails (§12) |
 | `runs/objective/` | What the training objective does to the policy: a label-free reward that prices unsold seats and denied admissions (§13) |
 | `runs/dp_baseline/` | Is RL better than a forecast-and-optimize planner: a one-night dynamic program under true and wrong forecasts (§14) |
+| `runs/show_up_leak/` | What the true show-up count in the observation is worth, via an operator-view env, and whether a capped planner still leads (§15) |
+| `runs/uncertain_nights/` | RL retrained on nights that each miss the usual demand and show-up rates, against the capped planner (§16) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on two policies |

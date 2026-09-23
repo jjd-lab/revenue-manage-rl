@@ -538,15 +538,59 @@ night's realized no-show draw. Results: `runs/dp_baseline/`.
   soft nights it prices at myopic's $92.
 - **A wrong demand forecast barely hurts it.** It loses at most 2.48%, and its
   worst case is still about 77k above the best learned policy.
-- **A wrong show-up model can erase the lead.** No-shows set at 12% (true 16%)
-  or cancellations underestimated: it holds back, still about 20–39k ahead.
-  No-shows at 20%: it roughly ties the best learned policy and turns people away
+- **A wrong show-up model can erase the lead.** No-show base set 4 points low
+  (12% against a true 16%) or cancellations underestimated: it holds back, still about 20–39k ahead.
+  No-show base 4 points high (20%): it roughly ties the best learned policy and turns people away
   on every peak night. Cancellations overestimated (ρ −0.1): 1,958,178, below
   myopic, with about 786 denied admissions per peak night.
 - **The learned policies' immunity is partly a leak.** Their observation
   includes `cumulative_mat_boh` and `remain_inv`, so they are shown the true
   show-up count that the planner is now denied. That isn't priced; fixing it
   means retraining.
+
+## 15. The show-up count, priced
+
+`cumulative_mat_boh` and `remain_inv` are built from the true cancellation and
+no-show process and the night's realized no-show draw. The learned joint
+policies read them in their observation. The oversell cap and myopic's late
+tighten read them as attributes. `envs/operator_view.py` replaces both with an
+operator's estimate, bookings taken × assumed keep rate, wherever decision code
+looks. It is evaluation only; the env still generates the night from the truth.
+Results: `runs/show_up_leak/`.
+
+- **With the true rates the leak is worth under 0.1%** to every learned policy.
+  The planner stays ahead of capped BC→SAC by +139,700 [117,670, 164,437].
+- **With wrong rates the learned policies are exposed too.** `rl_best` moves
+  −3.2% to +2.0% and capped BC→SAC −3.3% to +1.1%. `cu200` barely moves,
+  because it overbooks heavily regardless.
+- **The cap's zero-denied-admission guarantee depended on the true count.**
+  Capped BC→SAC denies admission on 1 peak night with the true rates, and on 8
+  or 14 when no-shows or cancellations are overestimated.
+- **The planner behind the cap scores at or above the best learned policy in
+  every scenario.** That's from +130k with the true rates to +6–12k when
+  cancellations are misjudged; no intervals for those. The cap halves its worst
+  case (−11.8% → −5.9%).
+
+## 16. Uncertain nights: RL retrained against the planner when every night differs
+
+§14 and §15 made one forecast wrong at a time, wrong the same way on every night.
+Here each night draws its own demand level (±25%), price sensitivity (−0.9 to
+−1.5), no-show rate (±4 points) and cancellation curve (ρ ±0.1). The switches
+are `demand.night_variation`, `env.noshow_noise_std` and
+`env.cancel_rho_night_std`, all off by default. Every policy sees only
+`env.operator_view`: bookings, and show-ups estimated with the usual rates. The
+planner and the cap plan with the usual model and rates. An RL policy was
+retrained in each setting (seed 7, 200k, the $200/$400 reward). A second setting
+triples daily demand noise. Results: `runs/uncertain_nights/`.
+
+- **The planner with the cap still wins by about 5%:** +108,081 [64,394,
+  154,985] over the retrained RL policy, and +100,555 [34,648, 164,831] with
+  noisy demand.
+- **Training on uncertain nights did not clearly help RL.** The retrained policy
+  is +22,938 over the ordinary-night $200/$400 policy, with an interval covering
+  zero.
+- **Tripling daily demand noise moved every score by under 1%.**
+- Every policy turns people away on 3–8 of 17 peak nights.
 
 ## Experiment takeaways
 
@@ -567,6 +611,8 @@ night's realized no-show draw. Results: `runs/dp_baseline/`.
 10. Clamping the published Joint SAC so its price never falls raises the score by about $45,000 and removes every markdown, with no retraining. Retraining under that clamp costs about $110,000. A penalty in the reward does not stop the markdowns (§12).
 11. The training objective sets how much a joint policy overbooks. Charging a flat $400 per denied admission and removing the cliff on the fill bonus raises Joint SAC's score by about $54,000. All of the gain is peak nights, with denied admission on 11 of 17 of them, and the cap no longer takes that to zero. The lead holds only while a denied admission costs less than about $652 (§13).
 12. With a correct model, a forecast-and-optimize dynamic program beats every learned policy by 6–8%, and a wrong demand forecast costs it at most 2.5%. A wrong cancellation or no-show model can erase that lead and make it overbook every peak night. The learned policies are immune partly because their observation leaks the true show-up count (§14).
+13. That leak is worth under 0.1% with the true rates. Given the same wrong rates as the planner, the learned policies and the cap are exposed too, and the cap's zero-denied-admission guarantee fails. A forecast-and-optimize planner behind the cap scores at or above every learned policy in every show-up scenario tried (§15).
+14. When every night misses the usual demand and show-up values, and the planner knows only the usual ones, the planner with the cap still beats an RL policy retrained on such nights by about 5%. The interval excludes zero. On this simulator, needing no forecast does not make up for planning (§16).
 
 ---
 
@@ -593,6 +639,8 @@ night's realized no-show draw. Results: `runs/dp_baseline/`.
 | `runs/soft_aware_report_demo/` | Section 6 demo of the stratified report |
 | `runs/objective/` | Section 13: the training objective and overbooking |
 | `runs/dp_baseline/` | Section 14: the dynamic-programming planner |
+| `runs/show_up_leak/` | Section 15: the true show-up count, priced |
+| `runs/uncertain_nights/` | Section 16: RL retrained on nights that miss the usual model |
 | `runs/training_seeds/` | Whether the §7 BC→SAC lead repeats across training seeds |
 | `runs/price_monotone_up/` | Section 12: cost of a non-decreasing price |
 | `artifacts/tree_long/best/rl_best.zip` | Joint SAC (pure joint policy) |

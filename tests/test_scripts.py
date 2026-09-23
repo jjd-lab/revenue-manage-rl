@@ -19,7 +19,7 @@ def _load(name: str):
     return module
 
 
-def test_build_site_figures_writes_five_charts_from_committed_tables(tmp_path):
+def test_build_site_figures_writes_six_charts_from_committed_tables(tmp_path):
     build = _load("build_site_figures")
     written = build.main(out=tmp_path)
     assert [p.name for p in written] == [
@@ -28,6 +28,7 @@ def test_build_site_figures_writes_five_charts_from_committed_tables(tmp_path):
         "f3_ceiling.png",
         "f4_booking_curve.png",
         "f5_lift.png",
+        "f6_night_controls.png",
     ]
     assert all(p.stat().st_size > 10_000 for p in written)
 

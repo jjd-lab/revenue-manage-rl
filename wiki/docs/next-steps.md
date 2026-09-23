@@ -93,7 +93,10 @@ the forecast doesn't.
 - The RL policies are unaffected by a bad forecast **by construction, not by
   merit** — they never had a forecast to lose. They are not blind to show-ups,
   though: their observation includes `cumulative_mat_boh` and `remain_inv`,
-  built from the true cancellation and no-show process (Task 6).
+  built from the true cancellation and no-show process. That leak is priced:
+  with the true rates it is worth under 0.1%. With wrong rates every policy is
+  exposed, learned or not, and so is the oversell cap's zero-denied-admission
+  guarantee (Task 6).
 - Rank only a pair whose interval sits off zero (§7). The rest of the headline
   table is ties.
 - Everything rests on 30 simulated nights of synthetic demand.
@@ -121,7 +124,9 @@ You are picking up a public repo at `github.com/jjd-lab/revenue-manage-rl`. Read
    Run the full `pytest -q` before touching anything in `runs/`.
 6. **Do not "fix" `estimate_keep_rate` to stop reading env parameters.** It is a
    known, measured, deliberately-kept leak worth ≤1.11%. See
-   `runs/keep_rate_dependence/NOTES.md`.
+   `runs/keep_rate_dependence/NOTES.md`. The observation's `cumulative_mat_boh`
+   and `remain_inv` are a second such leak, worth under 0.1% with true rates;
+   `envs/operator_view.py` measures it at evaluation (`runs/show_up_leak/NOTES.md`).
 7. **Do not switch GitHub Pages to a branch source.** Branch-deploy cannot serve
    `/site`; it is deployed by `.github/workflows/pages.yml`.
 
@@ -215,7 +220,7 @@ pace by −12.2k" — recompute it, don't copy it.
 `mix_alpha` is sampled at three points {0, 0.25, 0.4}. Sweep `mix_alpha` ×
 `overbook_factor` and plot the score-vs-denied-admission frontier. That curve —
 "each unit of overbooking risk buys this much score" — is the deliverable an
-operator actually wants, and it drops straight into figure F2 on the site. Select
+operator actually wants, and it extends the F2 chart (drawn by `scripts/build_site_figures.py`, no longer on the page). Select
 on seeds 100–129, report on the reported set.
 
 **3b. Misspecification under training (medium, needs retraining).**
@@ -488,25 +493,60 @@ every peak night. It is exported from `baselines/` but deliberately not in
 `BASELINE_FACTORY`, so no published table moves.
 
 **Disclosure.** The learned policies' observation includes `cumulative_mat_boh`
-and `remain_inv`, so they are shown the true show-up count. Their immunity to a
-wrong show-up model is partly that leak. It is not priced, and removing it
-changes the observation, which means retraining every checkpoint.
+and `remain_inv`, so they are shown the true show-up count; the oversell cap and
+myopic's late tighten read the same values.
+
+**Done (`runs/show_up_leak/NOTES.md`).** `envs/operator_view.py`
+(`OperatorViewEnv`, evaluation only, not wired into `make_env`) swaps that count
+for the operator's estimate, bookings taken × assumed keep rate.
+- *Pricing the RL leak:* with the true rates it is worth under 0.1% to every
+  learned policy, and the planner still leads capped BC→SAC with an interval
+  off zero. With wrong rates the learned policies move too, by roughly ±3%, and
+  the cap's zero-denied-admission guarantee fails: capped BC→SAC denies
+  admission on 8 or 14 of 17 peak nights when no-shows or cancellations are
+  overestimated.
+- *Planner with a cap:* behind the cap it scores at or above the best learned
+  policy in every show-up scenario, though it still denies admission on most
+  peak nights when it overestimates no-shows or cancellations.
+
+Training RL on the operator's estimate, combining demand and show-up errors,
+and heavier demand noise are done in Task 7.
 
 **Still open.**
-1. Price the RL observation leak, for example by evaluating the learned policies
-   with an operator-estimated show-up count in place of `cumulative_mat_boh`.
-2. Give the planner a cap in the overbooking scenarios (overestimated no-shows or
-   cancellations) and check whether it recovers the lead.
-3. Raise demand noise. Demand is nearly deterministic, which suits a planner
-   that averages over a forecast; heavier noise is where RL could close the gap.
-4. Raise the planner's denied-admission charge until it overshoots capacity on
+1. Raise the planner's denied-admission charge until it overshoots capacity on
    no peak night (it does on 8 of 17 now), and record what that costs.
-5. Separate the reward's effect from RL's in the 6–8% gap: the planner optimizes
+2. Separate the reward's effect from RL's in the 6–8% gap: the planner optimizes
    the score's costs directly, the learned policies a shaped reward.
 
 **Gotcha.** Registering `dp_policy` in `BASELINE_FACTORY` would add it to
 `evaluate_baselines`' default set (it runs every key) and change published outputs; keep it out unless those
 tables are regenerated deliberately.
+
+## Task 7 — Uncertain nights (first run 2026-09-23)
+
+**Status.** Results in `runs/uncertain_nights/NOTES.md`. With
+`demand.night_variation` each night draws its own demand level, price
+sensitivity, no-show rate and cancellation curve. With `env.operator_view` every
+policy sees only bookings and show-ups estimated at the usual rates. The planner
+and the cap plan with the usual values only. RL was retrained in that setting
+(seed 7, 200k, the $200/$400 reward). The planner behind the cap still wins by
+about 5%, with the interval off zero, and also with daily demand noise tripled.
+Retraining on uncertain nights did not clearly help RL: its lead over `cu200`
+has an interval covering zero. Tripling the noise moved every score by under
+1%. Both switches are off by default, and `rl_best` re-scores exactly.
+
+"No-shows 12%/20%" in earlier write-ups means the no-show *base parameter*
+moved by 4 points. The realized rate on held-out nights is about 10–12%.
+
+**Still open.**
+1. Errors shared across a season (a whole season running quiet) instead of
+   drawn independently per night.
+2. Larger errors than the ±25% demand, ±4-point no-show and ±0.1 ρ spreads.
+3. More training seeds for the retrained RL policy; there is one per setting.
+
+**Gotcha.** Checkpoints go to `artifacts/uncertain_nights/` (untracked). The
+experiment configs switch on `demand.night_variation` and `env.operator_view`;
+`default.yaml` and every shipped checkpoint are untouched.
 
 ## What not to bother with
 

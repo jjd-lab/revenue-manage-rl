@@ -87,8 +87,11 @@ worst case, 2,164,334, is still about 77k above the best learned policy.
 
 ## Results: wrong show-up model
 
-True values: no-show base 16%; Weibull cancellation shape ρ 0.4 on weekdays and
-0.5 on weekends. A lower ρ means the planner expects more cancellations.
+True values: no-show base parameter 16%; Weibull cancellation shape ρ 0.4 on
+weekdays and 0.5 on weekends. A lower ρ means the planner expects more
+cancellations. The base is adjusted down for weekends and peak months, so the
+actual no-show rate on these nights is about 10–12%. "No-shows 12%" and "20%"
+below move the base by 4 points either way, and the actual rate moves with it.
 
 | planner's show-up model | score_aware | change | peak unsold | peak nights with denied admission (mean seats) |
 | --- | ---: | ---: | ---: | --- |
@@ -132,8 +135,10 @@ such as the cap, or a policy that doesn't depend on them.
   `cumulative_mat_boh` and `remain_inv`, which the env builds from the true
   cancellation and no-show process and the night's realized draw. So their
   immunity to a wrong show-up model is partly because they are shown the answer.
-  This is the same leak the planner no longer uses. It isn't priced here, and
-  fixing it would change the observation and mean retraining every checkpoint.
+  This is the same leak the planner no longer uses. `runs/show_up_leak/` prices
+  it: with true rates it is worth under 0.1%. Given a wrong estimate, the learned
+  policies and the cap are exposed too, and the planner behind the cap scores at
+  or above them in every scenario.
 - **Mild demand noise.** Demand varies by ±8 bookings a day, so a night is close
   to deterministic, which suits a planner. Heavier noise was not tested.
 - **One error at a time.** Demand and show-up errors were not combined.

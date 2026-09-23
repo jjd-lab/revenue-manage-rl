@@ -1,0 +1,5 @@
+scenario,policy,baseline,point_diff,ci_low,ci_high,covers_zero
+"operator, true rates",DP planner,joint SAC rl_best,186145.93195280875,151723.64861626193,219397.95602203286,False
+"operator, true rates",DP planner,joint SAC cu200,132769.00564108323,104458.83479852197,161653.19904132912,False
+"operator, true rates",DP planner,joint BC->SAC + cap,139700.1322965934,117670.22585500249,164437.49676159088,False
+"operator, true rates",DP planner,myopic,255562.06613791967,177730.43933892885,332077.3024423087,False
