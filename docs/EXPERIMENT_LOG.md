@@ -644,6 +644,23 @@ Nothing is capped. The planner plans on the usual, now stale, forecast. It is al
 - **The planner absorbs a level shift because it is closed-loop.** Re-planning daily from its own bookings, it raises peak prices from $104 to $110 in the hot year and still fills to within 55 seats. Reading the booking pace is already in the dynamic program.
 - **Training across drifting years helps RL only in the cold year:** +101k over all months at 0.8, −14k and −23k at 1.0 and 1.2.
 
+## 19. Correcting the planner instead of replacing it
+
+Can RL add value on top of the planner?
+
+- **The run** (`configs/experiment_residual_sac.yaml`, `control.residual`): the DP planner proposes each day's price and limit, and joint SAC learns a bounded correction (±$10, ±500 seats).
+- **Training:** all twelve months, nights whose demand arrives earlier or later than the forecast's booking curve (`demand.night_variation.timing_sd` 7 days), R1's reward and leak-free view, seed 7, 200k steps.
+- **Test:** years where demand arrives 10 days early, on time, or 10 days late, with total demand unchanged and nothing capped.
+
+Results: `runs/residual_planner/`.
+
+- **The corrections make the planner worse in every year.** Residual minus planner is −33,807 (early), −26,902 (on time) and −14,371 (late), all with intervals below zero. They trade denied admission for empty seats, a losing trade at $400 against $200.
+- **The training reward stays flat at the planner's level for all 200k steps.** SAC found no correction that pays.
+- **A timing error barely hurts the planner:** 0.7% when demand comes 10 days early, 0.5% when late.
+- **A pickup adjustment backfires under timing errors:** −17,052 early and −2,284 late. It reads early demand as a hot year.
+- **Correction (2026-09-23).** The first timing shift also changed each night's total demand (+3.3% / −5.8% on seed 4). The shift now conserves it. The evaluation was rerun, but the residual was trained on the first version and not retrained.
+- **Across §17–§19, the planner is hard to beat on this simulator.** Learning comes within about 3% once it sees every month. It does not overtake the planner when the demand level drifts, and cannot improve it by correcting it when demand timing drifts.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -668,6 +685,7 @@ Nothing is capped. The planner plans on the usual, now stale, forecast. It is al
 14. When every night misses the usual demand and show-up values, and the planner knows only the usual ones, the planner with the cap still beats an RL policy retrained on such nights by about 5%. The interval excludes zero. On this simulator, needing no forecast does not make up for planning (§16).
 15. The learned policies come within 1.3–2.7% of the planner on the months they trained on and trail by 4.1–6.0% on the held-out June and December nights. Training on the score's own costs, with the night type in view, narrows the gap only a little. The planner is close to optimal for this simulator; about half or more of what RL loses appears only on months it never trained on (one training seed, §17).
 16. Training on all twelve months closes about 40% of the gap (+42,804, a real gap). When a whole year runs 20% above or below the forecast, the planner on the stale forecast still beats a policy trained across such years, by 1.6% to 3.8%. It re-plans from its own bookings every day, so a level shift is absorbed. RL's remaining case is forecast errors a closed loop cannot see, such as when demand arrives (§18).
+17. Letting RL correct the planner instead of replacing it makes it worse, by 0.7–1.5% in years whose demand arrives 10 days early, on time or late. A timing error costs the planner itself under 1%. On this simulator, plan with a model; use learning where no model can be built (§19).
 
 ---
 

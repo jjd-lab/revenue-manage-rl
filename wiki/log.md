@@ -580,3 +580,10 @@ New `runs/year_drift/` (§18): SAC on all twelve months beats R1 and cuts the pl
 4.8% to 2.9%; in years 20% off forecast the stale planner still beats a drift-trained SAC, since it
 re-plans from its own bookings. New knobs `level_shift`/`elasticity_shift`, `dp_policy(pickup_days=...)`.
 Planner-vs-RL comparisons are now uncapped on both sides. Next: booking-curve timing error. [[next-steps]], [[conventions]], [[dev-commands]]
+
+## [2026-09-23] decision | RL correcting the planner makes it worse; the planner-vs-RL question is closed here
+
+New `runs/residual_planner/` (§19): `control.residual` lets joint SAC add a bounded correction to the
+DP planner's price and limit, trained on nights with booking-curve timing error (`timing_shift`/`timing_sd`).
+It trails the plain planner in early, on-time and late years, intervals off zero; pickup backfires under
+timing error. Plan with a model; learning is left for worlds no model covers. [[next-steps]], [[conventions]], [[dev-commands]]

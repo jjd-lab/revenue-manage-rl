@@ -235,6 +235,7 @@ python runs/show_up_leak/run_leak.py                       # every policy on a v
 python runs/uncertain_nights/run_uncertain.py              # nights that miss the usual model (needs two retrains)
 python runs/rl_vs_planner_diagnosis/run_diagnosis.py       # why RL trails the planner (needs two retrains)
 python runs/year_drift/run_drift.py                        # all-month training, and years that miss the forecast (needs two retrains)
+python runs/residual_planner/run_residual.py               # RL correcting the planner (needs one retrain)
 python scripts/explain_rl_best.py                          # figures in runs/explain_rl_best/
 python scripts/build_site_figures.py                       # site/figures/ from the tables above
 ```
@@ -257,6 +258,7 @@ python scripts/build_site_figures.py                       # site/figures/ from 
 - [`runs/uncertain_nights/NOTES.md`](runs/uncertain_nights/NOTES.md) — RL retrained on nights that miss the usual model
 - [`runs/rl_vs_planner_diagnosis/NOTES.md`](runs/rl_vs_planner_diagnosis/NOTES.md) — why RL trails the planner, and how much of it is months never seen in training
 - [`runs/year_drift/NOTES.md`](runs/year_drift/NOTES.md) — training on every month, and whole years that run above or below the forecast
+- [`runs/residual_planner/NOTES.md`](runs/residual_planner/NOTES.md) — RL as a correction on top of the planner
 - [`runs/keep_rate_dependence/NOTES.md`](runs/keep_rate_dependence/NOTES.md) — what the controllers gain by reading the simulator's cancel and no-show parameters
 - [`runs/both_goals/NOTES.md`](runs/both_goals/NOTES.md), [`runs/oracle_ceiling/NOTES.md`](runs/oracle_ceiling/NOTES.md) — the cap, the price MPC, and the soft-night fill ceiling
 - [`wiki/index.md`](wiki/index.md) — maintainer notes: conventions, dev commands, change log

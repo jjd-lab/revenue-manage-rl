@@ -48,8 +48,10 @@ scripts are `run_*.py`/`final_eval.py` in lowercase, never SCREAMING_CASE.
 
 ## Config layering
 
-The control layer has five blocks: `selling_limit`, `early_promo`, `safe_sl`,
-`mpc`, and `price_monotone`. A new one needs adding to `_CONTROL_OVERRIDE_KEYS`
+The control layer has six blocks: `selling_limit`, `early_promo`, `safe_sl`,
+`mpc`, `price_monotone`, and `residual` (§19; joint only — the DP planner proposes
+and the agent's action is a bounded correction, `price_scale` / `limit_scale`,
+plus three observation slots, so its checkpoints need its config to be scored). A new one needs adding to `_CONTROL_OVERRIDE_KEYS`
 in `envs/factory.py` and to the bare-block exclusion tuple in
 `controls/oversell_cap.py`, which is hardcoded rather than derived from it —
 miss either and the block is silently ignored with no error.
@@ -59,8 +61,11 @@ neither registration. A new plain `env:` key does need adding to `_ENV_KEYS` in
 `envs/factory.py`, or `make_env` drops it. Inside `demand.night_variation`,
 `level_sd` / `elasticity_sd` draw a fresh error per night, while `level_shift` /
 `elasticity_shift` (§18; defaults 1.0 / 0.0) move every night the same way — a
-year that runs off forecast. The shifts consume no random draws, so an unshifted
-config reproduces the default nights exactly; the forecast never sees either.
+year that runs off forecast. `timing_shift` / `timing_sd` (§19; days, positive =
+demand arrives earlier; defaults 0) do the same for *when* demand arrives, against
+the forecast's booking curve. The shifts consume no random draws and `timing_sd`
+draws only when above 0, so an unshifted config reproduces the default nights
+exactly; the forecast never sees any of them.
 
 `configs/default.yaml` carries the full schema: `demand`, `env`, `control`,
 `algorithm`, `train`, `eval`, `tune`, with every control switched off.

@@ -57,7 +57,14 @@ _CONTROL_OVERRIDE_KEYS = (
     "safe_sl",
     "mpc",
     "price_monotone",
+    "residual",
 )
+
+
+def _enabled(block: Any) -> bool:
+    if isinstance(block, dict):
+        return bool(block.get("enabled", False))
+    return bool(block)
 
 
 def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
@@ -70,6 +77,7 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     Optional post-process wrappers (config-driven):
     - ``control.safe_sl`` → ``OversellGuardEnv`` on joint actions
     - ``control.mpc`` → short-horizon price MPC inside ``PriceOnlyWrapper``
+    - ``control.residual`` → ``ResidualPlannerEnv``: DP planner proposes, agent corrects
     - ``control.price_monotone`` → ``MonotonePriceEnv``, outermost, either action space
     """
     env_cfg = dict(cfg.get("env", cfg))
@@ -164,6 +172,23 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
         early_promo = get_early_promo(control)
         mpc = get_price_mpc(control)
         env = PriceOnlyWrapper(env, sl_controller, early_promo=early_promo, mpc=mpc)
+
+    # control.residual: the DP planner proposes, the agent corrects. Joint only.
+    residual = control.get("residual")
+    if isinstance(residual, dict) and residual.get("enabled", True):
+        # The outer guards would read the agent's correction as a full action.
+        clashes = [
+            k for k in ("price_only", "safe_sl", "price_monotone") if _enabled(control.get(k))
+        ]
+        if clashes:
+            raise ValueError(f"control.residual cannot be combined with {clashes}")
+        from reservation_pricing.envs.residual import ResidualPlannerEnv
+
+        env = ResidualPlannerEnv(
+            env,
+            price_scale=float(residual.get("price_scale", 0.5)),
+            limit_scale=float(residual.get("limit_scale", 0.2)),
+        )
 
     # Safe SL projection for joint (price, SL) policies only.
     # Price-only already fills SL via analytic/optimize_1d controllers.

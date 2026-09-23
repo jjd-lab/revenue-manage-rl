@@ -1,0 +1,13 @@
+timing_shift_days,policy,baseline,point_diff,ci_low,ci_high,covers_zero
+10.0,residual,planner,-33806.83,-45095.19,-21719.77,False
+10.0,residual,planner + pickup,-16755.22,-25570.55,-7428.94,False
+10.0,planner,all months,47094.17,27666.89,68761.53,False
+10.0,planner + pickup,planner,-17051.61,-24303.27,-9703.83,False
+0.0,residual,planner,-26902.29,-38087.1,-16050.32,False
+0.0,residual,planner + pickup,-27825.88,-39316.2,-16813.26,False
+0.0,planner,all months,63775.8,37727.45,89214.7,False
+0.0,planner + pickup,planner,923.59,-30.63,1999.88,True
+-10.0,residual,planner,-14370.71,-27207.54,-1714.49,False
+-10.0,residual,planner + pickup,-12086.29,-25659.45,1017.01,True
+-10.0,planner,all months,55260.91,31789.51,79139.77,False
+-10.0,planner + pickup,planner,-2284.42,-4003.94,-344.76,False

@@ -91,7 +91,8 @@ the controller kinds the shipped experiments do not use plus the decision-day
 convention (`test_controls_extra.py`), the synthetic corpus and the CSV refit
 path (`test_demand_synthesize.py`), the figure script (`test_scripts.py`), and
 the §17 env switches `undersell_on_soft` / `night_features` (`test_score_reward.py`),
-and the §18 year shift plus the planner's pickup adjustment (`test_year_drift.py`).
+and the §18 year shift plus the planner's pickup adjustment, and the §19 timing
+shift and residual planner (`test_year_drift.py`).
 
 It is **not** a correctness suite for learned policies: nothing asserts that a
 policy reaches a given score. Four tests train a tiny agent and are marked
@@ -127,6 +128,10 @@ policy reaches a given score. Four tests train a tiny agent and are marked
   checkpoints under `artifacts/year_drift/` (train them from
   `experiment_score_allmonths_sac.yaml` and `experiment_year_drift_sac.yaml`)
   plus R1's from §17. Reading is `runs/year_drift/NOTES.md`.
+- `python runs/residual_planner/run_residual.py` — the §19 tables; needs
+  `artifacts/residual_planner/` (train it with
+  `rprl-train -c configs/experiment_residual_sac.yaml`) plus the all-months
+  checkpoint from §18. Reading is `runs/residual_planner/NOTES.md`.
 - `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`
   (F1, F3–F6; F2 was retired), drawn from committed CSVs only. F1 adds the
   planner row from `runs/dp_baseline/dp_table.csv`. F6 reads

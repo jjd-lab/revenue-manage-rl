@@ -49,6 +49,7 @@ Generated, not documented here. Where to look:
 | `runs/dp_baseline/` | Is RL better than a forecast-and-optimize planner: a one-night dynamic program under true and wrong forecasts (§14) |
 | `runs/show_up_leak/` | What the true show-up count in the observation is worth, via an operator-view env, and whether a capped planner still leads (§15) |
 | `runs/uncertain_nights/` | RL retrained on nights that each miss the usual demand and show-up rates, against the capped planner (§16) |
+| `runs/residual_planner/` | RL as a bounded correction on top of the planner, in years whose demand arrives early or late (§19) |
 | `runs/year_drift/` | Training on all twelve months, and a whole year 20% above or below the forecast: RL vs a stale and a pickup-adjusted planner (§18) |
 | `runs/rl_vs_planner_diagnosis/` | Why RL trails the planner: retrains on the score's own costs with the night type in view, a planner clone, and the gap on training vs held-out months (§17) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on four policies |

@@ -91,7 +91,10 @@ show-up error tried. §17 traced about half or more of that gap to the test mont
 policies never train on June or December, and on months they did train on they
 come within a few percent of the planner. §18 confirmed it — training on all twelve months
 closes about 40% of the gap — and found the planner still leads when a whole year
-misses its forecast, because it re-plans from its own bookings.
+misses its forecast, because it re-plans from its own bookings. §19 closed the
+question for this simulator: letting RL correct the planner, in years whose demand
+arrives early or late, makes it worse. Plan with a model; use learning where no
+model can be built.
 
 ## The honest caveats, kept everywhere
 
@@ -553,7 +556,7 @@ moved by 4 points. The realized rate on held-out nights is about 10–12%.
 experiment configs switch on `demand.night_variation` and `env.operator_view`;
 `default.yaml` and every shipped checkpoint are untouched.
 
-## Task 8 — Why RL trails the planner (§17 and §18, 2026-09-23)
+## Task 8 — Why RL trails the planner (§17–§19, 2026-09-23)
 
 **Status.** Results in `runs/rl_vs_planner_diagnosis/NOTES.md` (§17). Two joint
 SAC retrains on the planner's own terminal charge (`env.undersell_on_soft:
@@ -592,29 +595,47 @@ pace — the edge RL was meant to have — is already in it. A pickup adjustment
 requests and re-planning) adds a little more in shifted years and ties when the
 forecast is right; a fair planner baseline should carry it.
 
-**Next run (recommended).** Booking-curve timing error: a forecast wrong about
-*when* demand arrives (curve earlier or later), which a level-driven pickup
-reads as a level change and a planner trusting its curve misprices. That is
-RL's remaining case. Compare drift-trained SAC against the planner with pickup
-on, uncapped on both sides ([[conventions]] § Presenting comparisons).
+**Done: booking-curve timing error (§19, `runs/residual_planner/NOTES.md`).**
+Instead of replacing the planner, joint SAC corrects it (`control.residual`,
+`experiment_residual_sac.yaml`): the planner proposes each day's price and
+limit, the agent adds a bounded correction and also sees the proposal and the
+pickup ratio. It trained on nights whose demand arrives earlier or later than
+the forecast's curve (`demand.night_variation.timing_sd`) and was tested in years
+shifted 10 days early, on time, or 10 days late (`timing_shift`, total demand
+conserved since a same-day correction), uncapped on both sides. The corrections make the planner worse in all three, each gap real:
+they trade denied admission for empty seats, which loses at $400 against $200,
+and the training reward never left the planner's level. A timing error barely
+fools the plain planner; the pickup adjustment is what it fools, reading early
+demand as a hot year, so pickup pays only when the level, not the timing, is off.
+
+**The planner-vs-RL question is closed for this simulator.** Across §17–§19 the
+planner is close to optimal here: learning comes within about 3% with full
+seasonal coverage, does not overtake it when the level drifts, and cannot improve
+it by correcting it when the timing drifts. Plan with a model; use learning where
+no model can be built. Do not queue another "can RL beat the planner here" run.
 
 **Still open.**
-1. A clone that actually reproduces the planner (e.g. DAgger with the planner as
-   online expert) before asking whether SAC can beat it.
-2. More training seeds: every §17 and §18 run is one seed, and §7's seed spread is as
-   large as the gaps here.
-3. R1 changed the reward and the observation together; their effects are not
+1. A world where no model can be built — demand the planner's forecast family
+   cannot represent — which is the case left for learning. Needs a new demand
+   setup, not another variant of this one.
+2. More training seeds: every §17–§19 run is one seed, and §7's seed spread is as
+   large as or larger than the gaps here (the §19 gaps are 14–34k).
+3. A clone that actually reproduces the planner (e.g. DAgger with the planner as
+   online expert). Lower priority now that correcting the planner does not pay.
+4. R1 changed the reward and the observation together; their effects are not
    separated.
-4. Pickup reads booking requests, including those the selling limit refused. A
+5. Pickup reads booking requests, including those the selling limit refused. A
    venue that cannot see turned-away requests would read low whenever the
    limit binds.
 
 **Gotcha.** Dropping the month one-hot or using `night_features` changes the
 observation size, so those checkpoints cannot be scored with a 27-slot config.
-Checkpoints go to `artifacts/rl_vs_planner/` and `artifacts/year_drift/`
-(untracked); `default.yaml` and every shipped checkpoint are untouched.
-`level_shift` / `elasticity_shift` draw no random numbers, so leaving them at
-1.0 / 0.0 reproduces every earlier night.
+Checkpoints go to `artifacts/rl_vs_planner/`, `artifacts/year_drift/` and
+`artifacts/residual_planner/` (untracked); `default.yaml` and every shipped
+checkpoint are untouched. `level_shift` / `elasticity_shift` / `timing_shift`
+draw no random numbers and `timing_sd` draws only when above 0, so leaving them
+at their defaults reproduces every earlier night. `control.residual` adds three
+observation slots, so its checkpoints need its config to be scored.
 
 ## What not to bother with
 

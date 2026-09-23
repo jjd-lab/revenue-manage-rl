@@ -1,0 +1,16 @@
+timing_shift_days,policy,score_aware,peak_mean_price,peak_denied_nights,peak_denied_seats,peak_unsold_seats
+10.0,planner,2203010.49,104.74,3,13.9,172.5
+10.0,planner + pickup,2185958.88,105.42,3,11.8,251.2
+10.0,residual,2169203.66,105.45,2,1.5,281.0
+10.0,"residual, kept checkpoint",2167965.75,104.98,3,8.5,276.9
+10.0,all months,2155916.32,104.17,3,13.0,283.9
+0.0,planner,2219271.73,104.02,8,31.8,56.1
+0.0,planner + pickup,2220195.32,104.04,8,29.6,55.3
+0.0,residual,2192369.44,104.45,5,10.6,144.1
+0.0,"residual, kept checkpoint",2201634.12,103.68,6,24.9,78.0
+0.0,all months,2155495.93,102.95,5,15.9,222.9
+-10.0,planner,2209081.9,103.62,8,30.8,54.1
+-10.0,planner + pickup,2206797.48,103.49,8,32.1,53.2
+-10.0,residual,2194711.19,104.07,5,22.6,93.9
+-10.0,"residual, kept checkpoint",2193182.5,103.13,6,31.5,62.2
+-10.0,all months,2153820.99,102.36,4,18.3,193.5

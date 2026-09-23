@@ -1,0 +1,43 @@
+# EXPERIMENT_LOG §19: the DP planner proposes each day's price and limit, and joint
+# SAC learns a bounded correction (±$10, ±500 seats) on top (control.residual).
+# Trained on all twelve months, on nights whose demand arrives earlier or later
+# than the forecast's booking curve (timing_sd 7 days), with R1's reward and
+# leak-free view. The planner keeps the usual curve; the agent also sees the
+# planner's proposal and the pickup ratio. Tested by run_residual.py.
+demand:
+  kind: tree_elastic
+  night_variation:
+    timing_sd: 7.0
+env:
+  undersell_penalty: 200.0
+  oversell_penalty: 400.0
+  utilization_bonus: 0.0
+  undersell_on_soft: false
+  night_features: true
+  operator_view: true
+  held_out_months: []
+control:
+  residual:
+    price_scale: 0.5
+    limit_scale: 0.2
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_held_out: false
+  eval_episodes: 30
+  eval_freq: 20000
+  model_dir: artifacts/residual_planner
+  run_name: residual_sac
+  log_dir: runs/residual_planner

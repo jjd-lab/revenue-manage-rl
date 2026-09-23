@@ -31,6 +31,7 @@ produces, not what you will find after a fresh clone.
 | `uncertain_cu200` | `experiment_uncertain_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_cu200/final_model.zip` | §16 |
 | `uncertain_noisy_cu200` | `experiment_uncertain_noisy_cu200_sac.yaml` | `runs/uncertain_nights/` | `artifacts/uncertain_nights/uncertain_noisy_cu200/final_model.zip` | §16 |
 | `score_sac` | `experiment_score_sac.yaml` | `runs/rl_vs_planner_diagnosis/` | `artifacts/rl_vs_planner/score_sac/best/best_model.zip` | §17 |
+| `residual_sac` | `experiment_residual_sac.yaml` | `runs/residual_planner/` | `artifacts/residual_planner/residual_sac/final_model.zip` | §19 |
 | `score_allmonths_sac` | `experiment_score_allmonths_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/score_allmonths_sac/final_model.zip` | §18 |
 | `year_drift_sac` | `experiment_year_drift_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/year_drift_sac/final_model.zip` | §18 |
 | `score_bc_dp_sac` | `experiment_score_bc_dp_sac.yaml` (`rprl-bc-sac`) | `runs/rl_vs_planner_diagnosis/` | `artifacts/rl_vs_planner/score_bc_dp_sac/best/best_model.zip` | §17 |
@@ -68,6 +69,7 @@ reported on seeds 0–29.
 | Dynamic-programming planner vs learned policies, true and wrong forecasts | `runs/dp_baseline/run_dp.py` | `runs/dp_baseline/` | §14 |
 | Every policy on an operator's show-up estimate instead of the env's count | `runs/show_up_leak/run_leak.py` | `runs/show_up_leak/` | §15 |
 | Planner vs RL retrained on nights that miss the usual model | `runs/uncertain_nights/run_uncertain.py` | `runs/uncertain_nights/` | §16 |
+| RL correcting the planner when demand arrives off schedule | `runs/residual_planner/run_residual.py` | `runs/residual_planner/` | §19 |
 | Seasonal coverage, and a year that misses the forecast | `runs/year_drift/run_drift.py` | `runs/year_drift/` | §18 |
 | Why RL trails the planner: score-aligned reward, night type, planner clone | `runs/rl_vs_planner_diagnosis/run_diagnosis.py` | `runs/rl_vs_planner_diagnosis/` | §17 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |

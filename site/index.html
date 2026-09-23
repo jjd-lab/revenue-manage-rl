@@ -619,15 +619,16 @@
         </ul>
 
         <h3 class="group-label" id="why">Why the learned policies trail</h3>
-        <p>Four retrains that see only what a venue sees, trained on the score's own costs, narrow down the reasons. One training seed each.</p>
+        <p>Five retrains that see only what a venue sees, trained on the score&rsquo;s own costs, narrow down the reasons. One training seed each.</p>
         <ul class="policies">
           <li><strong>Months never seen in training: the largest cause.</strong> The learned policies trained on ten months and were tested on June and December. Retrained on all twelve, the same setup trails the planner by 2.9 percent instead of 4.8, closing about 40 percent of the gap.</li>
           <li><strong>The reward: a small cause.</strong> Training on the score's own costs instead of the original reward gained $25,000, a tie.</li>
           <li><strong>Little room above the planner.</strong> It optimizes the score on the simulator's own model; seeing each night's actual no-shows would add only 1.1 percent.</li>
           <li><strong>A year that misses the forecast does not change it.</strong> The planner re-plans from its own bookings every day, so a policy trained to read the year from booking pace still trailed it by 1.6 to 3.8 percent in years 20 percent below or above the forecast.</li>
+          <li><strong>Learning on top of the planner does not help either.</strong> Letting a learned policy correct the planner's price and limit each day made it 0.7 to 1.5 percent worse, even when demand arrived 10 days earlier or later than forecast.</li>
           <li><strong>More data: coverage, not volume.</strong> The learned policies already see about two thousand simulated nights per run. What helps is experience of every season: for a real venue, at least a full year of history.</li>
         </ul>
-        <p>Details: sections 14 to 18 of the <a href="https://github.com/jjd-lab/revenue-manage-rl/blob/main/docs/EXPERIMENT_LOG.md">experiment log</a>.</p>
+        <p>Details: sections 14 to 19 of the <a href="https://github.com/jjd-lab/revenue-manage-rl/blob/main/docs/EXPERIMENT_LOG.md">experiment log</a>.</p>
       </section>
 
       <section id="variations">
@@ -782,7 +783,7 @@
           <li><strong>Training seeds.</strong> The published Joint BC to SAC and pace PPO weights are training seed 42; Joint SAC is seed 7 and Joint PPO seed 49. Retrains of Joint BC to SAC at seeds 43 and 44 also beat a pace run from the same seed. The retrain at seed 46 ties its matched pace run. Most results on this page are one training run.</li>
           <li><strong>The show-up count.</strong> The published learned policies and the cap read a count of expected show-ups built from the true cancellation and no-show rates, which no venue has. With the venue's own estimate and the right rates, scores move by under 0.1 percent. With wrong rates, every policy overbooks more, and the cap no longer holds denied admission at zero. The retrains in section 05 see only the venue's estimate.</li>
           <li><strong>Test months never seen in training.</strong> The learned policies train on ten months and are scored only on June and December, which they never saw; the planner's forecast covers every month. That split tests generalization. Retrained on all twelve months, the gap to the planner falls from 4.8 to 2.9 percent (section 05, one training seed). A venue would train on every month it has history for.</li>
-          <li><strong>The planner's advantage.</strong> The planner is handed the simulator's own demand model, and day-to-day demand here is fairly predictable. Its forecast was made wrong in only a few ways: price sensitivity off by a quarter either way, weekend and peak demand 25 percent too low, and random errors of up to 25 percent on each night, and a whole year 20 percent above or below forecast. Not tested: demand arriving earlier or later than forecast, a wrong price response in a drifting year, and larger errors. A planner that re-plans from its own bookings absorbs a level shift; errors in when demand arrives are where a learned policy could still come out ahead.</li>
+          <li><strong>The planner's advantage.</strong> The planner is handed the simulator's own demand model, and day-to-day demand here is fairly predictable. Its forecast was made wrong in these ways: price sensitivity off by a quarter either way, weekend and peak demand 25 percent too low, and random errors of up to 25 percent on each night, a whole year 20 percent above or below forecast, and demand arriving 10 days early or late. A planner that re-plans from its own bookings absorbed all of these. Not tested: customers who wait for a lower price, demand that depends on past prices, and problems too large to plan exactly, such as several seat tiers sharing one house. Those are where a learned policy could still come out ahead.</li>
           <li><strong>Myopic.</strong> Its selling limit, 12,353, never binds: it holds at most 11,402 bookings. That is why pace PPO, not myopic, is the price-only comparison.</li>
         </ul>
       </section>
