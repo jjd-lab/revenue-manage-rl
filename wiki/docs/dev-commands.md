@@ -3,7 +3,7 @@ type: ops
 title: Dev commands
 description: The operational constraints behind the README's commands - venv location, what each extra enables, what the tests cover, how tables and figures are regenerated.
 tags: [ops, cli, setup]
-timestamp: 2026-09-23
+timestamp: 2026-09-25
 ---
 
 # Dev commands
@@ -92,7 +92,9 @@ convention (`test_controls_extra.py`), the synthetic corpus and the CSV refit
 path (`test_demand_synthesize.py`), the figure script (`test_scripts.py`), and
 the §17 env switches `undersell_on_soft` / `night_features` (`test_score_reward.py`),
 and the §18 year shift plus the planner's pickup adjustment, and the §19 timing
-shift and residual planner (`test_year_drift.py`).
+shift and residual planner (`test_year_drift.py`), and the §20 festival env —
+logit substitution, selling limits, the `festival:` dispatch, the training
+seed offset and the shaping invariance (`test_festival.py`).
 
 It is **not** a correctness suite for learned policies: nothing asserts that a
 policy reaches a given score. Four tests train a tiny agent and are marked
@@ -132,6 +134,20 @@ policy reaches a given score. Four tests train a tiny agent and are marked
   `artifacts/residual_planner/` (train it with
   `rprl-train -c configs/experiment_residual_sac.yaml`) plus the all-months
   checkpoint from §18. Reading is `runs/residual_planner/NOTES.md`.
+- `python runs/festival/run_festival.py` — the §20 tables; needs
+  `artifacts/festival/` (train with `rprl-train -c configs/festival_sac.yaml` and
+  `rprl-bc-sac -c configs/festival_bc_sac.yaml`; the BC expert is
+  `festival_planner`). Reading is `runs/festival/NOTES.md`.
+- `python runs/festival/run_dagger.py` — the §20 DAgger rounds; run it after
+  `run_festival.py` (it scores against that script's `per_season.csv`) and after
+  `rprl-bc-sac`, whose clone is round 0. It writes the refit clones to
+  `artifacts/festival/festival_dagger/`.
+- `python runs/festival/train_dagger_sac.py [--shaped]` — §20 SAC fine-tuned
+  from the last DAgger clone; `--shaped` turns on `shape_reward` and writes
+  `festival_dagger_sac_shaped/` instead of `festival_dagger_sac/`. Full
+  regenerate order: `run_festival.py` → `run_dagger.py` → `train_dagger_sac.py`
+  (with and without `--shaped`) and `rprl-train -c configs/festival_sac_shaped.yaml`
+  → `run_festival.py` again, which then scores the four new rows.
 - `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`
   (F1, F3–F6; F2 was retired), drawn from committed CSVs only. F1 adds the
   planner row from `runs/dp_baseline/dp_table.csv`. F6 reads

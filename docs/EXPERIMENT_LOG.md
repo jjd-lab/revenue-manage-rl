@@ -661,6 +661,25 @@ Results: `runs/residual_planner/`.
 - **Correction (2026-09-23).** The first timing shift also changed each night's total demand (+3.3% / −5.8% on seed 4). The shift now conserves it. The evaluation was rerun, but the residual was trained on the first version and not retrained.
 - **Across §17–§19, the planner is hard to beat on this simulator.** Learning comes within about 3% once it sees every month. It does not overtake the planner when the demand level drifts, and cannot improve it by correcting it when demand timing drifts.
 
+## 20. Festival passes: several products sharing seats
+
+Does the planner's lead survive once products share seats and buyers move between them?
+
+- **The scenario** (`reservation_pricing.festival`, a separate env selected by a `festival:` config block): three nights of 10,000 seats, six passes (every run of consecutive nights), logit demand across passes, and a price per pass plus a selling limit per night, nine controls a day. Each season draws its own market size and night appeal; decision code knows only the usual values.
+- **The planner** re-solves a fluid program over the rest of the season every day. **RL:** joint SAC and BC → SAC (cloning the planner), seed 7, 200k steps each, trained on the score.
+- **Test:** held-out seeds 0–29; training envs draw seeds shifted by 1,000,000.
+
+Results: `runs/festival/`.
+
+- **Every learned policy trails the planner, with intervals below zero.** BC → SAC is 14.3% behind (−345,365), plain SAC 19.2% (−464,725). On one night the gap was 4–8%.
+- **Re-planning is worth 13%:** fixed prices all season lose 324,636. The best learned policy scores about the same as fixed prices.
+- **The learned policies sell Saturday too cheaply and bundles too dearly,** and leave about 1,500 more seats empty a season. The planner keeps Saturday dear and prices the bundles near the floor.
+- **The network is not the limit; the training is.** The clone drifts once it plays alone, because it saw only the planner's states. DAgger (the planner labels the clone's own states, `run_dagger.py`) takes it from 17.6% behind to 0.4–1.0% within two rounds. So the observation carries enough; SAC's gap is that trial and error does not find the planner's strategy in 2,000 seasons.
+- **Trial and error moves away from the planner's strategy.** SAC fine-tuned from the DAgger clone (`train_dagger_sac.py`, actor frozen while the critic warms) fell from 1.0% behind the planner to 11.6% behind, below it on all 30 seasons, drifting toward the same cheap-Saturday, dear-bundle pattern as every other learned policy. A bundle's value is only charged on the last day, which looked like the cause.
+- **Charging empty seats as the season goes does not help.** Potential-based shaping (policy-invariant, `shape_reward`) made SAC from scratch 150k worse and the DAgger fine-tune 223k worse, both real gaps; SAC from scratch began overbooking. The problem is SAC's updates on this nine-action problem, not when the reward arrives.
+- **Correction (2026-09-25).** The first evaluation scored the BC policies on seasons they had trained on. Training seeds are now shifted, both policies were retrained, and every number above is from the rerun.
+- **Caveats:** one training seed each; the planner is handed the true logit structure.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -686,6 +705,7 @@ Results: `runs/residual_planner/`.
 15. The learned policies come within 1.3–2.7% of the planner on the months they trained on and trail by 4.1–6.0% on the held-out June and December nights. Training on the score's own costs, with the night type in view, narrows the gap only a little. The planner is close to optimal for this simulator; about half or more of what RL loses appears only on months it never trained on (one training seed, §17).
 16. Training on all twelve months closes about 40% of the gap (+42,804, a real gap). When a whole year runs 20% above or below the forecast, the planner on the stale forecast still beats a policy trained across such years, by 1.6% to 3.8%. It re-plans from its own bookings every day, so a level shift is absorbed. RL's remaining case is forecast errors a closed loop cannot see, such as when demand arrives (§18).
 17. Letting RL correct the planner instead of replacing it makes it worse, by 0.7–1.5% in years whose demand arrives 10 days early, on time or late. A timing error costs the planner itself under 1%. On this simulator, plan with a model; use learning where no model can be built (§19).
+18. With six passes sharing three nights and buyers moving between them, the gap widens: the best learned policy trails the re-solving planner by 14.3% and scores about what fixed prices do. More products did not help RL here. A DAgger clone of the planner comes within 1% of it, so the gap is in how RL is trained, not in what it sees. SAC fine-tuning from that clone gives most of it back (11.6% behind), and reward shaping that charges empty seats as the season goes makes it worse, not better. A planner that must fit its demand model from data is the untested case (§20).
 
 ---
 

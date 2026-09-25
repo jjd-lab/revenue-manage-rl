@@ -80,6 +80,10 @@ def make_env(cfg: dict, **overrides: Any) -> Union[ReservationEnv, gym.Env]:
     - ``control.residual`` → ``ResidualPlannerEnv``: DP planner proposes, agent corrects
     - ``control.price_monotone`` → ``MonotonePriceEnv``, outermost, either action space
     """
+    if cfg.get("festival") is not None:
+        from reservation_pricing.festival import make_festival_env
+
+        return make_festival_env(cfg, **overrides)
     env_cfg = dict(cfg.get("env", cfg))
     # Flatten optional env.reward / control.reward nests into env kwargs
     for nest_src in (

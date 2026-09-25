@@ -1,0 +1,8 @@
+{
+  "clone": "artifacts/festival/festival_dagger/dagger_round5.zip",
+  "seed": 7,
+  "n_seeded": 10000,
+  "critic_warm_steps": 5000,
+  "init_ent_coef": 0.01,
+  "total_timesteps": 200000
+}

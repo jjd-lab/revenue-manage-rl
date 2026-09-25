@@ -587,3 +587,35 @@ New `runs/residual_planner/` (§19): `control.residual` lets joint SAC add a bou
 DP planner's price and limit, trained on nights with booking-curve timing error (`timing_shift`/`timing_sd`).
 It trails the plain planner in early, on-time and late years, intervals off zero; pickup backfires under
 timing error. Plan with a model; learning is left for worlds no model covers. [[next-steps]], [[conventions]], [[dev-commands]]
+
+## [2026-09-25] ingest | The site's "Where this sits" cites current RL-vs-DP work
+
+`site/index.html` §09 drops the 1972–2002 references for Gallego & van Ryzin 1994 and Talluri &
+van Ryzin 2004 as foundations, plus Lange, Dreessen & Schlosser 2025, Razumovskiy & Karenin 2026
+and the Kastius, Hagedorn & Schlosser 2026 survey: fitted DP wins on simple, known-model problems
+and RL catches up only with more data or scale, the case this repo tests. Copy only; no page change.
+
+## [2026-09-25] decision | Six passes sharing seats widen the planner's lead over RL
+
+New `reservation_pricing.festival` package and `runs/festival/` (§20), selected by a top-level `festival:`
+block; training envs shift seeds by `TRAIN_SEED_OFFSET` after a first run leaked test seasons into the
+BC expert. Every learned policy trails the re-solving planner with intervals below zero, a wider gap
+than on one night. [[conventions]], [[dev-commands]]
+
+## [2026-09-25] ingest | DAgger shows the festival gap is training, not observation
+
+New `runs/festival/run_dagger.py` (§20): the planner labels the states the BC clone visits and the clone is
+refit each round, closing most of its gap to the planner. The observation suffices; SAC's shortfall is
+training. SAC fine-tuned from the DAgger clone is the open next step. [[next-steps]], [[dev-commands]]
+
+## [2026-09-25] ingest | SAC from the DAgger clone and reward shaping both fail on the festival
+
+`FestivalConfig.shape_reward`, `configs/festival_sac_shaped.yaml` and `runs/festival/train_dagger_sac.py [--shaped]` (§20):
+fine-tuning drifts from the DAgger clone and shaping made both runs worse, so the gap is SAC's updates, not reward
+timing. Shaped training curves carry a +600 scaled constant. Next: Phase 2, a planner that fits its logit model
+from N seasons. [[next-steps]], [[conventions]], [[dev-commands]]
+
+## [2026-09-25] decision | Festival experiments stay off the site and README
+
+Festival results are recorded only in `docs/EXPERIMENT_LOG.md`, `runs/festival/NOTES.md` and the wiki;
+`site/index.html` and `README.md` do not mention them. [[conventions]]

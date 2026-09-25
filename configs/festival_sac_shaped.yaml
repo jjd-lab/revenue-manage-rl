@@ -1,0 +1,29 @@
+# Festival passes (EXPERIMENT_LOG §20): joint SAC sets a per-night price for each
+# of six passes and a selling limit for each of three nights. The reward is the
+# score. The scenario is FestivalConfig's defaults; list any field under
+# festival: to change it (nights, passes, demand, costs).
+# Shaped: each day's reward also carries the change in the end-of-season charge
+# if selling stopped now (FestivalEnv.potential); the best policy is unchanged.
+# Usage: rprl-train -c configs/festival_sac_shaped.yaml
+festival:
+  shape_reward: true
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 2000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_episodes: 10
+  eval_freq: 20000
+  model_dir: artifacts/festival
+  run_name: festival_sac_shaped
+  log_dir: runs/festival

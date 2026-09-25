@@ -35,6 +35,11 @@ produces, not what you will find after a fresh clone.
 | `score_allmonths_sac` | `experiment_score_allmonths_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/score_allmonths_sac/final_model.zip` | §18 |
 | `year_drift_sac` | `experiment_year_drift_sac.yaml` | `runs/year_drift/` | `artifacts/year_drift/year_drift_sac/final_model.zip` | §18 |
 | `score_bc_dp_sac` | `experiment_score_bc_dp_sac.yaml` (`rprl-bc-sac`) | `runs/rl_vs_planner_diagnosis/` | `artifacts/rl_vs_planner/score_bc_dp_sac/best/best_model.zip` | §17 |
+| `festival_sac` | `festival_sac.yaml` | `runs/festival/` | `artifacts/festival/festival_sac/final_model.zip` | §20 |
+| `festival_bc_sac` | `festival_bc_sac.yaml` (`rprl-bc-sac`) | `runs/festival/` | `artifacts/festival/festival_bc_sac/final_model.zip` | §20 |
+| `festival_dagger_sac` | `runs/festival/train_dagger_sac.py` (no config) | `runs/festival/festival_dagger_sac/` | `artifacts/festival/festival_dagger_sac/final_model.zip` | §20 |
+| `festival_sac_shaped` | `festival_sac_shaped.yaml` | `runs/festival/` | `artifacts/festival/festival_sac_shaped/final_model.zip` | §20 |
+| `festival_dagger_sac_shaped` | `runs/festival/train_dagger_sac.py --shaped` (no config) | `runs/festival/festival_dagger_sac_shaped/` | `artifacts/festival/festival_dagger_sac_shaped/final_model.zip` | §20 |
 
 `bc_sac_safe_sl` and `pace_mpc` are wrappers, not new policies: safe SL projects a
 trained joint action down, and the price MPC post-processes a trained price. Both
@@ -72,6 +77,8 @@ reported on seeds 0–29.
 | RL correcting the planner when demand arrives off schedule | `runs/residual_planner/run_residual.py` | `runs/residual_planner/` | §19 |
 | Seasonal coverage, and a year that misses the forecast | `runs/year_drift/run_drift.py` | `runs/year_drift/` | §18 |
 | Why RL trails the planner: score-aligned reward, night type, planner clone | `runs/rl_vs_planner_diagnosis/run_diagnosis.py` | `runs/rl_vs_planner_diagnosis/` | §17 |
+| Festival passes: planner vs RL with six passes sharing three nights | `runs/festival/run_festival.py` | `runs/festival/` | §20 |
+| Festival passes: DAgger clone of the planner, five rounds | `runs/festival/run_dagger.py` | `runs/festival/` | §20 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

@@ -1,0 +1,36 @@
+# Festival passes (EXPERIMENT_LOG §20): SAC warm-started by cloning the
+# re-solving planner, then fine-tuned on the score.
+# Usage: rprl-bc-sac -c configs/festival_bc_sac.yaml
+festival: {}
+algorithm:
+  name: sac
+  learning_rate: 0.0003
+  gamma: 1.0
+  batch_size: 256
+  buffer_size: 200000
+  learning_starts: 1000
+  tau: 0.005
+  ent_coef: auto
+  n_envs: 1
+  net_arch: [256, 256]
+  device: cpu
+  train_freq: 1
+  gradient_steps: 1
+bc:
+  expert_policy: festival_planner
+  n_episodes: 100
+  epochs: 50
+  batch_size: 256
+  lr: 0.001
+  log_std_target: -1.0
+  seed_replay_buffer: true
+  critic_warm_steps: 1000
+  learning_starts: 500
+train:
+  total_timesteps: 200000
+  seed: 7
+  eval_episodes: 10
+  eval_freq: 20000
+  model_dir: artifacts/festival
+  run_name: festival_bc_sac
+  log_dir: runs/festival

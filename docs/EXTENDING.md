@@ -81,9 +81,11 @@ Production pattern (sketch):
 5. **Capacity** — shared resource constraints across products that consume the
    same service-date inventory.
 
-There is deliberately no multi-product stub in the package: a placeholder that
-raises is not a design. Do **not** fake a multi-product env until real product
-definitions and capacity coupling are specified.
+`reservation_pricing.festival` is one worked instance, kept separate from the
+single-product env: passes over consecutive nights of one event, logit demand,
+a price per pass and a selling limit per night (§20). A top-level `festival:`
+block selects it; nights, passes, demand and costs are `FestivalConfig` fields.
+The steps below are for extending the single-product `DemandModel` path instead.
 
 Suggested migration steps:
 

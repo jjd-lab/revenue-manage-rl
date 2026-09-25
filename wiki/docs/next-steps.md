@@ -3,7 +3,7 @@ type: decision
 title: Session findings and next steps
 description: Plain-language record of the 2026-09-22 release-and-audit session, and the queued work with executable instructions for a coding agent.
 tags: [decision, roadmap, handover]
-timestamp: 2026-09-23
+timestamp: 2026-09-25
 ---
 
 # Session findings and next steps
@@ -613,6 +613,20 @@ planner is close to optimal here: learning comes within about 3% with full
 seasonal coverage, does not overtake it when the level drifts, and cannot improve
 it by correcting it when the timing drifts. Plan with a model; use learning where
 no model can be built. Do not queue another "can RL beat the planner here" run.
+
+**Done: several products sharing seats (§20, 2026-09-25, `runs/festival/NOTES.md`).**
+A separate festival env — six passes over three nights, logit demand across
+them — widened the planner's lead rather than closing it. DAgger (the planner
+labelling the states the BC clone reaches on its own) brings the clone to within
+about a percent of the planner in two rounds, so the observation carries enough
+to act like the planner and SAC's gap is a training problem, not an observation
+one. Both follow-ups are done: SAC fine-tuned from the DAgger clone drifts away
+from it, and potential-based reward shaping (`shape_reward`) made both SAC runs
+worse, so the problem is SAC's updates on this nine-action problem, not reward
+timing. That planner is still handed the true demand structure, so item 1 below
+stays open; the festival env is the natural place for it. **Next, now starting:
+Phase 2, a planner that fits its logit model from N seasons** (a two-segment
+truth it assumes is one is the follow-on).
 
 **Still open.**
 1. A world where no model can be built — demand the planner's forecast family

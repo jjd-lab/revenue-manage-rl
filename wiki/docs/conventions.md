@@ -3,7 +3,7 @@ type: convention
 title: Repo conventions
 description: What each top-level directory owns, which files are generated, and which values are pinned by the shipped checkpoints.
 tags: [convention, layout, configs]
-timestamp: 2026-09-23
+timestamp: 2026-09-25
 ---
 
 # Repo conventions
@@ -41,6 +41,13 @@ Never hand-edit a generated table to correct it — rerun the script. A table th
 disagrees with the checkpoints is a signal, not a typo. All runs use held-out
 seeds 0–29; a table on a different seed set is a bug, not a variant.
 
+The festival env draws the whole season from the reset seed, so "held-out" is a
+seed set, not a set of months. Training envs (`use_held_out=False`, which both
+trainers and the BC expert rollout pass) shift every seed by
+`TRAIN_SEED_OFFSET` (1,000,000) so no training or demonstration season is a test
+season. The first festival run lacked the offset and leaked — its correction is
+in `runs/festival/NOTES.md`. Any new seed-driven env needs the same split.
+
 Name run directories for what they found (`joint_vs_price_only_soft_aware`,
 `oversell_cap_transfer`), not what they ran (`soft_aware_report_demo` is the
 one deliberate exception — it names itself a demo because it is one). Driver
@@ -66,6 +73,14 @@ demand arrives earlier; defaults 0) do the same for *when* demand arrives, again
 the forecast's booking curve. The shifts consume no random draws and `timing_sd`
 draws only when above 0, so an unshifted config reproduces the default nights
 exactly; the forecast never sees any of them.
+
+A top-level `festival:` block (§20) bypasses all of the above: `make_env` hands
+the config to `make_festival_env`, which builds the multi-product `FestivalEnv`
+from `FestivalConfig` and reads nothing from `env:`, `demand:` or `control:`
+(they are still merged in from `default.yaml`, and ignored). Any `FestivalConfig`
+field — nights, passes, appeal, prices, costs — can be overridden inside the
+block; `festival: {}` means the defaults. The package stays separate from
+`ReservationEnv` so the single-night code, and its frozen values, are untouched.
 
 `configs/default.yaml` carries the full schema: `demand`, `env`, `control`,
 `algorithm`, `train`, `eval`, `tune`, with every control switched off.
@@ -131,12 +146,30 @@ to train a *new* arm on a different objective (`experiment_objective_*`); that
 leaves `default.yaml` and the shipped checkpoints untouched, and its weights go
 to their own `artifacts/` subdirectory.
 
+The festival checkpoints (`artifacts/festival/`) are pinned the same way by
+`FestivalConfig`'s defaults — capacity, price band, selling-limit bounds, costs
+and the pass list set its observation and action shapes and scales — not by
+`default.yaml`.
+
+`FestivalConfig.shape_reward` (off by default; `configs/festival_sac_shaped.yaml`
+turns it on) adds potential-based shaping: `FestivalEnv.potential` is minus the
+end-of-season charge if selling stopped now, from the operator's show-up
+estimate, and is zero at season end. With gamma 1 it adds only a constant per
+season, so the optimal policy is unchanged (`test_festival.py` checks this). That
+constant does show up in the EvalCallback's training curve (+600 in scaled
+units, $6M), so subtract it before comparing a shaped run's curve with an
+unshaped one; the evaluation scripts score the unshaped objective.
+
 ## Presenting comparisons
 
 - **Planner vs RL is uncapped on both sides.** The oversell cap is a separate
   control layer, not part of the question "does RL beat a planner", so the site,
   README and F6 compare the DP planner with uncapped learned policies. Capped
   rows belong to the cap's own findings (§10, §15, §16), labelled as capped.
+- **The festival experiments (§20 on) stay off the site and README.** They are
+  recorded only in `docs/EXPERIMENT_LOG.md`, `runs/festival/NOTES.md` and this
+  wiki; `site/index.html` and `README.md` do not mention them (decision
+  2026-09-25).
 - **Describe the reward as it is built:** $650 per unsold seat, plus an $80
   bonus per filled seat that is lost on any night someone is turned away. Do not
   fold the two into one per-seat figure; the bonus is conditional, so the sum

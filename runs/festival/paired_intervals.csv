@@ -1,0 +1,12 @@
+policy,baseline,mean_diff,ci_low,ci_high,n_seeds
+fixed prices,planner,-324636.0,-375455.0,-275225.0,30
+planner + pickup,planner,17910.0,-10259.0,45305.0,30
+SAC,planner,-464725.0,-507709.0,-424387.0,30
+"SAC, kept checkpoint",planner,-654165.0,-730049.0,-582594.0,30
+BC -> SAC,planner,-345365.0,-449129.0,-261840.0,30
+"BC -> SAC, kept checkpoint",planner,-406662.0,-489823.0,-329266.0,30
+clone only,planner,-427139.0,-493764.0,-357518.0,30
+DAgger clone,planner,-23001.0,-43958.0,-2144.0,30
+DAgger -> SAC,planner,-281391.0,-321250.0,-238709.0,30
+"SAC, shaped",planner,-614461.0,-736808.0,-502175.0,30
+"DAgger -> SAC, shaped",planner,-503989.0,-593795.0,-424880.0,30
