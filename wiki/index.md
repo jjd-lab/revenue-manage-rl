@@ -52,5 +52,5 @@ Generated, not documented here. Where to look:
 | `runs/residual_planner/` | RL as a bounded correction on top of the planner, in years whose demand arrives early or late (§19) |
 | `runs/year_drift/` | Training on all twelve months, and a whole year 20% above or below the forecast: RL vs a stale and a pickup-adjusted planner (§18) |
 | `runs/rl_vs_planner_diagnosis/` | Why RL trails the planner: retrains on the score's own costs with the night type in view, a planner clone, and the gap on training vs held-out months (§17) |
-| `runs/festival/` | Six festival passes sharing three nights' seats: learned policies vs a daily re-solving planner (§20) |
+| `runs/festival/` | Six festival passes sharing three nights' seats: learned policies vs a daily re-solving planner (§20–§21) |
 | `runs/soft_aware_report_demo/` | Demo of the soft-aware report on four policies |

@@ -26,13 +26,13 @@ size by booking requests seen so far over those expected at the prices charged.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from scipy.optimize import minimize
 
 from reservation_pricing.festival.env import FestivalEnv
-from reservation_pricing.festival.model import choice_probs, pass_utility
+from reservation_pricing.festival.model import FestivalConfig, choice_probs, pass_utility
 
 PICKUP_FROM_DAY = 10
 
@@ -43,15 +43,23 @@ def _blocks(days_left: int, n_buckets: int) -> list[np.ndarray]:
     return [b for b in np.array_split(days, min(n_buckets, days_left)) if b.size]
 
 
-def solve_fluid(env: FestivalEnv, market_mult: float, n_buckets: int) -> dict[str, np.ndarray]:
-    """Solve the program from the env's current state; see the module docstring."""
-    cfg = env.cfg
+def solve_fluid(
+    env: FestivalEnv,
+    market_mult: float,
+    n_buckets: int,
+    model: Optional[FestivalConfig] = None,
+) -> dict[str, np.ndarray]:
+    """Solve the program from the env's current state; see the module docstring.
+
+    ``model`` is the demand the planner believes in; by default the env's own.
+    """
+    cfg = model or env.cfg
     A, n_len = env.A, env.lengths
     K, N = env.n_passes, env.n_nights
     a = pass_utility(cfg, cfg.night_appeal)
     blocks = _blocks(env.days_prior, n_buckets)
     B = len(blocks)
-    w = env.arrival_weights
+    w = cfg.arrival_weights()
     lam = np.array([cfg.market_size * market_mult * w[b].sum() for b in blocks])
     beta = np.array([np.average([cfg.beta(d) for d in b], weights=w[b]) for b in blocks])
     keep = np.array(
@@ -168,26 +176,34 @@ def stop_at_capacity(env: FestivalEnv) -> np.ndarray:
 
 
 def planner_policy(
-    *, n_buckets: int = 10, resolve: bool = True, pickup: bool = False
+    *,
+    n_buckets: int = 10,
+    resolve: bool = True,
+    pickup: bool = False,
+    model: Optional[FestivalConfig] = None,
 ):
-    """``resolve=False, n_buckets=1`` is the fixed-price baseline: one price per pass all season."""
+    """``resolve=False, n_buckets=1`` is the fixed-price baseline: one price per pass all season.
+
+    ``model`` replaces the env's demand for planning, e.g. one fitted from
+    history (``festival.fit``); capacity, bounds and costs still come from the env.
+    """
 
     def _policy(obs: np.ndarray, env: Any, state: dict) -> np.ndarray:
         u: FestivalEnv = getattr(env, "unwrapped", env)
-        cfg = u.cfg
+        cfg = model or u.cfg
         t = cfg.horizon - u.days_prior
         if t > 0 and pickup:
             usual = pass_utility(cfg, cfg.night_appeal)
             probs = choice_probs(usual, state["prices"], cfg.beta(u.days_prior), u.on_sale)
             state["seen"] = state.get("seen", 0.0) + float(u.requests.sum())
             state["expected"] = state.get("expected", 0.0) + float(
-                cfg.market_size * u.arrival_weights[u.days_prior] * probs.sum()
+                cfg.market_size * cfg.arrival_weights()[u.days_prior] * probs.sum()
             )
         mult = 1.0
         if pickup and t >= PICKUP_FROM_DAY and state.get("expected", 0.0) > 0:
             mult = float(np.clip(state["seen"] / state["expected"], 0.5, 2.0))
         if resolve or "plan" not in state:
-            state["plan"] = solve_fluid(u, mult, n_buckets)
+            state["plan"] = solve_fluid(u, mult, n_buckets, model)
             if t == 0:
                 state["value"] = state["plan"]["value"]
         night_prices = state["plan"]["night_prices"][0]

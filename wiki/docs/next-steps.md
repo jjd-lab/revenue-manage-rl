@@ -623,10 +623,19 @@ to act like the planner and SAC's gap is a training problem, not an observation
 one. Both follow-ups are done: SAC fine-tuned from the DAgger clone drifts away
 from it, and potential-based reward shaping (`shape_reward`) made both SAC runs
 worse, so the problem is SAC's updates on this nine-action problem, not reward
-timing. That planner is still handed the true demand structure, so item 1 below
-stays open; the festival env is the natural place for it. **Next, now starting:
-Phase 2, a planner that fits its logit model from N seasons** (a two-segment
-truth it assumes is one is the follow-on).
+timing.
+
+**Done: Phase 2, a planner that fits its demand (§21, 2026-09-25,
+`runs/festival/NOTES.md`).** `festival.fit` fits the logit model by Poisson
+maximum likelihood to booking requests from past seasons played at random
+prices; `planner_policy(model=...)` plans with it. From as few as two seasons
+the fitted planner stays close to the one handed the true model and ahead of
+every learned policy, because re-solving from its own bookings corrects a
+loose market-size estimate. Two caveats make this a best case: random-price
+history is the easiest data to fit from, and the fitted family is the true one.
+So item 1 below stays open, and the festival env is still the place for it.
+**Next:** a two-segment truth fitted with one logit (the model family is wrong),
+and history taken from the venue's own past pricing rather than random prices.
 
 **Still open.**
 1. A world where no model can be built — demand the planner's forecast family

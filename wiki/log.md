@@ -619,3 +619,10 @@ from N seasons. [[next-steps]], [[conventions]], [[dev-commands]]
 
 Festival results are recorded only in `docs/EXPERIMENT_LOG.md`, `runs/festival/NOTES.md` and the wiki;
 `site/index.html` and `README.md` do not mention them. [[conventions]]
+
+## [2026-09-25] decision | A planner that fits its demand from two seasons still beats every learned policy
+
+New `reservation_pricing.festival.fit` and `runs/festival/run_fitted.py` (§21): Poisson ML fit of the logit
+model from random-price history; `planner_policy(model=...)` plans with it and stays close to the true-model
+planner. Best case only: random prices, true model family. Next: a two-segment truth fitted with one logit,
+and history from the venue's own pricing. Stays off the site and README. [[next-steps]], [[dev-commands]]

@@ -94,7 +94,7 @@ the §17 env switches `undersell_on_soft` / `night_features` (`test_score_reward
 and the §18 year shift plus the planner's pickup adjustment, and the §19 timing
 shift and residual planner (`test_year_drift.py`), and the §20 festival env —
 logit substitution, selling limits, the `festival:` dispatch, the training
-seed offset and the shaping invariance (`test_festival.py`).
+seed offset, the shaping invariance and the Phase 2 demand fit (`test_festival.py`).
 
 It is **not** a correctness suite for learned policies: nothing asserts that a
 policy reaches a given score. Four tests train a tiny agent and are marked
@@ -148,6 +148,10 @@ policy reaches a given score. Four tests train a tiny agent and are marked
   regenerate order: `run_festival.py` → `run_dagger.py` → `train_dagger_sac.py`
   (with and without `--shaped`) and `rprl-train -c configs/festival_sac_shaped.yaml`
   → `run_festival.py` again, which then scores the four new rows.
+- `python runs/festival/run_fitted.py` — §21, the planner that fits its demand
+  (`festival.fit`) from 2–100 random-price history seasons on training seeds;
+  needs `per_season.csv` from `run_festival.py` and no checkpoint. Writes
+  `fitted.csv` and `fitted_per_season.csv`; reading is `runs/festival/NOTES.md`.
 - `python scripts/build_site_figures.py` — the five PNGs under `site/figures/`
   (F1, F3–F6; F2 was retired), drawn from committed CSVs only. F1 adds the
   planner row from `runs/dp_baseline/dp_table.csv`. F6 reads

@@ -135,3 +135,16 @@ def test_shaping_adds_only_a_constant_over_a_season():
             total += r
         totals.append(total)
     assert totals[1] - totals[0] == pytest.approx(-start * env.cfg.revenue_scale)
+
+
+def test_fitting_recovers_price_sensitivity_and_the_booking_curve():
+    from reservation_pricing.festival import make_festival_env
+    from reservation_pricing.festival.fit import collect_history, fit_demand
+
+    cfg = FestivalConfig()
+    history = collect_history(lambda: make_festival_env({}, use_held_out=False), 20, 20_000)
+    fitted = fit_demand(cfg, history, 20)
+    assert fitted.beta_early == pytest.approx(cfg.beta_early, abs=0.2)
+    assert fitted.beta_late == pytest.approx(cfg.beta_late, abs=0.2)
+    assert fitted.arrival_decay_days == pytest.approx(cfg.arrival_decay_days, rel=0.1)
+    assert fitted.capacity == cfg.capacity

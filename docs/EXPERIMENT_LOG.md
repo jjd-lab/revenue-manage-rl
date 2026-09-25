@@ -680,6 +680,19 @@ Results: `runs/festival/`.
 - **Correction (2026-09-25).** The first evaluation scored the BC policies on seasons they had trained on. Training seeds are now shifted, both policies were retrained, and every number above is from the rerun.
 - **Caveats:** one training seed each; the planner is handed the true logit structure.
 
+## 21. Festival: a planner that fits its demand from past seasons
+
+Recent work finds RL overtakes a planner that must estimate demand from little data. Does it here?
+
+- **The run** (`runs/festival/run_fitted.py`, `reservation_pricing.festival.fit`): history seasons at random prices on training seeds; a Poisson maximum-likelihood fit of the logit model (night and pass appeals, price sensitivity early and late, market size, booking curve); the planner then plans with the fit. N = 2, 5, 20 and 100 seasons, three histories each. Cancellation and no-show rates known.
+
+Results: `runs/festival/NOTES.md`.
+
+- **Two seasons of history are enough.** Every fitted planner is within 1.8% of the true-model planner, and within 0.2% at 100 seasons.
+- **Every fitted planner beats every learned policy.** Against SAC trained on 2,000 seasons, the worst interval's lower end is +362,626.
+- **Price sensitivity and the booking curve are fitted well from two seasons; the level is not** (market size 93,880–147,363 against 100,000). Re-solving from bookings corrects the level as the season runs.
+- **Caveats:** random-price history is the easiest to fit from, and the planner's model family is the true one. A two-segment truth fitted with one logit is the next test.
+
 ## Experiment takeaways
 
 1. The earlier prototype fell short on the engineering and on the metrics.
@@ -705,7 +718,7 @@ Results: `runs/festival/`.
 15. The learned policies come within 1.3–2.7% of the planner on the months they trained on and trail by 4.1–6.0% on the held-out June and December nights. Training on the score's own costs, with the night type in view, narrows the gap only a little. The planner is close to optimal for this simulator; about half or more of what RL loses appears only on months it never trained on (one training seed, §17).
 16. Training on all twelve months closes about 40% of the gap (+42,804, a real gap). When a whole year runs 20% above or below the forecast, the planner on the stale forecast still beats a policy trained across such years, by 1.6% to 3.8%. It re-plans from its own bookings every day, so a level shift is absorbed. RL's remaining case is forecast errors a closed loop cannot see, such as when demand arrives (§18).
 17. Letting RL correct the planner instead of replacing it makes it worse, by 0.7–1.5% in years whose demand arrives 10 days early, on time or late. A timing error costs the planner itself under 1%. On this simulator, plan with a model; use learning where no model can be built (§19).
-18. With six passes sharing three nights and buyers moving between them, the gap widens: the best learned policy trails the re-solving planner by 14.3% and scores about what fixed prices do. More products did not help RL here. A DAgger clone of the planner comes within 1% of it, so the gap is in how RL is trained, not in what it sees. SAC fine-tuning from that clone gives most of it back (11.6% behind), and reward shaping that charges empty seats as the season goes makes it worse, not better. A planner that must fit its demand model from data is the untested case (§20).
+18. With six passes sharing three nights and buyers moving between them, the gap widens: the best learned policy trails the re-solving planner by 14.3% and scores about what fixed prices do. More products did not help RL here. A DAgger clone of the planner comes within 1% of it, so the gap is in how RL is trained, not in what it sees. SAC fine-tuning from that clone gives most of it back (11.6% behind), and reward shaping that charges empty seats as the season goes makes it worse, not better. A planner that fits its demand from as few as two past seasons stays within 1.8% of the true-model planner and ahead of every learned policy (§20–§21).
 
 ---
 

@@ -79,6 +79,7 @@ reported on seeds 0–29.
 | Why RL trails the planner: score-aligned reward, night type, planner clone | `runs/rl_vs_planner_diagnosis/run_diagnosis.py` | `runs/rl_vs_planner_diagnosis/` | §17 |
 | Festival passes: planner vs RL with six passes sharing three nights | `runs/festival/run_festival.py` | `runs/festival/` | §20 |
 | Festival passes: DAgger clone of the planner, five rounds | `runs/festival/run_dagger.py` | `runs/festival/` | §20 |
+| Festival passes: planner fitted from 2-100 past seasons | `runs/festival/run_fitted.py` | `runs/festival/` | §21 |
 | Public-page charts | `scripts/build_site_figures.py` | `site/figures/` | — |
 
 Every analysis and every training campaign evaluates on held-out seeds 0–29.

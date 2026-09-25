@@ -100,6 +100,28 @@ The clone matches the planner closely on the planner's own seasons: prices withi
 - **The fine-tune still drifted to the same pattern:** Saturday at $100 against the clone's $106, 299 three-day passes against 410. The shaped fine-tune fell to 1.26M at the first training-time check, lower than the unshaped one ever went.
 - **What is left as an explanation is SAC's own updates on this problem** — how its critic generalizes across nine continuous actions, and its exploration — rather than when the reward arrives. One training seed per run; a critic that learns the shaped values badly could also explain it, and was not checked.
 
+## Phase 2: a planner that fits its demand from N past seasons (§21)
+
+`run_fitted.py`, `reservation_pricing.festival.fit`. History seasons are played at random prices (each pass's per-night price drawn uniformly from the band every day, limits wide open) on training seeds. A Poisson maximum-likelihood fit of the logit model to each day's booking requests estimates the night appeals, the 2- and 3-day appeals, `beta_early`, `beta_late`, the market size and the arrival decay. Cancellation and no-show rates are taken as known. The planner then plans with the fitted model. Three independent histories per N; smaller histories are the first seasons of larger ones. Output: `fitted.csv`, `fitted_per_season.csv`.
+
+| seasons of history | mean score | vs true-model planner (3 histories) | worst lower bound vs SAC |
+| ---: | ---: | --- | ---: |
+| 2 | 2,406,004 | −25,621 to −6,480 | +399,818 |
+| 5 | 2,391,760 | −44,015 to −18,539 | +362,626 |
+| 20 | 2,410,226 | −13,511 to −6,599 | +408,216 |
+| 100 | 2,418,136 | −5,760 to +1,936 | +412,476 |
+
+- **Two seasons of history are enough.** Every fitted planner is within 1.8% of the one handed the true model; at 100 seasons, within 0.2%. Four of the twelve intervals against the true-model planner exclude zero, all at 2, 5 or 20 seasons.
+- **Every fitted planner beats every learned policy by a wide margin.** Against SAC, which trained on 2,000 seasons, the lower end of the interval is +362,626 at worst. Against fixed prices, +280,621 at worst.
+- **The fit gets price sensitivity and the booking curve right from two seasons; the level is loose.** `beta_early`, `beta_late` and the decay land within a few percent every time. The market size ranges from 93,880 to 147,363 against 100,000, trading off against the overall appeal, which logit sales data pin down only weakly. It barely matters: the planner re-solves from its own bookings each day, so a level error is corrected as the season runs (§18 found the same on one night).
+- **More history is not monotone at small N.** Five seasons did worse than two on average; which seasons you happen to have matters more than how many, until about 20.
+- **This is the setting in which recent work finds RL overtakes a fitted planner** — little data (Lange, Dreessen and Schlosser, 2025). Here it does not, for two reasons the caveats state: the history is played at random prices, which is the easiest data to fit from, and the planner's model family is the true one.
+
+Caveats:
+- Random-price history is a best case. A venue's real history comes from its own past pricing, with less and correlated price variation; the fit would be weaker.
+- The fitted model has the true structure. Demand from two customer groups, fitted with one logit, is the natural next test.
+- Cancellation and no-show rates are known; §15 showed a wrong show-up model is what hurts a planner most.
+
 ## Correction (2026-09-25)
 
 The first evaluation scored BC → SAC and the clone on seasons they had trained on: the planner demonstrations were collected on seeds 7–106, overlapping 23 of the 30 test seeds. Training envs now shift every seed by 1,000,000 (`make_festival_env`), both policies were retrained, and every row above comes from the rerun. The leak had flattered the clone by about 217,000 (−210,083 then, −427,139 now).
@@ -107,6 +129,6 @@ The first evaluation scored BC → SAC and the clone on seasons they had trained
 ## Caveats
 
 - One training seed per learned policy, 200k steps each. The single-night policies needed similar budgets; nine controls may need more.
-- The planner is handed the true logit structure and the usual rates; seasons differ from them only in market size, night appeal and show-up rates. A planner that has to fit its demand model from data is the next test.
+- The planner is handed the true logit structure and the usual rates; seasons differ from them only in market size, night appeal and show-up rates. A planner that has to fit its demand model from data is tested in Phase 2 below.
 - The planner's program is fluid: it plans with expected demand and ignores its spread. It is a strong heuristic, not the exact optimum, so the true gap to optimal may be larger.
 - The cutback when a night fills treats every pass on that night alike, and buyers cut are lost rather than moved to another pass.
