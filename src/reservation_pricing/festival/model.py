@@ -163,7 +163,10 @@ class Season:
 def pass_utility(cfg: FestivalConfig, night_appeal: Sequence[float]) -> np.ndarray:
     """Price-free utility of each pass."""
     extra = np.array(
-        [cfg.pass_appeal[len(p) - 1] if len(p) <= len(cfg.pass_appeal) else 0.0 for p in cfg.pass_list]
+        [
+            cfg.pass_appeal[len(p) - 1] if len(p) <= len(cfg.pass_appeal) else 0.0
+            for p in cfg.pass_list
+        ]
     )
     return cfg.incidence().T @ np.asarray(night_appeal, dtype=np.float64) + extra
 

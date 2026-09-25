@@ -63,7 +63,10 @@ def solve_fluid(
     lam = np.array([cfg.market_size * market_mult * w[b].sum() for b in blocks])
     beta = np.array([np.average([cfg.beta(d) for d in b], weights=w[b]) for b in blocks])
     keep = np.array(
-        [np.average([cfg.keep_rate(d, cfg.cancel_rho, cfg.noshow) for d in b], weights=w[b]) for b in blocks]
+        [
+            np.average([cfg.keep_rate(d, cfg.cancel_rho, cfg.noshow) for d in b], weights=w[b])
+            for b in blocks
+        ]
     )
     hi_price = n_len * cfg.max_night_price
     log_lo = a[None, :] - beta[:, None] * hi_price[None, :] / 100.0  # share floor, top price
@@ -94,7 +97,9 @@ def solve_fluid(
             cfg.unsold_cost * z[iu].sum() + cfg.denied_cost * z[io].sum()
         )
         g = np.zeros(n_var)
-        g[ix] = (-coef[:, None] * (a - lx - 1.0 + np.log(x0)[:, None] - (tot / x0)[:, None])).ravel()
+        g[ix] = (
+            -coef[:, None] * (a - lx - 1.0 + np.log(x0)[:, None] - (tot / x0)[:, None])
+        ).ravel()
         g[ir] = (lam[:, None] * hi_price[None, :]).ravel()
         g[iu] = cap * cfg.unsold_cost
         g[io] = cap * cfg.denied_cost

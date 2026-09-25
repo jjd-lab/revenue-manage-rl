@@ -41,9 +41,7 @@ def main() -> None:
     rows, per_season = [], []
     for rep in range(REPEATS):
         first = FIRST_HISTORY_SEED + rep * 1000
-        history = collect_history(
-            lambda: make_env(cfg, use_held_out=False), max(N_SEASONS), first
-        )
+        history = collect_history(lambda: make_env(cfg, use_held_out=False), max(N_SEASONS), first)
         for n in N_SEASONS:
             head = {k: v[: n * true_cfg.horizon] for k, v in history.items()}
             fitted = fit_demand(true_cfg, head, n)
@@ -72,7 +70,12 @@ def main() -> None:
                 row[f"vs {other} low"] = iv["ci_low"]
                 row[f"vs {other} high"] = iv["ci_high"]
             rows.append(row)
-            print(pd.DataFrame(rows)[["n_seasons", "history", "score", "vs planner", "vs SAC"]].round(0).to_string(index=False), flush=True)
+            print(
+                pd.DataFrame(rows)[["n_seasons", "history", "score", "vs planner", "vs SAC"]]
+                .round(0)
+                .to_string(index=False),
+                flush=True,
+            )
 
     pd.DataFrame(rows).round(3).to_csv(OUT / "fitted.csv", index=False)
     pd.concat(per_season).to_csv(OUT / "fitted_per_season.csv", index=False)

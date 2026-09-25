@@ -115,8 +115,7 @@ def test_the_planner_beats_fixed_prices():
     fixed = planner_policy(n_buckets=1, resolve=False)
     planner = planner_policy(n_buckets=5)
     gain = [
-        run_season(env, planner, s)["score"] - run_season(env, fixed, s)["score"]
-        for s in range(3)
+        run_season(env, planner, s)["score"] - run_season(env, fixed, s)["score"] for s in range(3)
     ]
     assert np.mean(gain) > 0
 

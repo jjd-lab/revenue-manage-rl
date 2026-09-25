@@ -63,7 +63,9 @@ def _unpack(theta: np.ndarray, n_nights: int) -> dict[str, Any]:
     }
 
 
-def fit_demand(cfg: FestivalConfig, history: dict[str, np.ndarray], n_seasons: int) -> FestivalConfig:
+def fit_demand(
+    cfg: FestivalConfig, history: dict[str, np.ndarray], n_seasons: int
+) -> FestivalConfig:
     """``cfg`` with its demand fields replaced by the maximum-likelihood fit."""
     if len(cfg.pass_appeal) != 3 or any(len(p) > 3 for p in cfg.pass_list):
         raise ValueError("fit_demand estimates appeal for passes of 1-3 nights")
@@ -87,7 +89,13 @@ def fit_demand(cfg: FestivalConfig, history: dict[str, np.ndarray], n_seasons: i
         return float((mu - y * np.log(mu)).sum()) / y.size
 
     theta0 = np.concatenate(
-        [np.zeros(n), np.zeros(2), [2.5, 2.5], [np.log(y.sum() / max(n_seasons, 1) / 0.3)], [np.log(30.0)]]
+        [
+            np.zeros(n),
+            np.zeros(2),
+            [2.5, 2.5],
+            [np.log(y.sum() / max(n_seasons, 1) / 0.3)],
+            [np.log(30.0)],
+        ]
     )
     res = minimize(nll, theta0, method="L-BFGS-B", options={"maxiter": 2000})
     return dataclasses.replace(cfg, **_unpack(res.x, n))
