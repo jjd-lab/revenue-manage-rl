@@ -42,7 +42,7 @@ trained weights, is **untracked raw material**, and must be retrained locally
 - Do not lead with overall `remain > 1500` as a quality metric; soft-day undersell
   is structural under this demand model. Use the soft-aware scores instead
   (`docs/EVALUATING_POLICIES.md`).
-- `ruff check .` and `pytest -m "not slow" -q` before every commit; the full
-  suite before touching anything under `runs/`.
+- `ruff check .`, `ruff format --check .` and `pytest -m "not slow" -q`
+  before every commit; the full suite before touching anything under `runs/`.
 - After changes that alter behavior, architecture, or conventions, sync the wiki
   per `wiki/SCHEMA.md`.
